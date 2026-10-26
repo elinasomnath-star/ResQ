@@ -1,0 +1,12 @@
+{
+  "scenario": "simulated_coverage_scenario",
+  "standard_event_target_unmet_pct": 8.0,
+  "severe_event_date": "2019-08-10",
+  "severe_event_target_unmet_pct": 1.5,
+  "inventory_basis": "synthetic scenario only; not actual relief-centre stock",
+  "site_split": "equal split across geocoded event-confirmed relief-site points",
+  "allocation_scope": "Module 8 consumes combined pool; no depot constraints modeled",
+  "steps": 8,
+  "summary_csv": "adequate_supply_summary.csv",
+  "site_inventory_csv": "simulated_relief_centre_inventory.csv"
+}

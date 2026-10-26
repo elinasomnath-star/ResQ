@@ -1,0 +1,530 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "closure_id": "2026-08-03_1",
+        "name": "Aladka",
+        "status": "unresolved",
+        "source": "https://theprint.in/india/karnataka-heavy-rain-swells-nethravathi-low-lying-areas-inundated-in-bantwal-residents-shifted/3004114/;https://daijiworld.com/news/newsDisplay?newsID=1321636;https://newskarnataka.com/mangaluru/bantwal-on-flood-alert-as-netravati-nears-danger-mark/02082026/",
+        "reason": "Reports place Aladka in the Panemangalore area and describe road/stream flooding there, but do not name the affected road segment or provide a pinpoint location. No locality-name edge or source-identifiable road segment was found in the cached graph; no nearby road was guessed.",
+        "osm_search_note": "Search performed directly on the cached Module 2 road graph using the Module 3 Bantwal taluk polygon bounds; no Nominatim lookup was used for this result.",
+        "search_method": "direct case-insensitive partial match against cached road_graph.graphml edge name attributes, restricted to edges intersecting the Bantwal taluk polygon bounding box",
+        "search_boundary": "data/processed/zones.geojson feature Bantwal taluk (osm_relation_3805146)",
+        "search_bounds_wgs84": [
+          74.9343315,
+          12.6636208,
+          75.2240074,
+          13.0162966
+        ],
+        "named_edge_matches": 0,
+        "source_context": "The reporting identifies the Aladka area of Panemangalore and nearby stream inundation, without tying the flooded road to a named road alignment."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "closure_id": "2026-08-03_2",
+        "name": "Kanchikarpete",
+        "status": "unresolved",
+        "source": "https://theprint.in/india/karnataka-heavy-rain-swells-nethravathi-low-lying-areas-inundated-in-bantwal-residents-shifted/3004114/;https://daijiworld.com/news/newsDisplay?newsID=1321636;https://newskarnataka.com/mangaluru/bantwal-on-flood-alert-as-netravati-nears-danger-mark/02082026/",
+        "reason": "Reporting identifies Kanchikarpete as the Netravati water-level monitoring centre and reports road flooding in the locality, but gives no station coordinates or exact flooded road segment. No locality-name edge or source-identifiable road segment was found in the cached graph; no nearby road was guessed.",
+        "osm_search_note": "Search performed directly on the cached Module 2 road graph using the Module 3 Bantwal taluk polygon bounds; no Nominatim lookup was used for this result.",
+        "search_method": "direct case-insensitive partial match against cached road_graph.graphml edge name attributes, restricted to edges intersecting the Bantwal taluk polygon bounding box",
+        "search_boundary": "data/processed/zones.geojson feature Bantwal taluk (osm_relation_3805146)",
+        "search_bounds_wgs84": [
+          74.9343315,
+          12.6636208,
+          75.2240074,
+          13.0162966
+        ],
+        "named_edge_matches": 0,
+        "source_context": "Kanchikarpete is a source-confirmed river monitoring-centre locality, but the report does not say the flooded road is the station access road or identify its geometry."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              75.053883,
+              12.9022185
+            ],
+            [
+              75.0536182,
+              12.902347
+            ],
+            [
+              75.0533707,
+              12.9024616
+            ],
+            [
+              75.0530864,
+              12.9025218
+            ],
+            [
+              75.0526948,
+              12.9025609
+            ],
+            [
+              75.0523836,
+              12.9025714
+            ],
+            [
+              75.0516522,
+              12.9025916
+            ],
+            [
+              75.0511989,
+              12.9026058
+            ],
+            [
+              75.050616,
+              12.9026185
+            ],
+            [
+              75.0501019,
+              12.9026424
+            ],
+            [
+              75.0494976,
+              12.9027283
+            ],
+            [
+              75.0489432,
+              12.9028437
+            ],
+            [
+              75.0486124,
+              12.9029296
+            ],
+            [
+              75.0482994,
+              12.9030607
+            ],
+            [
+              75.0480304,
+              12.9031963
+            ],
+            [
+              75.0476093,
+              12.9034264
+            ],
+            [
+              75.0472767,
+              12.9035571
+            ],
+            [
+              75.0470228,
+              12.9036358
+            ],
+            [
+              75.0467384,
+              12.9037196
+            ],
+            [
+              75.0464694,
+              12.9037819
+            ],
+            [
+              75.0462744,
+              12.9037901
+            ],
+            [
+              75.0460705,
+              12.9037718
+            ],
+            [
+              75.0458989,
+              12.9037248
+            ],
+            [
+              75.0457184,
+              12.9036486
+            ],
+            [
+              75.0455238,
+              12.9034934
+            ],
+            [
+              75.0453356,
+              12.9033169
+            ],
+            [
+              75.0450476,
+              12.9029771
+            ],
+            [
+              75.0448367,
+              12.9027862
+            ],
+            [
+              75.0446803,
+              12.9026917
+            ],
+            [
+              75.0444934,
+              12.9025992
+            ],
+            [
+              75.0440525,
+              12.9024189
+            ],
+            [
+              75.043678,
+              12.9022554
+            ],
+            [
+              75.0433312,
+              12.9020721
+            ],
+            [
+              75.042825,
+              12.9017822
+            ],
+            [
+              75.0423334,
+              12.9015387
+            ],
+            [
+              75.0420271,
+              12.9014137
+            ],
+            [
+              75.0416663,
+              12.9013012
+            ],
+            [
+              75.0412517,
+              12.9011958
+            ],
+            [
+              75.0411502,
+              12.9011745
+            ],
+            [
+              75.0407973,
+              12.9011181
+            ],
+            [
+              75.0404621,
+              12.901082
+            ],
+            [
+              75.040157,
+              12.9010646
+            ],
+            [
+              75.03973,
+              12.9010084
+            ],
+            [
+              75.0393954,
+              12.9009152
+            ],
+            [
+              75.0389282,
+              12.9007574
+            ],
+            [
+              75.0384182,
+              12.9005469
+            ],
+            [
+              75.0382036,
+              12.900441
+            ],
+            [
+              75.0379731,
+              12.900312
+            ],
+            [
+              75.0378146,
+              12.9001819
+            ],
+            [
+              75.0376444,
+              12.9000357
+            ],
+            [
+              75.0374611,
+              12.8998471
+            ],
+            [
+              75.0368187,
+              12.8990209
+            ],
+            [
+              75.0360686,
+              12.8980409
+            ]
+          ],
+          [
+            [
+              75.0360015,
+              12.8980924
+            ],
+            [
+              75.0367523,
+              12.8990663
+            ],
+            [
+              75.0373995,
+              12.899901
+            ],
+            [
+              75.0374236,
+              12.8999257
+            ],
+            [
+              75.0375907,
+              12.9000972
+            ],
+            [
+              75.0377678,
+              12.9002446
+            ],
+            [
+              75.0379308,
+              12.9003679
+            ],
+            [
+              75.038158,
+              12.9005037
+            ],
+            [
+              75.0383848,
+              12.9006167
+            ],
+            [
+              75.0389045,
+              12.9008159
+            ],
+            [
+              75.0392956,
+              12.9009609
+            ],
+            [
+              75.0397173,
+              12.9010702
+            ],
+            [
+              75.0401508,
+              12.9011272
+            ],
+            [
+              75.0404567,
+              12.9011446
+            ],
+            [
+              75.0407885,
+              12.9011805
+            ],
+            [
+              75.0411382,
+              12.9012363
+            ],
+            [
+              75.0412367,
+              12.901257
+            ],
+            [
+              75.0414612,
+              12.901314
+            ],
+            [
+              75.0416483,
+              12.9013616
+            ],
+            [
+              75.0420021,
+              12.9014845
+            ],
+            [
+              75.042309,
+              12.9016089
+            ],
+            [
+              75.042786,
+              12.9018479
+            ],
+            [
+              75.0432927,
+              12.902136
+            ],
+            [
+              75.0436427,
+              12.9023289
+            ],
+            [
+              75.0440214,
+              12.9024845
+            ],
+            [
+              75.0444609,
+              12.9026681
+            ],
+            [
+              75.0446406,
+              12.902757
+            ],
+            [
+              75.0447853,
+              12.9028547
+            ],
+            [
+              75.0449912,
+              12.9030334
+            ],
+            [
+              75.0452775,
+              12.9033676
+            ],
+            [
+              75.0454675,
+              12.9035522
+            ],
+            [
+              75.0456791,
+              12.9037159
+            ],
+            [
+              75.0458772,
+              12.9037842
+            ],
+            [
+              75.0460587,
+              12.9038339
+            ],
+            [
+              75.0462728,
+              12.9038532
+            ],
+            [
+              75.0464783,
+              12.9038445
+            ],
+            [
+              75.0467552,
+              12.9037803
+            ],
+            [
+              75.0470419,
+              12.9036958
+            ],
+            [
+              75.0472985,
+              12.9036163
+            ],
+            [
+              75.0476372,
+              12.9034832
+            ],
+            [
+              75.048061,
+              12.9032517
+            ],
+            [
+              75.048327,
+              12.9031176
+            ],
+            [
+              75.0486336,
+              12.9029892
+            ],
+            [
+              75.0489582,
+              12.9029049
+            ],
+            [
+              75.049509,
+              12.9027902
+            ],
+            [
+              75.0501081,
+              12.9027051
+            ],
+            [
+              75.0506183,
+              12.9026813
+            ],
+            [
+              75.0512006,
+              12.9026686
+            ],
+            [
+              75.0516541,
+              12.9026545
+            ],
+            [
+              75.0523857,
+              12.9026342
+            ],
+            [
+              75.0524474,
+              12.9026322
+            ],
+            [
+              75.0526992,
+              12.9026237
+            ],
+            [
+              75.0530965,
+              12.902584
+            ],
+            [
+              75.0533917,
+              12.9025216
+            ],
+            [
+              75.0536465,
+              12.9024035
+            ],
+            [
+              75.053883,
+              12.9022185
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "closure_id": "2026-08-03_3",
+        "name": "Kotekani",
+        "status": "verified",
+        "source": "https://daijiworld.com/news/newsDisplay?newsID=1321636",
+        "reason": null,
+        "osm_search_note": "Search performed directly on the cached Module 2 road graph using the Module 3 Bantwal taluk polygon bounds; no Nominatim lookup was used for this result.",
+        "search_method": "source-context road identification plus exact OSM NH73/NH234 way-reference match; the event source says water overflowed onto the road at Kotekani on the Jakribettu-Bantwal-Beltangady highway",
+        "search_boundary": "data/processed/zones.geojson feature Bantwal taluk (osm_relation_3805146)",
+        "search_bounds_wgs84": [
+          74.9343315,
+          12.6636208,
+          75.2240074,
+          13.0162966
+        ],
+        "named_edge_matches": 0,
+        "osm_ref": "NH73",
+        "osm_old_ref": "NH234",
+        "osm_way_ids": [
+          "197733702",
+          "1370252437"
+        ],
+        "osm_way_urls": [
+          "https://www.openstreetmap.org/way/197733702",
+          "https://www.openstreetmap.org/way/1370252437"
+        ],
+        "matching_method": "exact OSM road-reference match to the cached Bantwal-Beltangady highway way geometry",
+        "verification_scope": "corridor-level OSM road match, not an exact Kotekani flood point; article identifies the highway at Kotekani and reports Bantwal-Beltangady connectivity cut",
+        "closure_note": "The Daijiworld report states water overflowed onto the road in the Kotekani area on the highway connecting Jakribettu through Bantwal toward Beltangady. The matched NH73 way segment is the Bantwal-Beltangady corridor; exact inundation coordinates are not given."
+      }
+    }
+  ],
+  "resolution_status": "partial",
+  "event_date": "2026-08-03",
+  "note": "Kotekani is a corridor-level NH73 closure based on the event report and cached OSM way geometry. Aladka and Kanchikarpete remain unresolved after source-context and cached-graph checks: their reports give areas/landmarks but no exact road geometry; no nearby edges were guessed."
+}

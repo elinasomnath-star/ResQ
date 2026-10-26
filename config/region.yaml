@@ -1,0 +1,100 @@
+project:
+  name: Smart Disaster Relief Resource Allocation and Routing System
+  disaster_type: monsoon_coastal_river_flooding
+
+region:
+  country: India
+  state: Karnataka
+  district: Dakshina Kannada
+  default_taluk: Bantwal
+  # The only analysis zones are a 4x4 analytical grid clipped to Bantwal.
+  analysis_zone_names: ["Bantwal taluk"]
+  analysis_grid:
+    rows: 4
+    columns: 4
+  osm_admin_fallback_levels: [6, 5] # Available OSM taluk/district boundary levels in this region.
+  population_by_taluk_name:
+    Bantwal taluk: 395380
+    Mangaluru taluk: 994602
+    Putturu taluk: 287851
+  population_census_year: 2011
+  population_source_url: https://censusindia.gov.in/nada/index.php/catalog/604/download/2064/DH_2011_2921_PART_A_DCHB_DAKSHINA_KANNADA.pdf
+  population_model: WorldPop Global2 R2025A v1
+  population_model_year: 2025
+  population_resolution: 100m
+  population_api_base: https://api.worldpop.org/v2
+  population_model_source_url: https://hub.worldpop.org/geodata/listing?id=135
+  coverage_places:
+    - Mangaluru
+    - Bantwal
+    - Uppinangady
+  # Nominatim boundary relation 2020528, returned bbox ordered west,south,east,north.
+  bbox_wgs84: [74.7761084, 12.4600860, 75.6706418, 13.1851626]
+  metric_crs: EPSG:32643
+  osm_boundary_relation_id: 2020528
+  osm_place_query: Dakshina Kannada, Karnataka, India
+
+events:
+  csv_path: data/processed/events.csv
+  gauge_reference_level_m: 11.6 # Fixed to the largest event; held-out events do not set the training scale.
+
+warehouses: [] # Populate from an authoritative relief-facility source; no locations assumed.
+
+routing:
+  max_snap_distance_m: 5000
+  blockage_snap_radius_m: 35
+  secondary_max_distance_km: 10
+
+module8:
+  closure_activation_step: 2
+  shortage_threshold: 0.20 # Trigger when remaining stock covers less than 20% of unmet demand for a resource.
+  escalation_redirect_pct: 0.15 # Module 9 redirects at most 15% of donor-zone allocation, subject to donor floor and recipient need.
+
+resources:
+  inventory: {} # Verified warehouse inventory is not available in the current source data.
+  prototype_inventory:
+    food_rations: 25000
+    water_liters: 75000
+    medical_kits: 1200
+  inventory_status: scenario_assumption # Replace with a verified warehouse inventory before operational use.
+  min_fairness_pct: 40
+  secondary_payload_kg: 50
+  estimated_affected_population_share: 0.04 # Scenario assumption, not observed exposure.
+  demand_horizon_days: 3
+  food_rations_per_person: 3 # One ration per person per day over the configured horizon.
+  water_liters_per_person: 15 # 5 L per person per day over the configured horizon.
+  medical_kits_per_100_people: 4
+
+sar:
+  provider: Microsoft Planetary Computer Sentinel-1 RTC
+  collection: sentinel-1-rtc
+  polarization: VH
+  hand_provider: Alaska Satellite Facility GLO-30 HAND
+  hand_version: v1/2021
+  hand_threshold_m: 15
+  change_thresholds_db: [-1.0, -1.25, -1.5, -1.75]
+  requested_before_window_days: [14, 21]
+  event_window_end_dates:
+    "2024-07-31": "2024-08-02" # Reported July–August flood episode, including the second impact peak.
+
+gauge_hand:
+  dem_provider: Copernicus DEM GLO-30
+  flow_accumulation_threshold_km2: 50
+  processing_buffer_m: 12000
+  h0_fit_event: "2019-08-10"
+  h0_search_min_m: 0
+  h0_search_max_m: 11.5
+  h0_search_step_m: 0.25
+
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  rainfall_source: CHIRPS # Documented fallback pending IMD access verification.
+  rainfall_dataset: CHIRPS v2.0 daily global 0.05-degree
+  road_graph_path: data/processed/road_graph.graphml
+  node_mapping_path: data/processed/node_mapping.json
+  zones_path: data/processed/zones.geojson
+  analysis_zones_path: data/processed/analysis_zones.geojson
+  overpass_endpoints:
+    - https://overpass-api.de/api/interpreter
+    - https://overpass.kumi.systems/api/interpreter

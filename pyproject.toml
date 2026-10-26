@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "resq-disaster-allocation"
+version = "0.1.0"
+description = "Satellite-informed disaster relief allocation and routing prototype"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.34",
+  "pydantic>=2.10",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+phase2 = [
+  "numpy>=2.0",
+  "rasterio>=1.4",
+  "shapely>=2.0",
+  "pyproj>=3.7",
+  "geopandas>=1.0",
+  "openpyxl>=3.1",
+  "pyflwdir>=0.5.12",
+  "scikit-learn>=1.6",
+  "ortools>=9.12",
+]
+geo = ["networkx>=3.4"]
+gee = ["earthengine-api>=1.5", "geemap>=0.36"]
+optimization = ["ortools>=9.12", "scikit-learn>=1.6"]
+dev = ["ruff>=0.3", "pytest>=8.0"]
+
+[project.scripts]
+resq-phase2 = "resq.phase2:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

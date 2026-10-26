@@ -1,0 +1,24 @@
+# Runtime dependencies for the headless Phase II pipeline.
+fastapi>=0.115
+uvicorn[standard]>=0.34
+pydantic>=2.10
+PyYAML>=6.0
+
+# Sentinel-1/HAND raster processing and polygon operations.
+numpy>=2.0
+rasterio>=1.4
+shapely>=2.0
+pyflwdir>=0.5.12
+pyproj>=3.7
+geopandas>=1.0
+openpyxl>=3.1
+
+# Severity model and fair constrained allocation.
+scikit-learn>=1.6
+ortools>=9.12
+
+# Graph helpers for the existing road-network artifacts and Phase III routing.
+networkx>=3.4
+
+# Presentation-ready PNG demo figures.
+matplotlib>=3.9
