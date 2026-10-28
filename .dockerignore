@@ -1,0 +1,17 @@
+.git
+.venv
+.venv-signed
+.uv-cache
+.deps
+__pycache__
+*.py[cod]
+*.egg-info
+data/raw
+data/processed
+demo/*.png
+demo/*.csv
+!demo/adequate_supply_summary.csv
+demo/*.json
+demo/*.md
+validation
+tests

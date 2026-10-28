@@ -1,8 +1,10 @@
 # Demo notes
 
-The maps cover Bantwal taluk, divided into exactly 16 analytical grid zones clipped to its boundary. Each is checked for valid SAR pixels for the three events. Sentinel-1 is shown as a candidate VH-change signal used for severity context.
+The maps cover Bantwal taluk, divided into exactly 16 analytical grid zones clipped to its boundary. Each is checked for valid SAR pixels for the three events. Sentinel-1 is shown as a candidate VH-change signal used for severity context. Population is a modeled WorldPop estimate from sums of 2025 constrained 1 km raster pixels; the 2011 Census total is a comparison reference only.
 
 ## Six map figures
+
+Each map labels all 16 grid cells by number, uses kilometre axes, and includes a 10 km scale bar. Relief-centre names are listed in the road-map legend so text does not overlap the zone numbers.
 
 ### SAR, zones, and river (no road overlay)
 
@@ -29,7 +31,7 @@ Only mapped facilities inside Bantwal are drawn. Mini Town Hall is in Mangaluru,
 
 ## Four main limitations to mention
 
-1. The zones are 16 analytical grid cells, and population is apportioned by area because sub-taluk population counts are unavailable.
+1. Population comes from a 1 km modeled raster, so zone values are coarse estimates rather than household counts; the Bantwal raster total is 677,985.36 versus the 2011 Census reference of 395,380 (1.715×), with no adjustment to force agreement.
 2. SAR is candidate change context, not a validated flood outline.
 3. Shelter stocks and demand are simulated/modelled; no live facility inventory is connected.
 4. OSM roads and closure matches have coverage gaps; closure corridors do not prove real-time road access.

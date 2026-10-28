@@ -37,14 +37,13 @@ def run(event_dates: list[str] | None = None) -> None:
     zones = json.loads(analysis_zones_path.read_text(encoding="utf-8"))["features"]
     expected_population_year = int(config["region"].get("population_model_year", 2025))
     if any(int(z["properties"].get("population_year") or 0) != expected_population_year or
-           float(z["properties"].get("population_estimate") or 0) <= 0 for z in zones):
-        parent_features = json.loads(zones_path.read_text(encoding="utf-8"))["features"]
-        parent = next((f for f in parent_features if str(f.get("properties", {}).get("name", "")).casefold().startswith("bantwal")), None)
-        control_total = float((parent or {}).get("properties", {}).get("population_estimate") or 0)
-        if control_total <= 0:
-            raise ValueError("Bantwal parent population is missing; run python -m resq.population after python -m resq.zones")
+           float(z["properties"].get("population_estimate") or 0) < 0 or
+           "unadjusted" not in str(z["properties"].get("population_basis", "")) or
+           float(z["properties"].get("population_worldpop_raw_estimate") or -1) !=
+           float(z["properties"].get("population_estimate") or 0)
+           for z in zones):
         estimate_zone_populations(path=analysis_zones_path, year=expected_population_year,
-                                  config=config, control_total=control_total)
+                                  config=config)
         zones = json.loads(analysis_zones_path.read_text(encoding="utf-8"))["features"]
     for event in selected:
         day = event.event_date.isoformat()

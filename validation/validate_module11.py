@@ -9,6 +9,7 @@ from pathlib import Path
 from resq.config import REPO_ROOT, configured_path, load_config
 from resq.events import load_events
 from resq.module8 import run_module8
+from resq.routing import run_routing
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -48,6 +49,21 @@ def main() -> None:
         run_module8(event.event_date.isoformat())
     supply_rows = read_csv(REPO_ROOT / "demo" / "adequate_supply_summary.csv")
     status_lines = module0_9_status_section(processed)
+    route_summary = {}
+    for event in events:
+        day = event.event_date.isoformat()
+        route_csv, _route_geojson = run_routing(day, zone_layer="analysis")
+        route_rows = read_csv(route_csv)
+        closure_features = json.loads((processed / f"closures_{day}.geojson").read_text(encoding="utf-8")).get("features", [])
+        route_summary[day] = {
+            "zone_count": len(route_rows),
+            "road_count": sum(row.get("delivery_mode") == "road" for row in route_rows),
+            "secondary_count": sum(row.get("delivery_mode") == "secondary" for row in route_rows),
+            "no_mode_count": sum(row.get("delivery_mode") == "none" for row in route_rows),
+            "unresolved_closure_count": sum((feature.get("properties") or {}).get("status") != "verified"
+                                             for feature in closure_features),
+            "removed_edge_count": len(json.loads((processed / f"routes_analysis_{day}_metadata.json").read_text(encoding="utf-8")).get("closures", [])),
+        }
     supply_table = [
         "| Event | Configured Module 8 baseline | Module 6 simulated | Module 8 MILP | Module 8 LinUCB | Module 8 proportional | Target |",
         "|---|---:|---:|---:|---:|---:|---:|",
@@ -83,7 +99,7 @@ def main() -> None:
         "",
         "The analysis uses 16 regular grid zones clipped to the Bantwal taluk polygon. The cached SAR raster covers this parent polygon; every allocation zone is contained within it. Grid cells are analytical service areas, not administrative villages.",
         "",
-        "Module 6 allocates the modeled food, water, and medical demand across these zones using zone severity and the configured inventory. Module 8 repeats the decision over eight disruption rounds using event-specific closure geometries and remaining stock. Population is split by zone area because a sub-taluk population raster is unavailable; rainfall, SAR, and gauge-HAND features are summarized from cached rasters.",
+        "Module 6 allocates modeled food, water, and medical demand across these zones using zone severity and configured inventory. Module 8 repeats the decision over eight disruption rounds using event-specific closure geometries and remaining stock. Population is summed from WorldPop raster pixels per zone; rainfall, SAR, and gauge-HAND features are summarized from cached rasters.",
         "",
         "These are modeled policy comparisons, not observed deliveries. Aggregate unmet demand is constrained by the stock assumption; per-zone service and the minimum served zone show how each policy distributes that stock.",
         "",
@@ -93,7 +109,14 @@ def main() -> None:
         "",
         "The DDMP Safe Shelter table (pp. 58-60) names 47 distinct facilities, principally in Mangaluru and nearby taluks, not a Bantwal warehouse inventory. Individual Nominatim searches returned no OSM candidates for those 47 shelter names; `data/processed/warehouses.geojson` preserves them as medium-confidence DDMP-designated shelter candidates with null geometry. The file now also includes three event-confirmed relief-site candidates: SVS Kannada Medium School, Mini Town Hall Mangaluru, and Panemangaluru Sharada High School/locality. The Mini Town Hall report is from June 2025, not the 2026 Bantwal event; the Panemangaluru school is named in the Aug 2, 2026 report, but its coordinate reuses the village point rather than a school-building point. Null geometries are excluded from routing.",
         "",
-        "Module 7's A* scenario fixture passes (three taluk routes; a synthetic point removed two directed graph edges). The real-event validator reports PARTIAL PASS for all three events: 2019 Bantwal-Belthangady matches cached OSM NH73/NH234 ways; 2024 Panjala/Uppinangady matches nearby NH75 geometry (older NH48 designation); and 2026 Kotekani matches the NH73 Bantwal-Belthangady corridor. Each removes 35 directed graph edges and produces three routes. The NH73/NH75 geometries are corridor-level stress-test closures on highways identified by event reports, not pinpointed flood coordinates. For 2026, an exact graph-name search found no Aladka, Kanchikarpete, or Kotekani name-tagged edges within the Module 3 Bantwal polygon bounds. The Daijiworld report nevertheless places the Kotekani road overflow on the highway connecting Jakribettu through Bantwal toward Beltangady; matching that source-described corridor to the cached NH73 ways supports a corridor-level closure. Aladka and Kanchikarpete remain unresolved: reports place Aladka in the Panemangalore area and identify Kanchikarpete as the Netravati monitoring-centre locality, but neither gives the exact flooded road segment or a precise location that can be matched to a cached edge. The Kotekani flood point also remains unknown. This is also an example of sparse OSM name coverage for hyperlocal streets in smaller Indian towns. The 2024 Belthangady-Moodbidri and landslide closures, plus two other 2019 road labels, remain unresolved. The supplied 2019 event CSV lists Talapady service road, Bantwal-Belthangady road, and Marnabail-Panolibail connectivity road; 'Nandavara bridge' is absent. See validator output for per-event status.",
+        "Module 7 now runs A* from cached event-confirmed relief-site points to every one of the 16 Bantwal grid zones after removing verified event closure edges. The real-event outputs include per-zone road routes and, when no road path remains within the configured rules, a straight-line secondary-distance candidate with a 50 kg/trip check; this is not a boat/drone navigation model. Closure evidence remains partial: NH73/NH75 matches are corridor-level stress-test geometries rather than pinpoint flood locations, and some locality-level closure labels remain unresolved. The route table below reports coverage for each event.",
+        "",
+        "## Module 7 routing",
+        "",
+        "| Event | Zones routed | Road routes | Secondary candidates | No eligible mode | Directed edges removed | Unresolved closure labels |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+        *[f"| {day} | {m['zone_count']} | {m['road_count']} | {m['secondary_count']} | {m['no_mode_count']} | {m['removed_edge_count']} | {m['unresolved_closure_count']} |"
+          for day, m in route_summary.items()],
         "",
         "Sources: [Dakshina Kannada DDMP 2022-23](https://dk.nic.in/en/disaster-management/), [OSM NH73 way 197733702](https://www.openstreetmap.org/way/197733702), [OSM NH73 way 1370252437](https://www.openstreetmap.org/way/1370252437), [2024 SVS relief-centre report](https://newskarnataka.com/mangaluru/deputy-commissioner-assesses-flood-damage-in-bantwal-announces-relief-measures/01082024/), [2025 Mini Town Hall relief-centre report](https://www.deccanherald.com/india/karnataka/as-heavy-rains-lash-mangaluru-flood-victims-worry-for-their-homes-3587163), and [2026 report naming Panemangaluru Sharada High School as a ready relief centre](https://newskarnataka.com/mangaluru/bantwal-on-flood-alert-as-netravati-nears-danger-mark/02082026/).",
         "",
@@ -289,9 +312,9 @@ def main() -> None:
         "## Interpretation and limits",
         "",
         "- The 2019 event is the calibration record and is excluded from held-out severity validation. Only 2024 and 2026 count as held-out proxy comparisons. The 2024 reports cover two flood pulses/impact periods, but the available event-level record does not provide separate ground-truth targets for each pulse.",
-        "- The 16 analysis zones are regular grid cells clipped to Bantwal, not mapped village or ward boundaries. Their population values use an area-weighted split of the taluk total because no sub-taluk population raster is available.",
+        "- The 16 analysis zones are regular grid cells clipped to Bantwal, not mapped village or ward boundaries. Population is a modeled estimate from sums of WorldPop 2025 constrained 1 km raster pixels; the 2011 Census total is a reference only.",
         "- Aggregate unmet demand is largely fixed by stock caps. Compare per-zone shortfalls and minimum service instead. The MILP is severity-weighted, LinUCB uses contextual urgency/equity rewards, and the baseline is proportional to need. LinUCB training uses perturbed scenarios from all three event vectors, so allocator comparisons are simulations, not blind event holdouts.",
-        "- Module 8 applies event-specific verified Module 7 closure geometries to the cached graph at step 2 and recomputes route impacts; some closures are corridor-level stress geometries, not pinpoint flood coordinates. Module 9 alerts and partial reallocations are rule-based scenario heuristics, not operational dispatch advice. The population estimate is apportioned by area, and facility inventory remains simulated.",
+        "- Module 8 applies event-specific verified Module 7 closure geometries to the cached graph at step 2 and recomputes route impacts; some closures are corridor-level stress geometries, not pinpoint flood coordinates. Module 9 alerts and partial reallocations are rule-based scenario heuristics, not operational dispatch advice. Population is a modeled raster estimate and facility inventory remains simulated.",
         "- The supplied 2024 value is 9.3 m. A contemporaneous report records 9.1 m at 08:00 on 1 August, reflecting a different observation timestamp; the difference is retained as source variation rather than silently harmonized.",
         "",
         "## Event source links",
@@ -305,7 +328,7 @@ def main() -> None:
     limits_section = sections.index("## Interpretation and limits")
     source_links_section = sections.index("## Event source links", limits_section)
     sections[limits_section + 1:source_links_section] = [
-        "- The analysis grid is not an administrative boundary layer, and population is area-apportioned across grid cells.",
+        "- The analysis grid is not an administrative boundary layer. Population is derived from a coarse 1 km raster and should not be interpreted as observed household counts.",
         "- Aggregate unmet demand is driven by configured stock. The 25x sensitivity result is a counterfactual, not evidence that those supplies exist or that real-world unmet demand would fall below 10%.",
         "- Some road closures match highway corridors rather than exact flooded segments, and facility points do not confirm capacity or available stock.",
         "",
@@ -365,7 +388,12 @@ def main() -> None:
     assert all(row["properties"].get("zone_type") == "analysis_grid" for row in analysis_zones)
     parent_zones = json.loads(configured_path(config["data"]["zones_path"]).read_text(encoding="utf-8"))["features"]
     bantwal_parent = next((f for f in parent_zones if str(f.get("properties", {}).get("name", "")).casefold().startswith("bantwal")), None)
-    parent_population = float((bantwal_parent or {}).get("properties", {}).get("population_estimate") or 0)
+    parent_props = (bantwal_parent or {}).get("properties", {})
+    parent_population = float(parent_props.get("population_estimate") or 0)
+    census_reference = float(config["region"]["population_census_2011_reference_by_taluk_name"]["Bantwal taluk"])
+    parent_area_km2 = float(parent_props.get("population_area_km2") or 0)
+    parent_density = float(parent_props.get("population_density_per_km2") or 0)
+    population_ratio = parent_population / census_reference if census_reference else 0
     event_summary = [
         "| Event | Gauge stage | SAR before → during | Module 6 configured unmet | Module 8 configured unmet after 8 rounds | Module 8 simulated-stock unmet |",
         "|---|---:|---|---:|---:|---:|",
@@ -380,6 +408,24 @@ def main() -> None:
         f"| {day} | {event.water_level_m:.1f} m | {manifest['before_date']} to {manifest['during_date']} | "
             f"{static_unmet_by_day[day]:.2f}% | {baseline_unmet_by_day[day]:.2f}% | {m8_simulated:.2f}% (static sensitivity {m6_simulated:.2f}%) |"
         )
+    coverage_summary = [
+        "### Minimum zone coverage by engine",
+        "",
+        "| Event | Module 6 static floor (MILP / LinUCB / Proportional) | Module 8 final floor (MILP) | Module 8 final floor (LinUCB) | Module 8 final floor (Proportional) |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    for event in events:
+        day = event.event_date.isoformat()
+        static = read_csv(processed / f"allocation_comparison_{day}.csv")
+        dynamic = json.loads((processed / f"module8_dynamic_summary_{day}.json").read_text(encoding="utf-8"))["engines"]
+        static_floor = {row["engine"]: float(row["minimum_zone_fairness_pct"]) for row in static}
+        coverage_summary.append(
+            f"| {day} | {static_floor['MILP']:.2f}% / {static_floor['LinUCB_contextual_bandit']:.2f}% / "
+            f"{static_floor['naive_proportional_baseline']:.2f}% | "
+            f"{float(dynamic['MILP']['final_minimum_zone_coverage_pct']):.2f}% | "
+            f"{float(dynamic['LinUCB_contextual_bandit']['final_minimum_zone_coverage_pct']):.2f}% | "
+            f"{float(dynamic['naive_proportional_baseline']['final_minimum_zone_coverage_pct']):.2f}% |"
+        )
     sections = [
         "# ResQ results - Bantwal",
         "",
@@ -388,11 +434,15 @@ def main() -> None:
         "## Zones and population",
         "",
         f"The analysis uses exactly {len(analysis_zones)} regular grid cells clipped to the Bantwal taluk polygon. Every cell contains valid SAR pixels on all three event dates. These are analytical zones, not official village or ward boundaries; the six maps show the same zone layer.",
-        f"Zone population values are area-weighted shares of the Bantwal parent estimate ({parent_population:,.0f}), assuming uniform density within the taluk. They are a spatial proxy, not measured population counts for the individual zones.",
+        f"Zone population is a modeled estimate from WorldPop Global2 R2025A v1 India (2025, constrained, 1 km), computed by summing native population-count pixels per cell without Census scaling. The Bantwal polygon sum is {parent_population:,.2f} across {parent_area_km2:,.2f} km² ({parent_density:,.2f} people/km²). The Census 2011 reference is {census_reference:,.0f}; the raster estimate is {population_ratio:.3f}× that value. The difference is reported without adjustment.",
         "",
         "## Event and allocation results",
         "",
         *event_summary,
+        "",
+        *coverage_summary,
+        "",
+        "The static 40% fairness target is infeasible under configured stock, so Module 6 uses the maximum feasible common floor and the three engines tie on minimum coverage. During Module 8, LinUCB's learned reward allocation leaves a zone near zero coverage, while MILP and Proportional retain a higher floor. This is a distribution/equity effect under modeled scarcity; aggregate unmet demand remains similar because stocks are shared.",
         "",
         "The configured-stock results show how the current prototype inventory limits service. The separate simulated-stock sensitivity assumes a larger pooled supply and a 55% minimum zone-service floor; it is a scenario, not measured shelter inventory or an observed outcome.",
         "All engines use the same total demand and inventory caps, so aggregate unmet demand can be similar even when the distribution across zones differs. Compare the per-zone Module 6 charts and Module 8 minimum-coverage traces; equal totals do not mean identical allocations.",
@@ -409,16 +459,23 @@ def main() -> None:
         "| [`module6_static_zone_coverage_2024-07-31.png`](demo/module6_static_zone_coverage_2024-07-31.png) | Static per-zone coverage example |",
         "| [`module8_minimum_coverage_steps_2024-07-31.png`](demo/module8_minimum_coverage_steps_2024-07-31.png) | Eight-step minimum-coverage example |",
         "",
-        "## Modules 0–9 validation",
+        "## Module 7 routing coverage",
+        "",
+        "Module 7 computes a route or explicitly marked secondary-distance candidate for each of the 16 Bantwal grid zones after applying verified event closure geometries. PARTIAL PASS means some closure labels remain unresolved; it does not mean zone routes are missing. Secondary distance is straight-line context only, not evidence of a navigable water or air route.",
+        "",
+        "| Event | Zones | Road routes | Secondary candidates | No eligible mode | Directed edges removed | Unresolved closure labels |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+        *[f"| {day} | {m['zone_count']} | {m['road_count']} | {m['secondary_count']} | {m['no_mode_count']} | {m['removed_edge_count']} | {m['unresolved_closure_count']} |"
+          for day, m in route_summary.items()],
         "",
         *status_lines,
         "",
-        "Module 7 passes its integration validator as a partial real-event routing check: the closure geometries are corridor-level matches, and route output is limited by the available scenario origins and destinations.",
+        "Module 7 covers all 16 grid zones per event. Its PARTIAL PASS label describes unresolved closure inputs; it does not mean that routes were computed for only a subset of zones.",
         "",
         "## Sources and limits",
         "",
         "- The 16 analytical zones are regular grid cells clipped to the cached Bantwal taluk polygon; they are not administrative units.",
-        "- The Bantwal parent population estimate is split by zone area because a sub-taluk population raster is not available. Density variation within Bantwal is not represented.",
+        f"- Bantwal population is estimated using unadjusted WorldPop 2025 constrained 1 km raster pixel sums: {parent_population:,.2f} across {parent_area_km2:,.2f} km² ({parent_density:,.2f} people/km²). The Census 2011 total ({census_reference:,.0f}) remains config-only as a labeled reference; the ratio is {population_ratio:.3f}×.",
         "- SAR is shown as a candidate VH-change signal for severity context, not a verified flood outline.",
         "- Resource demand and inventory are simulated/modelled. The system does not connect to live shelter inventory or dispatch facilities.",
         "- Some road closures are corridor-level matches and do not confirm exact flood location or road passability.",

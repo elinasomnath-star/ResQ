@@ -57,7 +57,7 @@ def main() -> None:
             statuses[(6, day)] = "FAIL"
             details[(6, day)] = "Module 6 fairness validator failed"
 
-    # Module 7 reports partial closure coverage as a validated route pass.
+    # Module 7 passes when all 16 zones route; partial marks unresolved event closure labels.
     route_code, route_output = run_validator("validate_module7.py")
     route_results = {day: status for status, day in re.findall(
         r"Module 7 real-event (PARTIAL PASS|PASS|BLOCKED|FAILED) \[(\d{4}-\d{2}-\d{2})\]", route_output)}

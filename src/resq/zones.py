@@ -182,23 +182,17 @@ def _viewbox(place: dict[str, Any]) -> str | None:
     return f"{west},{north},{east},{south}"
 
 
-def _population_properties(boundary_name: str, config: dict[str, Any]) -> dict[str, Any]:
-    region = config["region"]
-    census_table = {name.casefold(): int(value) for name, value in region.get("population_by_taluk_name", {}).items()}
-    population = census_table.get(boundary_name.casefold())
+def _population_properties() -> dict[str, Any]:
     return {
         "population_estimate": None,
         "population_source": None,
         "population_year": None,
         "population_basis": None,
-        "population_census_2011_reference": population,
-        "population_census_reference_year": int(region["population_census_year"]) if population is not None else None,
-        "population_census_source": region["population_source_url"] if population is not None else None,
     }
 
 
 def enrich_existing_zone_population(path: str | Path | None = None, config: dict[str, Any] | None = None) -> int:
-    """Apply configured official taluk census counts to already-generated polygons."""
+    """Remove legacy census-derived fields; raster assignment happens separately."""
     config = config or load_config()
     zone_path = Path(path) if path is not None else configured_path(config["data"]["zones_path"])
     if not zone_path.is_absolute():
@@ -209,11 +203,12 @@ def enrich_existing_zone_population(path: str | Path | None = None, config: dict
         properties = feature.get("properties", {})
         if properties.get("admin_level") is None:
             continue
-        values = _population_properties(str(properties.get("name", "")), config)
-        properties.pop("population_census_2011", None)
+        values = _population_properties()
+        for legacy_key in ("population_census_2011", "population_census_2011_reference",
+                           "population_census_reference_year", "population_census_source"):
+            properties.pop(legacy_key, None)
         properties.update(values)
-        if values["population_census_2011_reference"] is not None:
-            enriched += 1
+        enriched += 1
     zone_path.write_text(json.dumps(collection, ensure_ascii=False), encoding="utf-8")
     return enriched
 
@@ -385,7 +380,7 @@ def build_zones(config: dict[str, Any] | None = None) -> tuple[Path, Path]:
     for boundary in grouped.values():
         aliases = boundary["aliases"]
         zone_name = boundary["name"] or aliases[0]
-        population = _population_properties(zone_name, config)
+        population = _population_properties()
         features.append({
             "type": "Feature", "geometry": boundary["geometry"],
             "properties": {

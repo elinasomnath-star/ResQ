@@ -51,7 +51,7 @@ def build_analysis_event_demand(event_date: str, config: dict[str, Any] | None =
         "zone_count": len(rows),
         "mangaluru_ward_count": 0,
         "zone_method": "16-cell regular grid clipped to Bantwal and checked for valid SAR coverage on every event date",
-        "population_method": "area-weighted Bantwal parent population proxy",
+        "population_method": "sum of WorldPop 2025 constrained 1 km population-count pixels within each Bantwal grid cell; unadjusted modeled estimate",
         "analysis_zone_geojson": str(output_path),
     }
 
@@ -92,11 +92,15 @@ def _verified_closures(event_date: str, processed: Path) -> tuple[list[tuple[flo
 
 
 def _closure_impacts(event_date: str, config: dict[str, Any], processed: Path,
-                     zone_path: Path) -> tuple[set[str], dict[str, Any]]:
+                     zone_path: Path,
+                     cached_graph: tuple[nx.MultiDiGraph, int] | None = None) -> tuple[set[str], dict[str, Any]]:
     """Apply real closure geometry to the cached graph and identify impacted zones."""
     points, lines, verified = _verified_closures(event_date, processed)
-    graph_path = configured_path(config["data"]["road_graph_path"])
-    graph, utm_zone = _load_graph(graph_path)
+    if cached_graph is None:
+        graph_path = configured_path(config["data"]["road_graph_path"])
+        graph, utm_zone = _load_graph(graph_path)
+    else:
+        graph, utm_zone = cached_graph
     open_graph = graph.copy()
     closed_graph = graph.copy()
     radius = float(config.get("routing", {}).get("blockage_snap_radius_m", 35))
@@ -171,7 +175,8 @@ def _allocate_bandit(policy: Any, rows: list[dict[str, str]], stocks: dict[str, 
 
 
 def run_module8(event_date: str, *, steps: int = STEPS, seed: int = 20261026,
-                config: dict[str, Any] | None = None) -> tuple[Path, Path]:
+                  config: dict[str, Any] | None = None,
+                  cached_graph: tuple[nx.MultiDiGraph, int] | None = None) -> tuple[Path, Path]:
     """Run repeated, synthetic disruption/reallocation comparison for one event."""
     if steps < 5 or steps > 10: raise ValueError("Module 8 uses 5–10 disruption steps")
     config = config or load_config()
@@ -220,7 +225,8 @@ def run_module8(event_date: str, *, steps: int = STEPS, seed: int = 20261026,
     training_time = time.perf_counter() - training_start
 
     module8_zone_path = processed / "zones_module8_analysis_grid.geojson"
-    closure_zone_ids, closure_impact = _closure_impacts(event_date, config, processed, module8_zone_path)
+    closure_zone_ids, closure_impact = _closure_impacts(event_date, config, processed, module8_zone_path,
+                                                          cached_graph=cached_graph)
     zone_ids = [r["zone_id"] for r in base_rows]
     zone_index = {zone_id: i for i, zone_id in enumerate(zone_ids)}
     affected_indices = {zone_index[z] for z in closure_zone_ids if z in zone_index}

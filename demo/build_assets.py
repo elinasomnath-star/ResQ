@@ -12,6 +12,7 @@ os.environ.setdefault("MPLCONFIGDIR", str(Path(tempfile.gettempdir()) / "resq-ma
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
@@ -58,7 +59,7 @@ def full_zone_bounds(zones: list[dict], crs: str) -> tuple[float, float, float, 
 
 
 def build_sar_zone_coverage() -> dict[str, dict[str, dict[str, object]]]:
-    """Count valid SAR pixels within each official Bantwal village zone."""
+    """Count valid SAR pixels within each Bantwal grid zone."""
     zones = json.loads((PROCESSED / "analysis_zones.geojson").read_text(encoding="utf-8"))["features"]
     rows = []
     coverage: dict[str, dict[str, dict[str, object]]] = {}
@@ -189,34 +190,34 @@ def render_bantwal_map(day: str, sar_coverage: dict[str, dict[str, object]], *, 
         ax.plot([p[0] for p in part], [p[1] for p in part], color="#0c7894", linewidth=1.4,
                 alpha=0.95, zorder=5)
     river_handles.append(Line2D([0], [0], color="#0c7894", lw=1.6, label="Netravati river (OSM)"))
+    facilities = json.loads((PROCESSED / "warehouses.geojson").read_text(encoding="utf-8"))["features"]
+    transformer = Transformer.from_crs("EPSG:4326", crs, always_xy=True)
+    mapped_sites = []
+    for feature in facilities:
+        geom = feature.get("geometry") or {}
+        props = feature.get("properties", {})
+        if geom.get("type") != "Point" or props.get("source") != "event-confirmed":
+            continue
+        lon, lat = map(float, geom["coordinates"][:2])
+        if parent_wgs.covers(Point(lon, lat)):
+            x, y = transformer.transform(lon, lat)
+            facility_id = str(props.get("warehouse_id", ""))
+            marker, color = (("o", "#f59e0b") if facility_id == "svs_kannada_medium_school_bantwal"
+                             else ("*", "#e34a33"))
+            mapped_sites.append((feature, x, y, marker, color))
     if with_roads:
         local, major = _road_segments(parent_wgs, crs)
         if local:
             ax.add_collection(LineCollection(local, colors="#495563", linewidths=0.38, alpha=0.68, zorder=3))
         if major:
             ax.add_collection(LineCollection(major, colors="#202b35", linewidths=0.95, alpha=0.9, zorder=4))
-        facilities = json.loads((PROCESSED / "warehouses.geojson").read_text(encoding="utf-8"))["features"]
-        transformer = Transformer.from_crs("EPSG:4326", crs, always_xy=True)
         site_handles = []
-        for feature in facilities:
-            geom = feature.get("geometry") or {}
+        for feature, x, y, marker, color in mapped_sites:
             props = feature.get("properties", {})
-            if geom.get("type") != "Point" or props.get("source") != "event-confirmed":
-                continue
-            lon, lat = map(float, geom["coordinates"][:2])
-            if not parent_wgs.covers(Point(lon, lat)):
-                continue
-            x, y = transformer.transform(lon, lat)
-            facility_id = str(props.get("warehouse_id", ""))
-            marker, color = (("o", "#f59e0b") if facility_id == "svs_kannada_medium_school_bantwal"
-                             else ("*", "#e34a33"))
             ax.scatter([x], [y], marker=marker, s=140 if marker == "*" else 92,
                        color=color, edgecolors="white", linewidths=1.0, zorder=8)
             label = str(props.get("name", "Relief centre"))
             label = label.replace(", Bantwal", "").replace(" (Sharada High School)", "")
-            label_offset = (8, 13) if marker == "o" else (8, -21)
-            ax.annotate(label, (x, y), xytext=label_offset, textcoords="offset points", fontsize=8.5, weight="bold",
-                        bbox={"boxstyle": "round,pad=0.22", "fc": "white", "alpha": 0.86, "ec": "none"}, zorder=9)
             site_handles.append(Line2D([0], [0], marker=marker, color="none", markerfacecolor=color,
                                        markeredgecolor="white", markersize=10, label=label))
         road_handles = [Line2D([0], [0], color="#495563", lw=0.7, label="OSM local roads"),
@@ -224,7 +225,7 @@ def render_bantwal_map(day: str, sar_coverage: dict[str, dict[str, object]], *, 
         handles = river_handles + road_handles + site_handles
     else:
         handles = river_handles
-    for feature in zones:
+    for zone_number, feature in enumerate(zones, start=1):
         geom = transform_geom("EPSG:4326", crs, feature["geometry"])
         polygons = geom["coordinates"] if geom["type"] == "MultiPolygon" else [geom["coordinates"]]
         for polygon in polygons:
@@ -232,6 +233,22 @@ def render_bantwal_map(day: str, sar_coverage: dict[str, dict[str, object]], *, 
                 xy = np.asarray(ring)
                 ax.plot(xy[:, 0], xy[:, 1], color="white", linewidth=1.6, alpha=0.95, zorder=6)
                 ax.plot(xy[:, 0], xy[:, 1], color="#173b57", linewidth=0.62, alpha=0.94, zorder=7)
+        zone_shape = shape(transform_geom("EPSG:4326", crs, feature["geometry"]))
+        point = zone_shape.representative_point()
+        if mapped_sites and min(point.distance(Point(x, y)) for _, x, y, _, _ in mapped_sites) < 1_500:
+            minx, miny, maxx, maxy = zone_shape.bounds
+            candidates = [Point(minx + (maxx - minx) * i / 12,
+                                miny + (maxy - miny) * j / 12)
+                          for i in range(1, 12) for j in range(1, 12)]
+            candidates = [candidate for candidate in candidates if zone_shape.contains(candidate)]
+            if candidates:
+                point = max(candidates, key=lambda candidate:
+                            min(candidate.distance(Point(x, y)) for _, x, y, _, _ in mapped_sites)
+                            + 0.35 * candidate.distance(zone_shape.boundary))
+        ax.text(point.x, point.y, str(zone_number), ha="center", va="center", fontsize=7,
+                weight="bold", color="#102a43", zorder=10,
+                bbox={"boxstyle": "circle,pad=0.22", "fc": "white", "ec": "#173b57",
+                      "lw": 0.55, "alpha": 0.92})
     parent_projected = transform_geom("EPSG:4326", crs, parent_features[0]["geometry"])
     parent_coords = parent_projected["coordinates"] if parent_projected["type"] == "MultiPolygon" else [parent_projected["coordinates"]]
     for polygon in parent_coords:
@@ -240,41 +257,56 @@ def render_bantwal_map(day: str, sar_coverage: dict[str, dict[str, object]], *, 
     ax.set_xlim(left, right); ax.set_ylim(bottom, top)
     fig.colorbar(shown, ax=ax, label="Relative candidate VH-change signal", shrink=0.78)
     suffix = "with OSM roads and mapped relief centres" if with_roads else "with Netravati river; no road overlay"
-    ax.set_title(f"Bantwal severity zones and Sentinel-1 SAR context - {day}\n{suffix}", pad=13)
-    ax.set_xlabel(f"Projected easting ({crs})"); ax.set_ylabel("Projected northing (m)")
+    ax.set_title(f"Bantwal grid zones and Sentinel-1 SAR context — {day}\n{suffix}", pad=13)
+    ax.set_xlabel("Easting (km)"); ax.set_ylabel("Northing (km)")
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value / 1000:.0f}"))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{value / 1000:.0f}"))
+    # A 10 km scale bar in the projected UTM coordinate system.
+    bar_x = left + (right - left) * 0.045
+    bar_y = bottom + (top - bottom) * 0.055
+    bar_len = 10_000
+    ax.plot([bar_x, bar_x + bar_len], [bar_y, bar_y], color="black", linewidth=3,
+            solid_capstyle="butt", zorder=12)
+    ax.text(bar_x + bar_len / 2, bar_y + (top - bottom) * 0.012, "10 km", ha="center", va="bottom",
+            fontsize=8, weight="bold", color="black", zorder=12,
+            bbox={"fc": "white", "ec": "none", "alpha": 0.8, "pad": 1.5})
     ax.tick_params(labelsize=9)
-    ax.legend(handles=handles, frameon=True, loc="upper center", bbox_to_anchor=(0.5, -0.12),
+    ax.legend(handles=handles, frameon=True, loc="upper center", bbox_to_anchor=(0.5, -0.16),
               fontsize=8, ncols=min(4, len(handles)), columnspacing=1.2, handlelength=1.8)
     out_name = f"sar_roads_relief_sites_{day}.png" if with_roads else f"sar_flood_likelihood_{day}.png"
-    fig.subplots_adjust(bottom=0.20, top=0.90, right=0.88)
+    fig.subplots_adjust(bottom=0.25, top=0.88, right=0.88)
     save(fig, out_name)
 
 
 def render_static_coverage(day: str) -> None:
     rows = read_csv(SIMULATED / f"module6_allocation_zone_metrics_{day}.csv")
-    zones = list(dict.fromkeys(row["zone_name"] for row in rows))
-    zones.sort(key=lambda name: name.casefold())
+    zone_names = list(dict.fromkeys(row["zone_name"] for row in rows))
+    zone_names.sort(key=lambda name: name.casefold())
+    zones = [name.replace("Bantwal zone", "Grid zone") for name in zone_names]
     y = np.arange(len(zones))
-    fig, ax = plt.subplots(figsize=(11.5, max(11, len(zones) * 0.22)), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(11.5, max(11, len(zones) * 0.22)))
     height = 0.23
     for index, engine in enumerate(ENGINES):
         subset = [row for row in rows if row["engine"] == engine]
         values = [float(next(row for row in subset if row["zone_name"] == zone)["mean_resource_coverage_pct"])
-                  for zone in zones]
+                  for zone in zone_names]
         label = ENGINE_LABELS[engine]
         ax.barh(y + (index - 1) * height, values, height * 0.92, label=label, color=COLORS[label])
     ax.set_yticks(y, zones)
     ax.set_xlabel("Mean resource coverage across food, water, and medical (%)")
-    ax.set_ylabel("Bantwal village")
+    ax.set_ylabel("Grid zone")
     target = next(row for row in read_csv(OUT / "adequate_supply_summary.csv") if row["event_date"] == day)
     target_pct = float(target["scenario_target_unmet_pct"])
-    ax.set_title(f"Module 6 zone coverage by allocation engine - {day} ({target_pct:g}% unmet target)", pad=12)
+    ax.set_title("")
     ax.axvline(50, color="#64748b", linestyle="--", linewidth=1, alpha=0.75)
     ax.set_xlim(0, 105)
     ax.tick_params(axis="y", labelsize=6.6)
     ax.grid(axis="x", alpha=0.25)
     handles, labels = ax.get_legend_handles_labels()
-    fig.legend(handles, labels, frameon=False, ncols=3, loc="upper center", bbox_to_anchor=(0.5, 1.02))
+    fig.suptitle(f"Mean coverage by grid zone — {day} — assumed inventory ({target_pct:g}% unmet target)",
+                 y=0.99, weight="bold")
+    fig.legend(handles, labels, frameon=False, ncols=3, loc="upper center", bbox_to_anchor=(0.5, 0.94))
+    fig.subplots_adjust(top=0.89, bottom=0.06, left=0.23, right=0.98)
     save(fig, f"module6_static_zone_coverage_{day}.png")
 
 
@@ -296,13 +328,13 @@ def render_dynamic_minimum(day: str) -> None:
     ax.set_xlabel("Disruption / reallocation step")
     ax.set_ylabel("Minimum zone coverage (%)")
     target = next(row for row in read_csv(OUT / "adequate_supply_summary.csv") if row["event_date"] == day)
-    ax.set_title(f"Module 8 minimum zone coverage by engine - {day} ({float(target['scenario_target_unmet_pct']):g}% unmet target)", pad=12)
+    ax.set_title(f"Module 8 minimum zone coverage — assumed inventory — {day} ({float(target['scenario_target_unmet_pct']):g}% unmet target)", pad=12)
     ax.axhline(50, color="#64748b", linestyle="--", linewidth=1, alpha=0.75)
     ax.set_ylim(0, 105)
     ax.grid(alpha=0.25)
     handles, labels = ax.get_legend_handles_labels()
     fig.legend(handles, labels, frameon=False, ncols=3, loc="upper center", bbox_to_anchor=(0.5, 0.96))
-    fig.subplots_adjust(top=0.80, bottom=0.14)
+    fig.subplots_adjust(top=0.82, bottom=0.14)
     save(fig, f"module8_minimum_coverage_steps_{day}.png")
 
 
@@ -333,18 +365,24 @@ def build_severity_scores() -> None:
     event_scores = {day: {row["zone"]: row["severity_score_0_to_1"] for row in rows if row["event_date"] == day}
                     for day in EVENTS}
     zone_names = sorted({row["zone"] for row in rows})
+    zone_index = {str(feature.get("properties", {}).get("name", "")): index
+                  for index, feature in enumerate(
+                      json.loads((PROCESSED / "analysis_zones.geojson").read_text(encoding="utf-8"))["features"],
+                      start=1)}
     display = [[zone, event_scores[EVENTS[0]].get(zone, ""),
                 event_scores[EVENTS[1]].get(zone, ""), event_scores[EVENTS[2]].get(zone, "")]
                for zone in zone_names]
     zone_names = [row[0] for row in display]
+    zone_labels = [f"Grid zone {zone_index.get(name, index + 1):02d}"
+                   for index, name in enumerate(zone_names)]
     matrix = np.asarray([[float(row[index]) for index in range(1, 4)] for row in display], dtype=float)
     fig, ax = plt.subplots(figsize=(9, max(12, len(zone_names) * 0.22)), constrained_layout=True)
     image = ax.imshow(matrix, aspect="auto", cmap="YlOrRd", vmin=0, vmax=1, interpolation="nearest")
-    ax.set_yticks(np.arange(len(zone_names)), zone_names, fontsize=6.8)
+    ax.set_yticks(np.arange(len(zone_names)), zone_labels, fontsize=7.2)
     ax.set_xticks(np.arange(3), ["2019", "2024", "2026"])
     ax.set_xlabel("Flood event")
-    ax.set_ylabel("Bantwal village")
-    ax.set_title("Modeled severity by Bantwal village", fontsize=14, weight="bold", pad=12)
+    ax.set_ylabel("Grid zone")
+    ax.set_title("Modeled severity by grid zone", fontsize=14, weight="bold", pad=12)
     ax.set_xticks(np.arange(-0.5, 3, 1), minor=True)
     ax.set_yticks(np.arange(-0.5, len(zone_names), 1), minor=True)
     ax.grid(which="minor", color="white", linewidth=1.2)
@@ -377,26 +415,26 @@ def render_adequate_supply_summary() -> None:
         ax.bar(0.85, value, width=0.72, color="#3a9d74")
         ax.text(0.85, value + 0.6, f"{value:.2f}%", ha="center", fontsize=9, weight="bold")
         ax.axhline(10, color="#c0392b", linestyle="--", linewidth=1.3)
-        ax.set_xticks([-0.55, 0.85], ["Baseline", "Simulated\nsupply"])
+        ax.set_xticks([-0.55, 0.85], ["Baseline", "Simulated\n(assumed inventory)"])
         ax.set_title(day)
         ax.set_ylim(0, 100)
         ax.grid(axis="y", alpha=0.22)
         ax.set_axisbelow(True)
     axes[0].set_ylabel("Modeled unmet demand (%)")
     legend_handles = [Patch(facecolor="#7b8794", label="Configured baseline"),
-                      Patch(facecolor="#3a9d74", label="Simulated supply (shared across engines)")]
+                      Patch(facecolor="#3a9d74", label="Simulated supply (assumed inventory; shared across engines)")]
     fig.legend(handles=legend_handles, frameon=False, loc="upper center", ncols=2,
-               bbox_to_anchor=(0.5, 0.94), fontsize=9)
+               bbox_to_anchor=(0.5, 0.88), fontsize=9)
     fig.suptitle("Supply sensitivity, not an allocator performance comparison",
                  fontsize=14, weight="bold", y=0.99)
-    fig.subplots_adjust(top=0.82, bottom=0.1, wspace=0.04)
+    fig.subplots_adjust(top=0.78, bottom=0.1, wspace=0.04)
     save(fig, "supply_sensitivity_unmet_demand.png")
 
 
 def render_allocation_policy_comparison() -> None:
     """Compare mean zone/resource coverage by engine for static and dynamic runs."""
     rows = read_csv(OUT / "adequate_supply_summary.csv")
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True, constrained_layout=True)
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
     x = np.arange(len(EVENTS))
     width = 0.24
     for ax, field, title in zip(axes,
@@ -417,8 +455,12 @@ def render_allocation_policy_comparison() -> None:
         ax.set_ylim(0, 105)
         ax.grid(axis="y", alpha=0.23); ax.set_axisbelow(True)
     axes[0].set_ylabel("Mean zone/resource coverage (%)")
-    axes[1].legend(frameon=False, ncols=3, loc="upper center", bbox_to_anchor=(0.5, 1.14))
-    fig.suptitle("Per-zone allocation coverage under simulated near-adequate stock", weight="bold")
+    axes[1].legend(frameon=False, ncols=3, loc="upper center", bbox_to_anchor=(0.5, 1.17))
+    fig.suptitle("Mean coverage", weight="bold", y=0.98)
+    fig.text(0.5, 0.925, "Simulated runs use assumed inventory", ha="center", fontsize=10, color="#4d5966")
+    axes[0].set_title("Module 6 static — assumed inventory", weight="bold", pad=9)
+    axes[1].set_title("Module 8 eight rounds — assumed inventory", weight="bold", pad=9)
+    fig.subplots_adjust(top=0.78, bottom=0.13, left=0.09, right=0.98, wspace=0.16)
     save(fig, "allocation_engine_coverage.png")
 
 
@@ -456,13 +498,13 @@ def render_simulated_site_inventory() -> None:
     legend_handles = [Patch(facecolor=site_colors[index % len(site_colors)], label=site_names[site])
                       for index, site in enumerate(sites)]
     fig.legend(handles=legend_handles, frameon=False, loc="upper center", ncols=3,
-               bbox_to_anchor=(0.5, 0.94), fontsize=8)
-    fig.suptitle("Illustrative equal split of simulated stock across mapped relief centres",
+               bbox_to_anchor=(0.5, 0.87), fontsize=8)
+    fig.suptitle("Illustrative simulated stock by relief centre (assumed inventory)",
                  fontsize=14, weight="bold", y=0.99)
     fig.text(0.5, 0.04,
              "Synthetic planning quantities only. Module 8 uses the combined pool; facility-level stock limits are not modeled.",
              ha="center", fontsize=9, color="#4d5966")
-    fig.subplots_adjust(top=0.82, bottom=0.18, wspace=0.25)
+    fig.subplots_adjust(top=0.79, bottom=0.18, wspace=0.25)
     save(fig, "simulated_relief_centre_inventory.png")
 
 

@@ -175,41 +175,51 @@ def compute_routes(*, graph_path: Path, zone_path: Path, origins: list[dict[str,
     """Route every zone from its lowest-network-cost supplied origin using A*."""
     if not origins:
         raise ValueError("No warehouse origins configured; add verified warehouses or pass an explicit scenario origin")
-    if secondary_payload_kg <= 0:
-        raise ValueError("secondary_payload_kg must be positive")
+    if secondary_payload_kg <= 0 or secondary_max_distance_km < 0:
+        raise ValueError("secondary payload capacity must be positive and maximum distance cannot be negative")
+    if max_snap_distance_m < 0 or closure_radius_m < 0:
+        raise ValueError("snap distances and closure radius cannot be negative")
     graph, zone_number = _load_graph(graph_path)
     closures = block_near_points(graph, closure_points or [], zone_number, closure_radius_m)
     closures.extend(block_matching_lines(graph, closure_lines or [], zone_number,
                                          tolerance_m=closure_radius_m))
     snapped_origins = []
+    rejected_origins = []
     for origin in origins:
-        node, distance = _nearest_node(graph, float(origin["lon"]), float(origin["lat"]), zone_number)
+        origin_id = str(origin.get("origin_id", origin.get("name", "unnamed origin")))
+        lon, lat = float(origin["lon"]), float(origin["lat"])
+        if not (math.isfinite(lon) and math.isfinite(lat) and -180 <= lon <= 180 and -90 <= lat <= 90):
+            rejected_origins.append({"origin_id": origin_id, "reason": "invalid_coordinates"})
+            continue
+        node, distance = _nearest_node(graph, lon, lat, zone_number)
         if distance > max_snap_distance_m:
-            raise ValueError(f"Origin {origin['origin_id']} is {distance:.0f} m from the road graph (limit {max_snap_distance_m:g} m)")
-        snapped_origins.append({**origin, "node_id": node, "snap_distance_m": distance})
+            rejected_origins.append({"origin_id": origin_id, "reason": "too_far_from_graph",
+                                     "snap_distance_m": distance})
+            continue
+        snapped_origins.append({**origin, "origin_id": origin_id, "node_id": node,
+                                "snap_distance_m": distance})
+    if not snapped_origins:
+        raise ValueError("No configured origin snaps within the maximum distance of the road graph")
     route_rows = []
     route_features = []
     for target in _zone_points(zone_path):
         target_node, target_snap = _nearest_node(graph, target["lon"], target["lat"], zone_number)
-        if target_snap > max_snap_distance_m:
-            route_rows.append({"zone_id": target["zone_id"], "zone_name": target["zone_name"],
-                               "status": "ZONE_TOO_FAR_FROM_GRAPH", "delivery_mode": "none",
-                               "target_snap_distance_m": target_snap})
-            continue
         choices = []
-        for origin in snapped_origins:
-            try:
-                path = nx.astar_path(graph, origin["node_id"], target_node,
-                                     heuristic=_heuristic(graph, target_node), weight="length")
-                distance = sum(float(graph.get_edge_data(a, b)["length"]) for a, b in zip(path, path[1:]))
-                choices.append((distance, origin, path))
-            except (nx.NetworkXNoPath, nx.NodeNotFound):
-                continue
+        if target_snap <= max_snap_distance_m:
+            for origin in snapped_origins:
+                try:
+                    path = nx.astar_path(graph, origin["node_id"], target_node,
+                                         heuristic=_heuristic(graph, target_node), weight="length")
+                    distance = sum(float(graph.get_edge_data(a, b)["length"]) for a, b in zip(path, path[1:]))
+                    choices.append((distance, origin, path))
+                except (nx.NetworkXNoPath, nx.NodeNotFound):
+                    continue
         if choices:
             distance, origin, path = min(choices, key=lambda item: item[0])
             geometry = _path_geometry(graph, path)
             route_rows.append({"zone_id": target["zone_id"], "zone_name": target["zone_name"],
-                               "status": "ROUTED", "delivery_mode": "road", "origin_id": origin["origin_id"],
+                               "status": "ROUTED", "road_status": "ROUTED", "secondary_status": "NOT_NEEDED",
+                               "delivery_mode": "road", "origin_id": origin["origin_id"],
                                "origin_source": origin.get("origin_source", "configured_warehouse"),
                                "origin_snap_distance_m": origin["snap_distance_m"],
                                "target_snap_distance_m": target_snap, "road_distance_m": distance,
@@ -227,13 +237,22 @@ def compute_routes(*, graph_path: Path, zone_path: Path, origins: list[dict[str,
             straight_km = haversine_m(origin["lon"], origin["lat"], target["lon"], target["lat"]) / 1000.0
             within_limit = straight_km <= secondary_max_distance_km
             payload = target.get("payload_kg_required")
-            payload_known = payload is not None and math.isfinite(float(payload))
-            trips = math.ceil(float(payload) / secondary_payload_kg) if payload_known else None
-            status = ("SECONDARY_ROUTE_REQUIRES_PAYLOAD_CHECK" if within_limit and not payload_known else
-                      "SECONDARY_ROUTE_AVAILABLE" if within_limit and trips == 1 else
-                      "SECONDARY_ROUTE_REQUIRES_MULTIPLE_TRIPS" if within_limit and trips and trips > 1 else
+            try:
+                payload_value = float(payload)
+                payload_known = math.isfinite(payload_value) and payload_value >= 0
+            except (TypeError, ValueError):
+                payload_value, payload_known = 0.0, False
+            trips = math.ceil(payload_value / secondary_payload_kg) if payload_known else None
+            secondary_status = ("REQUIRES_PAYLOAD_CHECK" if within_limit and not payload_known else
+                                "AVAILABLE" if within_limit and trips <= 1 else
+                                "REQUIRES_MULTIPLE_TRIPS" if within_limit and trips and trips > 1 else
+                                "EXCEEDS_DISTANCE_LIMIT")
+            status = ("SECONDARY_ROUTE_REQUIRES_PAYLOAD_CHECK" if secondary_status == "REQUIRES_PAYLOAD_CHECK" else
+                      "SECONDARY_ROUTE_AVAILABLE" if secondary_status == "AVAILABLE" else
+                      "SECONDARY_ROUTE_REQUIRES_MULTIPLE_TRIPS" if secondary_status == "REQUIRES_MULTIPLE_TRIPS" else
                       "UNREACHABLE")
             route_rows.append({"zone_id": target["zone_id"], "zone_name": target["zone_name"],
+                               "road_status": "UNREACHABLE_BY_ROAD", "secondary_status": secondary_status,
                                "status": status, "delivery_mode": "secondary" if status.startswith("SECONDARY") else "none",
                                "origin_id": origin["origin_id"], "origin_source": origin.get("origin_source", "configured_warehouse"),
                                "target_snap_distance_m": target_snap, "road_distance_m": None, "road_distance_km": None,
@@ -249,11 +268,12 @@ def compute_routes(*, graph_path: Path, zone_path: Path, origins: list[dict[str,
                                                       "delivery_mode": "secondary", "status": status}})
     return route_rows, {"closures": closures, "route_features": route_features,
                         "origin_count": len(snapped_origins), "zone_count": len(route_rows),
+                        "rejected_origins": rejected_origins,
                         "reachable_road_count": sum(r["delivery_mode"] == "road" for r in route_rows),
                         "secondary_count": sum(r["delivery_mode"] == "secondary" for r in route_rows)}
 
 
-def run_routing(event_date: str | None = None, *, zone_layer: str = "taluk",
+def run_routing(event_date: str | None = None, *, zone_layer: str = "analysis",
                 origins: list[dict[str, Any]] | None = None,
                 closure_points: list[tuple[float, float]] | None = None,
                 closure_lines: list[dict[str, Any]] | None = None,
@@ -304,10 +324,16 @@ def run_routing(event_date: str | None = None, *, zone_layer: str = "taluk",
         zone_path = configured_path(data["zones_path"])
     elif zone_layer == "module8":
         zone_path = configured_path(data["processed_dir"]) / "zones_module8_analysis_grid.geojson"
+    elif zone_layer == "analysis":
+        zone_path = configured_path(data.get("analysis_zones_path", "data/processed/analysis_zones.geojson"))
     else:
-        raise ValueError("zone_layer must be 'taluk' or 'module8'")
+        raise ValueError("zone_layer must be 'analysis', 'module8', or 'taluk'")
     if not zone_path.exists():
         raise FileNotFoundError(f"Zone GeoJSON not found: {zone_path}")
+    if zone_layer in {"analysis", "module8"}:
+        zone_collection = json.loads(zone_path.read_text(encoding="utf-8"))
+        if len(zone_collection.get("features", [])) != 16:
+            raise ValueError(f"Expected 16 Bantwal grid zones for Module 7, found {len(zone_collection.get('features', []))}")
     graph_path = configured_path(data["road_graph_path"])
     rows, details = compute_routes(
         graph_path=graph_path, zone_path=zone_path, origins=origins,
@@ -327,7 +353,7 @@ def run_routing(event_date: str | None = None, *, zone_layer: str = "taluk",
     geo_path.write_text(json.dumps({"type": "FeatureCollection", "features": details["route_features"]}, ensure_ascii=False), encoding="utf-8")
     metadata = {key: value for key, value in details.items() if key != "route_features"}
     metadata.update({"event_date": event_date, "zone_layer": zone_layer,
-                    "note": "Routes from configured warehouses are operational candidates. Explicit CLI origins are labeled scenario-only; closure coordinates must be verified."})
+                    "note": "Routes are candidate paths from configured relief-site points. Secondary geometries are straight-line abstractions, not boat/drone navigation; payload feasibility must be checked when zone payload is missing. Explicit CLI origins are scenario-only."})
     (processed / f"routes_{zone_layer}_{suffix}_metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     return csv_path, geo_path
 
@@ -345,7 +371,7 @@ def _parse_point(value: str) -> tuple[float, float]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--event-date", help="label outputs for a configured event")
-    parser.add_argument("--zone-layer", choices=("taluk", "module8"), default="taluk")
+    parser.add_argument("--zone-layer", choices=("analysis", "module8", "taluk"), default="analysis")
     parser.add_argument("--origin", action="append", type=_parse_point,
                         help="explicit scenario origin as lon,lat; repeatable. Real warehouses should be configured in YAML.")
     parser.add_argument("--block-point", action="append", type=_parse_point,

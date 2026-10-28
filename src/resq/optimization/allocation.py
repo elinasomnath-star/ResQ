@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import heapq
 import json
 import math
 import time
@@ -212,15 +213,20 @@ def _proportional(zone_rows: list[dict[str, str]], resources: dict[str, int]) ->
         fraction = min(1.0, stock / max(1, int(demand.sum())))
         allocated = np.floor(demand * fraction).astype(int)
         # Assign integer remainders to the currently least-served eligible
-        # zone. Stable index-order remainders bias late zones under scarcity.
+        # zone. The heap preserves the old (coverage, index) tie-break while
+        # avoiding a full eligible-zone scan for each remainder.
         left = stock - int(allocated.sum())
+        eligible = [i for i in range(len(demand)) if allocated[i] < demand[i]]
+        heap = [(allocated[i] / max(1, demand[i]), i) for i in eligible]
+        heapq.heapify(heap)
         while left > 0:
-            eligible = np.flatnonzero(allocated < demand)
-            if not len(eligible):
+            if not heap:
                 break
-            index = min(eligible, key=lambda i: (allocated[i] / max(1, demand[i]), i))
+            _, index = heapq.heappop(heap)
             allocated[index] += 1
             left -= 1
+            if allocated[index] < demand[index]:
+                heapq.heappush(heap, (allocated[index] / max(1, demand[index]), index))
         result[resource] = allocated
     return result
 

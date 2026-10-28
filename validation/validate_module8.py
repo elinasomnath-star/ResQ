@@ -55,7 +55,7 @@ def main() -> None:
             zone_rows = list(csv.DictReader(stream))
         assert len(zone_rows) == summary["zone_metadata"]["zone_count"] * len(expected_engines) * 3
         assert {r["engine"] for r in zone_rows} == expected_engines
-        assert all(float(z["properties"].get("population_estimate", 0)) > 0 for z in zones)
+        assert all(float(z["properties"].get("population_estimate", -1)) >= 0 for z in zones)
         print(f"[{day}] Module 8 artifacts pass (16 Bantwal analysis-grid zones, {summary['steps']} steps, 3 engines)")
 
 

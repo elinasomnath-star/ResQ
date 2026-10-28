@@ -48,8 +48,8 @@ def main() -> None:
         if unresolved:
             raise SystemExit(f"{len(unresolved)} place boundaries unresolved; see {unresolved_path}.")
     modeled = sum(f["properties"].get("population_year") == 2025 and f["properties"].get("population_estimate") is not None for f in features)
-    census = sum(f["properties"].get("population_census_2011_reference") is not None for f in features)
-    print(f"Validated {len(features)} polygon zones; {modeled} recent modeled estimates and {census} historical Census references present.")
+    census_reference = config["region"]["population_census_2011_reference_by_taluk_name"]["Bantwal taluk"]
+    print(f"Validated {len(features)} polygon zones; {modeled} WorldPop modeled estimates present; Census 2011 reference ({census_reference}) remains config-only.")
 
     analysis_path = configured_path(config["data"].get("analysis_zones_path", "data/processed/analysis_zones.geojson"))
     if not analysis_path.exists():
@@ -63,8 +63,8 @@ def main() -> None:
         props = cell.get("properties", {})
         if props.get("zone_type") != "analysis_grid" or props.get("parent_name") != "Bantwal taluk":
             raise SystemExit(f"Analysis zone is outside the Bantwal 16-cell scope: {props.get('zone_id')}")
-        if float(props.get("population_estimate") or 0) <= 0:
-            raise SystemExit(f"Analysis zone lacks a positive population proxy: {props.get('zone_id')}")
+        if props.get("population_estimate") is None or float(props["population_estimate"]) < 0:
+            raise SystemExit(f"Analysis zone lacks a nonnegative WorldPop raster sum: {props.get('zone_id')}")
     coverage = configured_path(config["data"]["processed_dir"]) / "bantwal_grid_sar_coverage.csv"
     if not coverage.exists():
         raise SystemExit(f"Per-zone SAR coverage table is missing: {coverage}")

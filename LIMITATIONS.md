@@ -1,9 +1,11 @@
 # Limitations
 
-- The 16 zones are regular analytical grid cells clipped to Bantwal, not official village boundaries. Population is split by cell area, assuming uniform density within the taluk.
+- The 16 zones are regular analytical grid cells clipped to Bantwal, not official village boundaries. Population is a modeled WorldPop 2025 constrained 1 km estimate: native raster pixels are summed by cell. The coarse raster can make small-zone estimates uneven or zero and does not resolve household-level population. The 2011 Census total (395,380) remains only in config as a labeled reference; the unadjusted raster sum (677,985.36) is 1.715× that value, and the difference is not reconciled.
 - Sentinel-1 is used as candidate VH-change context for severity. The project does not establish a validated flood outline.
 - Severity, affected population, and resource demand are estimates. Historical event reports and synthetic model augmentation do not provide observed demand for each grid cell.
 - Relief-centre locations come from cached public map or event-report sources. Facility stock, capacity, and operational status are simulated or unknown.
 - The road graph is from OpenStreetMap. Some closure matches are broad highway corridors rather than exact flood points; a routed path does not establish that a road was passable during an event.
+- Module 7 covers all 16 Bantwal grid zones per event. Current validation yields 15 road routes and one secondary-distance candidate per event, with no zone lacking a delivery mode; two closure labels per event remain unresolved. The secondary option is only straight-line distance and payload-capacity context, not actual boat/drone navigation, and its zone payload needs checking. Only closures with verified geometry are applied.
 - Allocation and disruption results depend on assumed inventory and demand. The near-adequate stock example is a sensitivity scenario with a 55% minimum service floor, not a real-world performance claim.
 - Each event is one dated input followed by eight simulated disruption steps. This is not an operational timeline; the 2024 impact peaks are not separate model runs.
+- The FastAPI backend is a tested local prototype over generated files and a local SQLite database. Docker Compose now builds and runs locally, but a fresh checkout still needs the ignored spatial cache generated and mounted. The service has no authentication, live facility stock, dispatch integration, frontend, or safe multi-worker job isolation.

@@ -18,6 +18,7 @@ from shapely.geometry import Point, box, mapping, shape
 from .config import configured_path, load_config
 from .events import load_events
 from .rainfall import write_event_rainfall
+from .population import raster_population_sums
 
 
 def _transformer(source: str, target: str):
@@ -77,23 +78,26 @@ def build_grid(config: dict[str, Any] | None = None) -> Path:
                 "centroid_lat": lat,
                 "centroid_lon": lon,
                 "population_area_km2": area_km2,
-                "population_year": int(config["region"].get("population_model_year", 2025)),
-                "population_model": "Bantwal parent population apportioned by clipped grid-cell area",
-                "population_basis": "area-weighted taluk proxy; assumes uniform density within Bantwal",
                 "boundary_source": "regular analytical grid clipped to the Bantwal taluk polygon",
             }
             cells.append(({"type": "Feature", "geometry": mapping(shapely_transform(clipped, to_wgs, interleaved=False)),
                           "properties": props}, clipped))
 
-    parent_population = float(parent_props.get("population_estimate") or
-                              config["region"].get("population_by_taluk_name", {}).get("Bantwal taluk", 0))
-    if parent_population <= 0:
-        raise ValueError("Bantwal population control total is missing or nonpositive")
-    total_area = sum(geom.area for _, geom in cells)
-    for feature, geom in cells:
-        props = feature["properties"]
-        props["population_estimate"] = parent_population * geom.area / total_area
-        props["population_density_per_km2"] = props["population_estimate"] / props["population_area_km2"]
+    raster_population = raster_population_sums([feature for feature, _ in cells], config=config)
+    for (feature, _), population in zip(cells, raster_population):
+        feature["properties"].update(population)
+    population_rows = [{"zone_id": feature["properties"]["zone_id"],
+                        "zone_name": feature["properties"]["name"],
+                        **{key: feature["properties"][key] for key in (
+                            "population_estimate", "population_worldpop_raw_estimate", "population_year",
+                            "population_model", "population_resolution", "population_constrained",
+                            "population_source", "population_area_km2", "population_density_per_km2",
+                            "population_valid_pixel_count")}}
+                       for feature, _ in cells]
+    with (processed / "zone_population_2025.csv").open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(population_rows[0]))
+        writer.writeheader()
+        writer.writerows(population_rows)
 
     coverage_rows: list[dict[str, Any]] = []
     coverage: dict[str, dict[str, int]] = {f["properties"]["zone_id"]: {} for f, _ in cells}

@@ -13,17 +13,22 @@ region:
     rows: 4
     columns: 4
   osm_admin_fallback_levels: [6, 5] # Available OSM taluk/district boundary levels in this region.
-  population_by_taluk_name:
+  # Historical comparison values only; never used to estimate, split, or scale raster populations.
+  population_census_2011_reference_by_taluk_name:
     Bantwal taluk: 395380
     Mangaluru taluk: 994602
     Putturu taluk: 287851
   population_census_year: 2011
   population_source_url: https://censusindia.gov.in/nada/index.php/catalog/604/download/2064/DH_2011_2921_PART_A_DCHB_DAKSHINA_KANNADA.pdf
-  population_model: WorldPop Global2 R2025A v1
+  population_grid_source: worldpop_raster_pixel_sum
+  population_grid_source_note: Sum of WorldPop population-count pixels whose centers fall inside each clipped cell; no census normalization.
+  population_model: WorldPop Global2 R2025A v1 constrained
   population_model_year: 2025
-  population_resolution: 100m
-  population_api_base: https://api.worldpop.org/v2
-  population_model_source_url: https://hub.worldpop.org/geodata/listing?id=135
+  population_resolution: 1km
+  population_constrained: true
+  population_raster_path: data/raw/ind_pop_2025_CN_1km_R2025A_UA_v1.tif
+  population_raster_source_url: https://data.worldpop.org/GIS/Population/Global_2015_2030/R2025A/2025/IND/v1/1km_ua/constrained/ind_pop_2025_CN_1km_R2025A_UA_v1.tif
+  population_model_source_url: https://hub.worldpop.org/project/categories?id=3
   coverage_places:
     - Mangaluru
     - Bantwal
