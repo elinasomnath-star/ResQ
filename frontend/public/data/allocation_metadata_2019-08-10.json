@@ -1,0 +1,21 @@
+{
+  "event_date": "2019-08-10",
+  "solver": "OR-Tools CBC MILP",
+  "bandit": "Linear UCB contextual bandit",
+  "requested_hard_fairness_pct": 40.0,
+  "hard_fairness_target_status": "INFEASIBLE",
+  "maximum_feasible_common_floor_pct": 19.61359323788167,
+  "milp_final_enforced_floor_pct": 19.61359323788167,
+  "prototype_inventory_assumption": {
+    "food_rations": 25000,
+    "water_liters": 75000,
+    "medical_kits": 1200
+  },
+  "training_episodes_per_resource": 120,
+  "effective_fairness_floor_pct_by_resource": {
+    "food_rations": 32.68247326824735,
+    "water_liters": 19.61359323788167,
+    "medical_kits": 40.0
+  },
+  "note": "The MILP first enforces the requested hard fairness floor. If infeasible, it records INFEASIBLE and reruns a separately labeled shortage solution at the maximum common floor that fits inventory. Inventory quantities and demand conversions are prototype assumptions."
+}

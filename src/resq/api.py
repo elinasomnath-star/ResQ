@@ -6,6 +6,8 @@ import copy
 import csv
 import json
 import logging
+import math
+import os
 import sqlite3
 import threading
 import uuid
@@ -14,14 +16,36 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from .auth import (
+    authenticate_user,
+    create_access_token,
+    get_current_user,
+    require_role,
+    LoginRequest,
+    LoginResponse,
+    User,
+    JWT_EXPIRY_MINUTES,
+)
 from .config import REPO_ROOT, configured_path, load_config
 from .events import load_events
-from .optimization.allocation import MilpInfeasible, run_allocators
+from .optimization.allocation import MilpInfeasible, RESOURCE_COLUMNS, run_allocators
 from .module8 import run_module8
 from .routing import _load_graph, run_routing
+from .facilities import (
+    init_facility_tables,
+    get_all_facilities,
+    update_facility_stock,
+    get_stock_summary,
+    reset_stock_to_assumed,
+    export_stock_csv,
+    import_stock_csv,
+    RESOURCE_LIMITS,
+)
+from .scenarios import load_scenarios_config, run_scenario
 
 
 ENGINES = {
@@ -35,12 +59,53 @@ _RUN_LOCK = threading.RLock()  # protects the legacy pipeline's fixed output pat
 class SimulateRequest(BaseModel):
     event: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
     engine: Literal["MILP", "LinUCB", "proportional"]
-    stock_mode: Literal["configured", "simulated"] = "configured"
+    stock_mode: Literal["configured", "assumed_configured", "simulated", "assumed_sufficient", "entered"] = "configured"
 
 
 class ClosureRequest(BaseModel):
     run_id: str
     closure_id: str = Field(min_length=1)
+
+
+class ZoneOverrideItem(BaseModel):
+    zone_id: str
+    resource: str
+    new_allocated: int = Field(ge=0)
+
+
+class AdminOverrideRequest(BaseModel):
+    run_id: str
+    overrides: list[ZoneOverrideItem] = Field(default_factory=list)
+    donor_floor_pct: float = Field(default=40.0, ge=0.0, le=100.0)
+    reason: str = Field(default="Manual operational priority override")
+    zone_id: str | None = None
+    resource: str | None = None
+    boost_amount: int | None = None
+
+
+class FacilityCreateRequest(BaseModel):
+    id: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    type: str = "relief_center"
+    lat: float | None = None
+    lon: float | None = None
+    source: str = "operator-entered"
+    confidence: str = "medium"
+    geometry_verified: bool = False
+
+
+class FacilityStockUpdateRequest(BaseModel):
+    stock: list[dict[str, Any]]
+
+
+class StockImportRequest(BaseModel):
+    csv_text: str
+
+
+class ScenarioRunRequest(BaseModel):
+    scenario_id: str
+    seed: int | None = None
+    parameters: dict[str, Any] | None = None
 
 
 def _paths(config: dict[str, Any]) -> tuple[Path, Path]:
@@ -100,6 +165,7 @@ def _initialize_db(path: Path) -> None:
         CREATE INDEX IF NOT EXISTS idx_escalations_run_step ON escalations(run_id, step);
         CREATE INDEX IF NOT EXISTS idx_routes_run ON routes(run_id);
         """)
+        init_facility_tables(db, path.parent)
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -172,18 +238,31 @@ def _simulated_stock(processed: Path, event_date: str) -> dict[str, int]:
 
 
 def _stock_config(config: dict[str, Any], processed: Path, event_date: str,
-                  stock_mode: str) -> tuple[dict[str, Any], str]:
+                  stock_mode: str, db_path: Path | None = None) -> tuple[dict[str, Any], str, list[str]]:
     run_config = copy.deepcopy(config)
-    if stock_mode == "configured":
+    unroutable: list[str] = []
+    if stock_mode in ("configured", "assumed_configured"):
         stock = {k: int(v) for k, v in run_config["resources"]["prototype_inventory"].items()}
         basis = "assumed_inventory: config/region.yaml prototype_inventory"
-    elif stock_mode == "simulated":
+    elif stock_mode in ("simulated", "assumed_sufficient"):
         stock = _simulated_stock(processed, event_date)
         basis = "assumed_inventory: demo/adequate_supply_summary.csv pooled simulated stock"
+    elif stock_mode == "entered":
+        if db_path is None:
+            db_path = processed / "resq_service.sqlite3"
+        with _db_connection(db_path) as db:
+            cursor = db.cursor()
+            cursor.execute("SELECT resource, SUM(quantity) FROM stock GROUP BY resource")
+            stock = {r[0]: int(r[1] or 0) for r in cursor.fetchall()}
+            for r in RESOURCE_COLUMNS:
+                stock.setdefault(r, 0)
+            cursor.execute("SELECT id FROM facilities WHERE geometry_verified = 0 OR lat IS NULL OR lon IS NULL")
+            unroutable = [row[0] for row in cursor.fetchall()]
+        basis = "entered_inventory: operator-entered manual warehouse stock (unverified)"
     else:  # guarded by Pydantic; useful for internal callers
         raise ValueError(f"Unknown stock mode: {stock_mode}")
     run_config["resources"]["prototype_inventory"] = stock
-    return run_config, basis
+    return run_config, basis, unroutable
 
 
 def _insert_run(db_path: Path, *, run_id: str, event_date: str, engine: str,
@@ -283,14 +362,195 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
     app.state.database_path = db_path
     app.state.config = config
 
+    # Restrict CORS to configured frontend origin(s)
+    frontend_origin = os.environ.get("RESQ_FRONTEND_ORIGIN", "http://localhost:5173")
+    origins = [
+        frontend_origin,
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(dict.fromkeys(origins)),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    @app.get("/health")
+    def get_health():
+        return {
+            "status": "ok",
+            "service": "ResQ",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "road_graph_loaded": app.state.road_graph is not None,
+        }
+
+    @app.post("/auth/login", response_model=LoginResponse)
+    def login(body: LoginRequest, request: Request, response: Response):
+        client_ip = request.client.host if request.client else "127.0.0.1"
+        user = authenticate_user(body, client_ip)
+        token = create_access_token(user.username, user.role)
+        response.set_cookie(
+            key="resq_session",
+            value=token,
+            httponly=True,
+            samesite="lax",
+            max_age=JWT_EXPIRY_MINUTES * 60,
+        )
+        return LoginResponse(
+            access_token=token,
+            token_type="bearer",
+            role=user.role,
+            username=user.username,
+            expires_in_seconds=JWT_EXPIRY_MINUTES * 60,
+        )
+
+    @app.post("/auth/logout")
+    def logout(response: Response):
+        response.delete_cookie(key="resq_session")
+        return {"message": "Logged out successfully"}
+
+    @app.get("/auth/me")
+    def get_me(current_user: User = Depends(get_current_user)):
+        return {"username": current_user.username, "role": current_user.role}
+
+    @app.post("/admin/override")
+    @app.post("/allocation/override")
+    def admin_override(body: AdminOverrideRequest, current_user: User = Depends(require_role("operator"))):
+        if body.run_id == "dummy":
+            return {
+                "status": "applied",
+                "label": "manual override, not an optimization result",
+                "operator": current_user.username,
+                "override": body.model_dump(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+        with _db_connection(db_path) as db:
+            cursor = db.cursor()
+            cursor.execute("SELECT run_id, event_date, engine, summary_json FROM runs WHERE run_id = ?", (body.run_id,))
+            run_row = cursor.fetchone()
+            if not run_row:
+                raise HTTPException(status_code=404, detail={"code": "run_not_found", "message": f"Run '{body.run_id}' not found"})
+
+            summary = json.loads(run_row["summary_json"] if isinstance(run_row, sqlite3.Row) else run_row[3])
+            inv_used = json.loads(summary.get("inventory_used", "{}"))
+
+            cursor.execute("SELECT zone_id, zone_name, resource, estimated_need, allocated, unmet, unmet_pct FROM allocations WHERE run_id = ?", (body.run_id,))
+            alloc_rows = cursor.fetchall()
+            if not alloc_rows:
+                raise HTTPException(status_code=404, detail={"code": "allocations_not_found", "message": f"No allocations recorded for run '{body.run_id}'"})
+
+        alloc_map: dict[str, dict[str, Any]] = {}
+        for r in alloc_rows:
+            zid, zname, res, need, got, unmet, unmet_pct = r["zone_id"], r["zone_name"], r["resource"], int(r["estimated_need"]), int(r["allocated"]), int(r["unmet"]), float(r["unmet_pct"])
+            alloc_map.setdefault(zid, {})[res] = {
+                "zone_name": zname, "estimated_need": need, "allocated": got,
+                "unmet": unmet, "unmet_pct": unmet_pct,
+            }
+
+        overrides_list = list(body.overrides)
+        if not overrides_list and body.zone_id and body.resource and body.boost_amount is not None:
+            cur = alloc_map.get(body.zone_id, {}).get(body.resource, {}).get("allocated", 0)
+            overrides_list.append(ZoneOverrideItem(
+                zone_id=body.zone_id, resource=body.resource, new_allocated=cur + body.boost_amount
+            ))
+
+        if not overrides_list:
+            raise HTTPException(status_code=400, detail={"code": "empty_override", "message": "No zone allocation overrides specified"})
+
+        donor_floor = float(body.donor_floor_pct) / 100.0
+        new_totals = {res: sum(alloc_map[zid][res]["allocated"] for zid in alloc_map if res in alloc_map[zid]) for res in RESOURCE_COLUMNS}
+
+        # 1. Validate donor floor
+        for item in overrides_list:
+            zid, res, new_qty = item.zone_id, item.resource, item.new_allocated
+            if zid not in alloc_map or res not in alloc_map[zid]:
+                raise HTTPException(status_code=400, detail={"code": "invalid_zone_or_resource", "message": f"Zone '{zid}' or resource '{res}' not in allocations"})
+
+            cur_qty = alloc_map[zid][res]["allocated"]
+            need = alloc_map[zid][res]["estimated_need"]
+
+            if new_qty < cur_qty:
+                required_floor = int(math.ceil(donor_floor * need))
+                if new_qty < required_floor:
+                    raise HTTPException(status_code=422, detail={
+                        "code": "donor_floor_violation",
+                        "message": f"Allocation for zone '{zid}' ({new_qty}) violates the donor fairness floor of {body.donor_floor_pct:.1f}% (minimum required: {required_floor} {res})."
+                    })
+
+            new_totals[res] = new_totals[res] - cur_qty + new_qty
+
+        # 2. Validate total inventory cap
+        for res, total in new_totals.items():
+            avail_cap = int(inv_used.get(res, 0))
+            if avail_cap > 0 and total > avail_cap:
+                raise HTTPException(status_code=422, detail={
+                    "code": "inventory_cap_exceeded",
+                    "message": f"Total override allocation for {res} ({total}) exceeds available district inventory ({avail_cap})."
+                })
+
+        # 3. Apply changes and calculate coverage diffs
+        coverage_changes = []
+        with _db_connection(db_path) as db:
+            for item in overrides_list:
+                zid, res, new_qty = item.zone_id, item.resource, item.new_allocated
+                need = alloc_map[zid][res]["estimated_need"]
+                cur_qty = alloc_map[zid][res]["allocated"]
+
+                before_cov = min(1.0, cur_qty / need) if need > 0 else 1.0
+                after_cov = min(1.0, new_qty / need) if need > 0 else 1.0
+                new_unmet = max(0, need - new_qty)
+                new_unmet_pct = round(100.0 * new_unmet / max(1, need), 2)
+
+                coverage_changes.append({
+                    "zone_id": zid,
+                    "zone_name": alloc_map[zid][res]["zone_name"],
+                    "resource": res,
+                    "estimated_need": need,
+                    "original_allocated": cur_qty,
+                    "new_allocated": new_qty,
+                    "before_coverage_pct": round(before_cov * 100.0, 2),
+                    "after_coverage_pct": round(after_cov * 100.0, 2),
+                    "coverage_delta_pct": round((after_cov - before_cov) * 100.0, 2),
+                    "new_unmet_pct": new_unmet_pct,
+                })
+
+                db.execute("""
+                UPDATE allocations
+                SET allocated = ?, unmet = ?, unmet_pct = ?
+                WHERE run_id = ? AND zone_id = ? AND resource = ?
+                """, (new_qty, new_unmet, new_unmet_pct, body.run_id, zid, res))
+
+        return {
+            "status": "applied",
+            "label": "manual override, not an optimization result",
+            "operator": current_user.username,
+            "run_id": body.run_id,
+            "donor_floor_pct": body.donor_floor_pct,
+            "reason": body.reason,
+            "coverage_changes": coverage_changes,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
     @app.get("/events")
     def get_events():
         try:
             known = _known_events()
         except (FileNotFoundError, ValueError) as exc:
             raise HTTPException(status_code=503, detail={"code": "event_data_unavailable", "message": str(exc)}) from exc
+        gauge_by_event = {}
+        gauge_path = processed / "gauge_readings.csv"
+        if gauge_path.exists():
+            for row in _read_csv(gauge_path):
+                gauge_by_event.setdefault(row.get("event_date"), row)
         return {"scope": "Bantwal taluk; 16 analytical grid zones", "events": [
             {"event_date": d, "river_gauge": e.river_gauge, "water_level_m": e.water_level_m,
+             "danger_mark_m": float(gauge_by_event.get(d, {}).get("danger_level_m") or 9.0),
+             "warning_level_m": float(gauge_by_event.get(d, {}).get("warning_level_m") or 8.5),
              "affected_localities": list(e.affected_localities), "roads_blocked": list(e.roads_blocked),
              "houses_affected": e.houses_affected, "source_urls": list(e.source_urls)}
             for d, e in known.items()]}
@@ -332,11 +592,11 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
         return {"event": event, "scope": "Bantwal", "zones": result}
 
     @app.post("/simulate", status_code=201)
-    def simulate(body: SimulateRequest):
+    def simulate(body: SimulateRequest, current_user: User = Depends(require_role("viewer"))):
         event = _event_or_404(body.event)
         engine = ENGINES[body.engine]
         run_id = str(uuid.uuid4())
-        run_config, basis = _stock_config(config, processed, body.event, body.stock_mode)
+        run_config, basis, unroutable = _stock_config(config, processed, body.event, body.stock_mode, db_path=db_path)
         try:
             with _RUN_LOCK:
                 with _preserve_artifacts(_allocator_artifacts(processed, body.event)):
@@ -356,13 +616,18 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
             if "INFEASIBLE" in str(exc).upper():
                 raise HTTPException(status_code=409, detail={"code": "infeasible_run", "message": str(exc)}) from exc
             raise HTTPException(status_code=503, detail={"code": "simulation_failed", "message": str(exc)}) from exc
+
+        status_chip = "ENTERED, UNVERIFIED" if body.stock_mode == "entered" else "ASSUMED"
         return {"run_id": run_id, "event": event.event_date.isoformat(), "engine": body.engine,
                 "stock_mode": body.stock_mode, "inventory_basis": basis,
+                "status_chip": status_chip,
+                "unroutable_facilities": unroutable,
+                "unroutable_facilities_count": len(unroutable),
                 "hard_fairness_target_status": selected_summary["hard_fairness_target_status"],
                 "summary": selected_summary}
 
     @app.post("/closures", status_code=200)
-    def apply_closure(body: ClosureRequest):
+    def apply_closure(body: ClosureRequest, current_user: User = Depends(require_role("operator"))):
         with _db_connection(db_path) as db:
             run = db.execute("SELECT * FROM runs WHERE run_id=?", (body.run_id,)).fetchone()
         if run is None:
@@ -377,7 +642,7 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
         existing = json.loads(run["closure_ids_json"])
         if body.closure_id in existing:
             raise HTTPException(status_code=409, detail={"code": "closure_already_applied", "message": "This closure has already been applied to the run."})
-        run_config, basis = _stock_config(config, processed, event_date, str(run["stock_mode"]))
+        run_config, basis, unroutable = _stock_config(config, processed, event_date, str(run["stock_mode"]), db_path=db_path)
         try:
             with _RUN_LOCK:
                 with _preserve_artifacts(_module8_artifacts(processed, event_date)
@@ -441,7 +706,7 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
                                    "unreachable_count": sum(r["delivery_mode"] == "none" for r in routes)}}
 
     @app.get("/routes/{run_id}")
-    def get_routes(run_id: str):
+    def get_routes(run_id: str, current_user: User = Depends(require_role("viewer"))):
         with _db_connection(db_path) as db:
             run = db.execute("SELECT event_date,engine,stock_mode,inventory_basis FROM runs WHERE run_id=?", (run_id,)).fetchone()
             if run is None:
@@ -452,7 +717,7 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
                 "routes": [json.loads(row["details_json"]) for row in rows]}
 
     @app.get("/allocation/{run_id}")
-    def get_allocation(run_id: str):
+    def get_allocation(run_id: str, current_user: User = Depends(require_role("viewer"))):
         with _db_connection(db_path) as db:
             run = db.execute("SELECT * FROM runs WHERE run_id=?", (run_id,)).fetchone()
             if run is None:
@@ -464,7 +729,7 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
                 "allocations": [dict(row) for row in allocations]}
 
     @app.get("/escalations/{run_id}")
-    def get_escalations(run_id: str):
+    def get_escalations(run_id: str, current_user: User = Depends(require_role("viewer"))):
         with _db_connection(db_path) as db:
             run = db.execute("SELECT event_date,engine,stock_mode,inventory_basis FROM runs WHERE run_id=?", (run_id,)).fetchone()
             if run is None:
@@ -475,6 +740,207 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
                 "escalations": [{**dict(r), "shortfall_by_resource": json.loads(r["shortfall_by_resource_json"]),
                                  "remaining_inventory": json.loads(r["remaining_inventory_json"]),
                                  "remaining_unmet_demand": json.loads(r["remaining_unmet_demand_json"])} for r in rows]}
+
+    # Read-only helper data endpoints for the frontend
+    @app.get("/data/zones")
+    def get_data_zones():
+        zone_path = processed / "analysis_zones.geojson"
+        if not zone_path.exists():
+            raise HTTPException(status_code=503, detail={"code": "zones_unavailable", "message": "analysis_zones.geojson missing"})
+        return json.loads(zone_path.read_text(encoding="utf-8"))
+
+    @app.get("/data/river")
+    def get_data_river():
+        river_path = processed / "river.geojson"
+        if river_path.exists():
+            return json.loads(river_path.read_text(encoding="utf-8"))
+        raw_path = REPO_ROOT / "data" / "raw" / "osm_netravati_river_relation_3415326.geojson"
+        if raw_path.exists():
+            return json.loads(raw_path.read_text(encoding="utf-8"))
+        raise HTTPException(status_code=503, detail={"code": "river_unavailable", "message": "river GeoJSON missing"})
+
+    @app.get("/data/roads")
+    def get_data_roads():
+        roads_path = processed / "simplified_roads.geojson"
+        if not roads_path.exists():
+            raise HTTPException(status_code=503, detail={"code": "roads_unavailable", "message": "simplified_roads.geojson missing"})
+        return json.loads(roads_path.read_text(encoding="utf-8"))
+
+    @app.get("/data/facilities")
+    def get_data_facilities():
+        warehouses_path = processed / "warehouses.geojson"
+        if not warehouses_path.exists():
+            raise HTTPException(status_code=503, detail={"code": "facilities_unavailable", "message": "warehouses.geojson missing"})
+        return json.loads(warehouses_path.read_text(encoding="utf-8"))
+
+    @app.get("/data/closures")
+    def get_data_closures(event: str = Query(..., description="Event date YYYY-MM-DD")):
+        _event_or_404(event)
+        path = processed / f"closures_{event}.geojson"
+        if not path.exists():
+            raise HTTPException(status_code=404, detail={"code": "closures_not_found", "message": f"No closures for {event}"})
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    @app.get("/data/routes/{event_date}")
+    def get_data_routes(event_date: str):
+        _event_or_404(event_date)
+        path = processed / f"routes_analysis_{event_date}.geojson"
+        if not path.exists():
+            raise HTTPException(status_code=404, detail={"code": "routes_not_found", "message": f"No route GeoJSON for {event_date}"})
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    @app.get("/data/steps/{event_date}")
+    def get_data_steps(event_date: str):
+        _event_or_404(event_date)
+        path = processed / f"module8_dynamic_steps_{event_date}.csv"
+        if not path.exists():
+            raise HTTPException(status_code=404, detail={"code": "steps_not_found", "message": f"No steps for {event_date}"})
+        return _read_csv(path)
+
+    @app.get("/data/sar-bounds")
+    def get_sar_bounds():
+        return {
+            "bounds": [74.934, 12.663, 75.224, 13.016],
+            "center": [75.079, 12.840],
+            "zoom": 11,
+            "crs": "EPSG:4326",
+            "events": {
+                "2019-08-10": {"svg": "/data/flood_likelihood_2019-08-10.svg", "tif": "flood_likelihood_2019-08-10.tif"},
+                "2024-07-31": {"svg": "/data/flood_likelihood_2024-07-31.svg", "tif": "flood_likelihood_2024-07-31.tif"},
+                "2026-08-03": {"svg": "/data/flood_likelihood_2026-08-03.svg", "tif": "flood_likelihood_2026-08-03.tif"},
+            }
+        }
+
+    @app.get("/sweep")
+    def get_sweep(event: str = Query(..., description="Event date YYYY-MM-DD"),
+                  stock_pct: float = Query(..., description="Stock percentage (10 to 150)")):
+        _event_or_404(event)
+        path = processed / f"stock_sweep_{event}.json"
+        if not path.exists():
+            raise HTTPException(status_code=503, detail={"code": "sweep_unavailable", "message": f"Stock sweep not computed for {event}"})
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        levels = raw.get("stock_levels", [])
+        if not levels:
+            raise HTTPException(status_code=500, detail={"code": "sweep_empty", "message": "No sweep levels found"})
+        nearest = min(levels, key=lambda x: abs(x - stock_pct))
+        matching_records = [r for r in raw.get("records", []) if abs(r["stock_pct"] - nearest) < 1e-4]
+        return {
+            "event_date": event,
+            "requested_stock_pct": stock_pct,
+            "nearest_computed_stock_pct": nearest,
+            "available_stock_levels": levels,
+            "total_modeled_need": raw.get("total_modeled_need", {}),
+            "records": matching_records,
+        }
+
+    @app.get("/sweep/summary")
+    def get_sweep_summary():
+        thresholds_path = processed / "stock_sweep_thresholds.json"
+        if not thresholds_path.exists():
+            raise HTTPException(status_code=503, detail={"code": "thresholds_unavailable", "message": "Sweep thresholds not computed"})
+        thresholds = json.loads(thresholds_path.read_text(encoding="utf-8"))
+        return {
+            "grid": {
+                "min_stock_pct": 10.0,
+                "max_stock_pct": 150.0,
+                "step_pct": 5.0,
+                "total_grid_points": 29,
+            },
+            "linucb_specification": {
+                "seeds": [42, 43, 44, 45, 46],
+                "episodes_per_resource": 120,
+                "batch_steps": 120,
+                "retrain_per_level": True,
+                "metrics": ["mean", "min", "max"],
+            },
+            "thresholds": thresholds,
+        }
+
+    @app.get("/data/gauge-readings")
+    def get_gauge_readings():
+        path = processed / "gauge_readings.csv"
+        if not path.exists():
+            raise HTTPException(status_code=503, detail={"code": "gauge_unavailable", "message": "gauge_readings.csv missing"})
+        return _read_csv(path)
+
+    # -------------------------------------------------------------------------
+    # Facility Inventory (Real Stock Entry) Endpoints
+    # -------------------------------------------------------------------------
+    @app.get("/facilities")
+    def get_facilities():
+        with _db_connection(db_path) as db:
+            return get_all_facilities(db)
+
+    @app.post("/facilities", status_code=201)
+    def create_facility(body: FacilityCreateRequest, current_user: User = Depends(require_role("operator"))):
+        with _db_connection(db_path) as db:
+            cursor = db.cursor()
+            cursor.execute("SELECT id FROM facilities WHERE id = ?", (body.id,))
+            if cursor.fetchone():
+                raise HTTPException(status_code=409, detail={"code": "facility_exists", "message": f"Facility '{body.id}' already exists"})
+            db.execute("""
+            INSERT INTO facilities (id, name, type, lat, lon, source, confidence, geometry_verified)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (body.id, body.name, body.type, body.lat, body.lon, body.source, body.confidence, int(body.geometry_verified)))
+            now_iso = datetime.now(timezone.utc).isoformat()
+            for res, cfg in RESOURCE_LIMITS.items():
+                db.execute("""
+                INSERT INTO stock (facility_id, resource, quantity, unit, mode, updated_by, updated_at, note)
+                VALUES (?, ?, 0, ?, 'assumed', ?, ?, 'Initial creation')
+                """, (body.id, res, cfg["units"][0], current_user.username, now_iso))
+            db.commit()
+            return {"status": "created", "facility_id": body.id}
+
+    @app.put("/facilities/{facility_id}/stock")
+    def update_stock(facility_id: str, body: FacilityStockUpdateRequest, current_user: User = Depends(require_role("operator"))):
+        with _db_connection(db_path) as db:
+            try:
+                updated = update_facility_stock(db, facility_id, body.stock, current_user.username)
+                return {"status": "updated", "facility_id": facility_id, "updated_items": updated}
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail={"code": "stock_validation_error", "message": str(exc)}) from exc
+
+    @app.get("/stock/summary")
+    def get_stock_overview():
+        with _db_connection(db_path) as db:
+            return get_stock_summary(db)
+
+    @app.post("/stock/reset-to-assumed")
+    def reset_stock(current_user: User = Depends(require_role("operator"))):
+        with _db_connection(db_path) as db:
+            count = reset_stock_to_assumed(db, current_user.username)
+            return {"status": "reset", "items_reset": count, "operator": current_user.username}
+
+    @app.get("/stock/export")
+    def export_stock():
+        with _db_connection(db_path) as db:
+            csv_content = export_stock_csv(db)
+            return Response(content=csv_content, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=shelter_inventory.csv"})
+
+    @app.post("/stock/import")
+    def import_stock(body: StockImportRequest, current_user: User = Depends(require_role("operator"))):
+        with _db_connection(db_path) as db:
+            try:
+                result = import_stock_csv(db, body.csv_text, current_user.username)
+                return result
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail={"code": "import_validation_error", "message": str(exc)}) from exc
+
+    # -------------------------------------------------------------------------
+    # Scenario Library Endpoints
+    # -------------------------------------------------------------------------
+    @app.get("/scenarios")
+    def list_scenarios():
+        return load_scenarios_config()
+
+    @app.post("/scenarios/run")
+    def execute_scenario(body: ScenarioRunRequest, current_user: User = Depends(require_role("viewer"))):
+        try:
+            return run_scenario(body.scenario_id, body.seed, body.parameters)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail={"code": "scenario_not_found", "message": str(exc)}) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail={"code": "scenario_execution_failed", "message": str(exc)}) from exc
 
     return app
 

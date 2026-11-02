@@ -1,0 +1,50 @@
+[
+  {
+    "trigger_id": "2019-08-10_MILP_08",
+    "event_date": "2019-08-10",
+    "step": "8",
+    "engine": "MILP",
+    "threshold": "0.2",
+    "resource_types_short": "food_rations;water_liters;medical_kits",
+    "shortfall_by_resource": "{\"food_rations\": 1454, \"medical_kits\": 20, \"water_liters\": 7267}",
+    "remaining_inventory": "{\"food_rations\": 0, \"medical_kits\": 0, \"water_liters\": 0}",
+    "remaining_unmet_demand": "{\"food_rations\": 1454, \"medical_kits\": 20, \"water_liters\": 7267}",
+    "inventory_to_unmet_ratio": "{\"food_rations\": 0.0, \"medical_kits\": 0.0, \"water_liters\": 0.0}",
+    "affected_zone_ids": "bantwal_grid_02;bantwal_grid_03;bantwal_grid_05;bantwal_grid_06;bantwal_grid_07;bantwal_grid_08;bantwal_grid_10;bantwal_grid_11",
+    "transfer_count": "0",
+    "min_zone_coverage_before_pct": "96.42857142857143",
+    "min_zone_coverage_after_pct": "96.42857142857143"
+  },
+  {
+    "trigger_id": "2019-08-10_LinUCB_contextual_bandit_08",
+    "event_date": "2019-08-10",
+    "step": "8",
+    "engine": "LinUCB_contextual_bandit",
+    "threshold": "0.2",
+    "resource_types_short": "food_rations;water_liters;medical_kits",
+    "shortfall_by_resource": "{\"food_rations\": 1454, \"medical_kits\": 20, \"water_liters\": 7267}",
+    "remaining_inventory": "{\"food_rations\": 0, \"medical_kits\": 0, \"water_liters\": 0}",
+    "remaining_unmet_demand": "{\"food_rations\": 1454, \"medical_kits\": 20, \"water_liters\": 7267}",
+    "inventory_to_unmet_ratio": "{\"food_rations\": 0.0, \"medical_kits\": 0.0, \"water_liters\": 0.0}",
+    "affected_zone_ids": "bantwal_grid_01;bantwal_grid_02;bantwal_grid_03;bantwal_grid_05;bantwal_grid_06;bantwal_grid_07;bantwal_grid_08;bantwal_grid_10;bantwal_grid_11;bantwal_grid_12;bantwal_grid_14;bantwal_grid_15",
+    "transfer_count": "0",
+    "min_zone_coverage_before_pct": "97.70992366412213",
+    "min_zone_coverage_after_pct": "97.70992366412213"
+  },
+  {
+    "trigger_id": "2019-08-10_naive_proportional_baseline_08",
+    "event_date": "2019-08-10",
+    "step": "8",
+    "engine": "naive_proportional_baseline",
+    "threshold": "0.2",
+    "resource_types_short": "food_rations;water_liters;medical_kits",
+    "shortfall_by_resource": "{\"food_rations\": 1454, \"medical_kits\": 20, \"water_liters\": 7267}",
+    "remaining_inventory": "{\"food_rations\": 0, \"medical_kits\": 0, \"water_liters\": 0}",
+    "remaining_unmet_demand": "{\"food_rations\": 1454, \"medical_kits\": 20, \"water_liters\": 7267}",
+    "inventory_to_unmet_ratio": "{\"food_rations\": 0.0, \"medical_kits\": 0.0, \"water_liters\": 0.0}",
+    "affected_zone_ids": "bantwal_grid_01;bantwal_grid_02;bantwal_grid_03;bantwal_grid_04;bantwal_grid_05;bantwal_grid_06;bantwal_grid_07;bantwal_grid_08;bantwal_grid_09;bantwal_grid_10;bantwal_grid_11;bantwal_grid_12;bantwal_grid_13;bantwal_grid_14;bantwal_grid_15;bantwal_grid_16",
+    "transfer_count": "0",
+    "min_zone_coverage_before_pct": "97.77777777777777",
+    "min_zone_coverage_after_pct": "97.77777777777777"
+  }
+]

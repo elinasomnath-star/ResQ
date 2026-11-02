@@ -47,7 +47,7 @@ def render_layers(plt, Box, out):
         ("Processing", "SAR/HAND / rainfall\nzone features\nImplemented", "#e7f4ed"),
         ("Decision", "MILP / LinUCB\nproportional / Modules 8-9\nImplemented", "#fff2d9"),
         ("Serving", "FastAPI / request checks\nSQLite-backed runs\nImplemented", "#eee9f7"),
-        ("Presentation", "16-zone maps / tables\ncharts / API docs\nPartial", "#f8e8eb"),
+        ("Presentation", "16-zone maps / tables\ncharts / Module 10 UI\nImplemented", "#f8e8eb"),
     ]
     x0, gap, width, y, height = .025, .025, .17, .62, .22
     centers = []
@@ -62,8 +62,8 @@ def render_layers(plt, Box, out):
     for center in centers:
         ax.plot([center[0], center[0]], [.49, y], color="#8aa0b3", lw=.9,
                 linestyle=(0, (2, 2)), zorder=0)
-    _box(ax, Box, (.24, .10), .52, .17, "Planned operational components",
-         "Authentication / live facility stock / dispatch integration / frontend",
+    _box(ax, Box, (.24, .10), .52, .17, "Authentication & Operational Scope",
+         "Demo-level auth (two roles)\nNot covered: user mgmt, reset, audit, MFA, live dispatch",
          "#f1f1f1")
     ax.text(.5, .05, "All reported stock is configured or simulated assumption; no live warehouse inventory is connected.",
             ha="center", fontsize=9, color="#52616b")

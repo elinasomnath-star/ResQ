@@ -8,12 +8,17 @@ from fastapi.testclient import TestClient
 
 import resq.api as api
 from resq.api import create_app
+from resq.auth import reset_rate_limiter
 from resq.config import configured_path, load_config
 
 
 @pytest.fixture
 def client(tmp_path: Path):
+    reset_rate_limiter()
     with TestClient(create_app(database_path=tmp_path / "api-test.sqlite3")) as test_client:
+        login_res = test_client.post("/auth/login", json={"username": "operator", "password": "operator2026"})
+        assert login_res.status_code == 200
+        test_client.headers["Authorization"] = f"Bearer {login_res.json()['access_token']}"
         yield test_client
 
 
@@ -46,6 +51,9 @@ def test_api_starts_without_cached_graph_and_reports_routing_unavailable(tmp_pat
     monkeypatch.setattr(api, "_load_graph", missing_graph)
     app = create_app(database_path=tmp_path / "no-graph.sqlite3")
     with TestClient(app) as test_client:
+        login_res = test_client.post("/auth/login", json={"username": "operator", "password": "operator2026"})
+        assert login_res.status_code == 200
+        test_client.headers["Authorization"] = f"Bearer {login_res.json()['access_token']}"
         assert test_client.get("/events").status_code == 200
         assert test_client.get("/zones", params={"event": "2019-08-10"}).status_code == 200
         simulated = test_client.post("/simulate", json={

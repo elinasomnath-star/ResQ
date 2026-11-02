@@ -1,0 +1,90 @@
+{
+  "scope": "Bantwal taluk; 16 analytical grid zones",
+  "danger_mark_m": 8,
+  "warning_level_m": 7,
+  "events": [
+    {
+      "event_date": "2019-08-10",
+      "river_gauge": "Bantwal",
+      "water_level_m": 11.6,
+      "danger_mark_m": 8,
+      "warning_level_m": 7,
+      "affected_localities": [
+        "Bantwal Kelagina Pete",
+        "Panemangaluru",
+        "Bogodi",
+        "Bastipadpu",
+        "Baddakatte",
+        "Ajilamagaru",
+        "Navur",
+        "Jakribettu",
+        "Kadeshivalaya",
+        "Bhandaribettu",
+        "Nandarabettu",
+        "Brahmarakottlu"
+      ],
+      "roads_blocked": [
+        "Talapady service road",
+        "Bantwal-Belthangady road",
+        "Marnabail-Panolibail connectivity road"
+      ],
+      "houses_affected": "58 houses inundated; over 1,000 people displaced; 1,129 people rescued district-wide; 31 relief centres district-wide",
+      "source_urls": [
+        "https://www.deccanherald.com/india/karnataka/water-in-nethravathi-river-touches-record-level-753354.html",
+        "https://www.daijiworld.com/news/newsDisplay.aspx?newsID=613724",
+        "https://www.mangaloretoday.com/mainnewsprint/Bantwal-reels-under-floods-as-Netravathi-flows-above-danger-mark.html",
+        "https://www.mangaloretoday.com/newsbriefs/DK-Floods-Cong-leader-Poojary-among-hundreds-rescued.html",
+        "https://www.deccanherald.com/india/karnataka/we-had-not-expected-so-much-flood-753555.html"
+      ]
+    },
+    {
+      "event_date": "2024-07-31",
+      "river_gauge": "Bantwal",
+      "water_level_m": 9.3,
+      "danger_mark_m": 8,
+      "warning_level_m": 7,
+      "affected_localities": [
+        "Aladka",
+        "Bastipadpu",
+        "Kotekani",
+        "Panemangaluru",
+        "Navoor",
+        "Sarapady",
+        "Maninalkur"
+      ],
+      "roads_blocked": [
+        "NH at Panjala Uppinangady submerged",
+        "Belthangady-Moodbidri highway",
+        "landslides Vittal-Kalladka and BC Road-Polali"
+      ],
+      "houses_affected": "8 families shifted (Phalguni, near Polali);15+ houses (Belthangady-Moodbidri)",
+      "source_urls": [
+        "https://www.daijiworld.com/news/newsDisplay?newsID=1212288",
+        "https://www.mangaloretoday.com/mainnewsprint/Flood-situation-continues-in-parts-of-Dakshina-Kannada.html",
+        "https://www.mangaloretoday.com/main/Belthangady-Moodbidri-State-Highway-flooded-families-shifted-to-safer-places.html",
+        "https://newskarnataka.com/udupi/phalguni-river-floods-bantwal-area-displaces-eight-families/03082024/"
+      ]
+    },
+    {
+      "event_date": "2026-08-03",
+      "river_gauge": "Bantwal",
+      "water_level_m": 8.5,
+      "danger_mark_m": 8,
+      "warning_level_m": 7,
+      "affected_localities": [
+        "Panemangaluru",
+        "Aladkapadpu"
+      ],
+      "roads_blocked": [
+        "Aladka",
+        "Kanchikarpete",
+        "Kotekani"
+      ],
+      "houses_affected": "More than 15 houses inundated",
+      "source_urls": [
+        "https://theprint.in/india/karnataka-heavy-rain-swells-nethravathi-low-lying-areas-inundated-in-bantwal-residents-shifted/3004114/",
+        "https://www.daijiworld.com/news/newsDisplay?newsID=1321707"
+      ]
+    }
+  ]
+}

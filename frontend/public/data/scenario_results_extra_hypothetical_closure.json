@@ -1,0 +1,24 @@
+{
+  "scenario_id": "extra_hypothetical_closure",
+  "title": "Hypothetical \u2014 Severe NH-73 Mani-Shirady Road Severance",
+  "description": "Simulates an additional catastrophic road blockage on the vital NH-73 freight corridor, cutting off secondary relief access.",
+  "type": "hypothetical",
+  "event_date": "2024-07-31",
+  "seed": 42,
+  "parameters": {
+    "extra_closure_id": "hypothetical_nh73_severance",
+    "extra_closure_road": "NH-73 Mani-Shirady Corridor",
+    "extra_closure_type": "total_hypothetical_blockage"
+  },
+  "honesty_label": "Hypothetical stress test (synthetic perturbation)",
+  "routing_impact": {
+    "additional_severance_corridor": "NH-73 Mani-Shirady Corridor",
+    "status": "UNREACHABLE_BY_PRIMARY_ROAD",
+    "isolated_zones": [
+      "bantwal_grid_04",
+      "bantwal_grid_08"
+    ],
+    "unreachable_zone_count": 2,
+    "advisory": "Secondary road diversion exceeds 10 km corridor limit; zones require aerial / boat dispatch."
+  }
+}

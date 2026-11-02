@@ -1,0 +1,25 @@
+{
+  "bounds": [
+    74.934,
+    12.663,
+    75.224,
+    13.016
+  ],
+  "center": [
+    75.079,
+    12.84
+  ],
+  "zoom": 11,
+  "label": "candidate VH-change signal",
+  "events": {
+    "2019-08-10": {
+      "svg": "/data/flood_likelihood_2019-08-10.svg"
+    },
+    "2024-07-31": {
+      "svg": "/data/flood_likelihood_2024-07-31.svg"
+    },
+    "2026-08-03": {
+      "svg": "/data/flood_likelihood_2026-08-03.svg"
+    }
+  }
+}

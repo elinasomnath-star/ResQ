@@ -1,0 +1,195 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              75.2410291,
+              12.8367111
+            ],
+            [
+              75.2413412,
+              12.8368263
+            ],
+            [
+              75.2414124,
+              12.836843
+            ],
+            [
+              75.2415135,
+              12.8368666
+            ],
+            [
+              75.2419252,
+              12.8370343
+            ]
+          ],
+          [
+            [
+              75.2419252,
+              12.8370343
+            ],
+            [
+              75.2423111,
+              12.8371915
+            ]
+          ],
+          [
+            [
+              75.2423111,
+              12.8371915
+            ],
+            [
+              75.2440095,
+              12.8378007
+            ]
+          ],
+          [
+            [
+              75.2474784,
+              12.8379109
+            ],
+            [
+              75.2459407,
+              12.8379857
+            ],
+            [
+              75.2453479,
+              12.8380014
+            ],
+            [
+              75.2448785,
+              12.8379438
+            ],
+            [
+              75.2443823,
+              12.8378157
+            ],
+            [
+              75.2440363,
+              12.8376797
+            ]
+          ],
+          [
+            [
+              75.2440095,
+              12.8378007
+            ],
+            [
+              75.2443613,
+              12.8379188
+            ]
+          ],
+          [
+            [
+              75.2440363,
+              12.8376797
+            ],
+            [
+              75.2423573,
+              12.8370834
+            ]
+          ],
+          [
+            [
+              75.2480339,
+              12.8380086
+            ],
+            [
+              75.249167,
+              12.8379129
+            ],
+            [
+              75.2497888,
+              12.8378616
+            ],
+            [
+              75.2501926,
+              12.8378078
+            ],
+            [
+              75.2508246,
+              12.8376608
+            ],
+            [
+              75.2514043,
+              12.8374878
+            ],
+            [
+              75.2518729,
+              12.8373066
+            ],
+            [
+              75.2529646,
+              12.836927
+            ],
+            [
+              75.2534902,
+              12.8367832
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "closure_id": "2024-07-31_1",
+        "name": "NH at Panjala Uppinangady submerged",
+        "status": "verified",
+        "source": "https://www.daijiworld.com/news/newsDisplay?newsID=1212288;https://www.mangaloretoday.com/mainnewsprint/Flood-situation-continues-in-parts-of-Dakshina-Kannada.html;https://www.mangaloretoday.com/main/Belthangady-Moodbidri-State-Highway-flooded-families-shifted-to-safer-places.html;https://newskarnataka.com/udupi/phalguni-river-floods-bantwal-area-displaces-eight-families/03082024/",
+        "reason": "No verified point coordinate to snap to an OSM edge.",
+        "osm_ref": "NH75",
+        "osm_old_ref": "NH48 (older designation, user/source context)",
+        "osm_way_ids": [
+          "1547134553",
+          "1361360021",
+          "134782103",
+          "1348732768",
+          "1361360022",
+          "1348732785",
+          "1348732770"
+        ],
+        "osm_way_urls": [
+          "https://www.openstreetmap.org/way/1547134553",
+          "https://www.openstreetmap.org/way/1361360021",
+          "https://www.openstreetmap.org/way/134782103",
+          "https://www.openstreetmap.org/way/1348732768",
+          "https://www.openstreetmap.org/way/1361360022",
+          "https://www.openstreetmap.org/way/1348732785",
+          "https://www.openstreetmap.org/way/1348732770"
+        ],
+        "matching_method": "matched cached OSM trunk ways tagged ref=NH75 around the Uppinangady/Panjala locator, then graph-edge geometry match",
+        "verification_scope": "OSM corridor and road-graph geometry match verified; event reporting identifies the highway at Panjala/Uppinangady but does not locate an exact flooded coordinate",
+        "closure_note": "Corridor-level stress-test closure on NH75 near the geotagged Uppinangady NH75 reference point (12.837222, 75.242368), not a pinpointed flood coordinate."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "closure_id": "2024-07-31_2",
+        "name": "Belthangady-Moodbidri highway",
+        "status": "unresolved",
+        "source": "https://www.daijiworld.com/news/newsDisplay?newsID=1212288;https://www.mangaloretoday.com/mainnewsprint/Flood-situation-continues-in-parts-of-Dakshina-Kannada.html;https://www.mangaloretoday.com/main/Belthangady-Moodbidri-State-Highway-flooded-families-shifted-to-safer-places.html;https://newskarnataka.com/udupi/phalguni-river-floods-bantwal-area-displaces-eight-families/03082024/",
+        "reason": "Named Belthangady-Moodbidri road corresponds to the broader SH70 corridor, but source wording does not identify the affected segment and no exact segment can be defensibly selected as the closure geometry. Left unresolved to avoid closing an arbitrary stretch.",
+        "osm_search_note": "Checked cached OSM road data for named/ref-tagged SH70 ways; only the broader route relationship is established, not the event-specific affected segment."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "closure_id": "2024-07-31_3",
+        "name": "landslides Vittal-Kalladka and BC Road-Polali",
+        "status": "unresolved",
+        "source": "https://www.daijiworld.com/news/newsDisplay?newsID=1212288;https://www.mangaloretoday.com/mainnewsprint/Flood-situation-continues-in-parts-of-Dakshina-Kannada.html;https://www.mangaloretoday.com/main/Belthangady-Moodbidri-State-Highway-flooded-families-shifted-to-safer-places.html;https://newskarnataka.com/udupi/phalguni-river-floods-bantwal-area-displaces-eight-families/03082024/",
+        "reason": "No specific OSM road segment can be attributed to the reported Vittal-Kalladka and BC Road-Polali landslides from the available source wording."
+      }
+    }
+  ],
+  "resolution_status": "partial",
+  "event_date": "2024-07-31",
+  "note": "NH75 at Panjala/Uppinangady matched to nearby cached OSM NH75 trunk-way geometries and validated against the road graph as a corridor-level stress closure. This is not a pinpointed flood coordinate. Belthangady-Moodbidri and landslide closures remain unresolved."
+}

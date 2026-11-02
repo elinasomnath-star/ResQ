@@ -1,0 +1,46 @@
+{
+  "scenario_id": "documented_replay_2026",
+  "title": "Documented Replay \u2014 2026 Riverbank Pulse (8.5 m)",
+  "description": "Replay of the August 2026 localized flood pulse with warning mark water levels affecting low-lying riverfront hamlets.",
+  "type": "documented_replay",
+  "event_date": "2026-08-03",
+  "seed": 42,
+  "parameters": {
+    "stock_mode": "assumed_configured",
+    "stock_pct": 100.0
+  },
+  "honesty_label": "Documented historical replay",
+  "results": {
+    "inventory": {
+      "food_rations": 25000,
+      "water_liters": 75000,
+      "medical_kits": 1200
+    },
+    "MILP": {
+      "engine": "MILP",
+      "solve_or_inference_time_seconds": 0.002932600036729127,
+      "aggregate_unmet_demand_pct": 42.926371162853364,
+      "food_rations_unmet_demand_pct": 55.48908592386853,
+      "water_liters_unmet_demand_pct": 73.29002756469156,
+      "medical_kits_unmet_demand_pct": 0.0,
+      "minimum_zone_fairness_pct": 26.707048458149778,
+      "critical_medical_demand_satisfied_pct": 100.0,
+      "population_coverage_pct": 26.71025479772696,
+      "weighted_allocation_objective": 105.94083582988372,
+      "inventory_used": "{\"food_rations\": 25000, \"water_liters\": 75000, \"medical_kits\": 755}"
+    },
+    "Proportional": {
+      "engine": "naive_proportional_baseline",
+      "solve_or_inference_time_seconds": 0.0,
+      "aggregate_unmet_demand_pct": 42.926371162853364,
+      "food_rations_unmet_demand_pct": 55.48908592386853,
+      "water_liters_unmet_demand_pct": 73.29002756469156,
+      "medical_kits_unmet_demand_pct": 0.0,
+      "minimum_zone_fairness_pct": 26.705874490409677,
+      "critical_medical_demand_satisfied_pct": 100.0,
+      "population_coverage_pct": 26.71030635149844,
+      "weighted_allocation_objective": 99.61751065046484,
+      "inventory_used": "{\"food_rations\": 25000, \"water_liters\": 75000, \"medical_kits\": 755}"
+    }
+  }
+}

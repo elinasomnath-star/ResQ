@@ -1,0 +1,2297 @@
+[
+  {
+    "id": "ddmp_shelter_46",
+    "name": "Aided HPSchool Uliya Kenjar village",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_47",
+    "name": "Bhandar House school Mudushedde",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_08",
+    "name": "Church School, Kuluru",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_44",
+    "name": "DKZP HPSchool Chelair",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_43",
+    "name": "DKZP Model HPSchool Jokatte",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_05",
+    "name": "DKZP School Bokkapatna",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_04",
+    "name": "DKZP School Hoige Bazar",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_14",
+    "name": "DKZPHP School Amblamogaru",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_15",
+    "name": "DKZPHP School Gadigadde",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_13",
+    "name": "DKZPHP School Permannur",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_10",
+    "name": "DKZPHPS Ombathukere PSchool",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_31",
+    "name": "DKZPHPSchool Addoor",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_34",
+    "name": "DKZPHPSchool Adyapady",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_20",
+    "name": "DKZPHPSchool Ammembala",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_06",
+    "name": "DKZPHPSchool Bajal",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_01",
+    "name": "DKZPHPSchool Bengre",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_16",
+    "name": "DKZPHPSchool Inoli",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_37",
+    "name": "DKZPHPSchool Karambar",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_02",
+    "name": "DKZPHPSchool Pandeshwar",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_33",
+    "name": "DKZPHPSchool Ulaibettu",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_23",
+    "name": "DKZPSchool Karnire",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_19",
+    "name": "English Medium HPS Kannur",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_03",
+    "name": "G.H.S. Hoige Bazar",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_29",
+    "name": "G.H.S. Kilinjuru",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_21",
+    "name": "G.Model HPS Bappanadu",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_22",
+    "name": "G.Model HPS Board School Bappanadu Mulki",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_24",
+    "name": "GHPSchool Manampady",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_25",
+    "name": "GHPSchool Pachija",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_39",
+    "name": "GHPSchool Panjimogaru",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_30",
+    "name": "GHPschool Board School Bappanadu",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_32",
+    "name": "Govt. PU College Gurupur",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_36",
+    "name": "Grama Chavadi",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_35",
+    "name": "Grama Panchayath Adyar",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_07",
+    "name": "H.M. DKZPHPSchool Bajal",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_45",
+    "name": "Kulur Church HP School",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_42",
+    "name": "Kunjathbail HPSchool",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_41",
+    "name": "Marakada HPSchool",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "mini_town_hall_mangaluru",
+    "name": "Mini Town Hall, Mangaluru",
+    "type": "relief_center",
+    "lat": 12.86431,
+    "lon": 74.83935,
+    "source": "event-confirmed",
+    "confidence": "high",
+    "geometry_verified": true,
+    "is_routable": true,
+    "routing_flag": "routable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_11",
+    "name": "Mogaveera Patna School",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_18",
+    "name": "Muslim Charitable Trust Kannur",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_28",
+    "name": "Old Panchayat Office Nadugodu",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_38",
+    "name": "Panchayath Office Soorinje",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "panemangaluru_sharada_relief_centre",
+    "name": "Panemangaluru relief centre (Sharada High School)",
+    "type": "relief_center",
+    "lat": 12.8726788,
+    "lon": 75.0461226,
+    "source": "event-confirmed",
+    "confidence": "high",
+    "geometry_verified": true,
+    "is_routable": true,
+    "routing_flag": "routable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_17",
+    "name": "Ramakrishna High School Harekala",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_12",
+    "name": "Ranipura HPSchool",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "svs_kannada_medium_school_bantwal",
+    "name": "SVS Kannada Medium School, Bantwal",
+    "type": "relief_center",
+    "lat": 12.8726393,
+    "lon": 75.0481939,
+    "source": "event-confirmed",
+    "confidence": "high",
+    "geometry_verified": true,
+    "is_routable": true,
+    "routing_flag": "routable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "someshwara_relief_centre",
+    "name": "Someshwara relief centre",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "event-confirmed",
+    "confidence": "high",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_09",
+    "name": "Tippu Sultan Urdu Hna",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_26",
+    "name": "UBMC HPSchool Haleyangadi",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_27",
+    "name": "Vasudevarao Memorial Lower Primary School Attikaribettu",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  },
+  {
+    "id": "ddmp_shelter_40",
+    "name": "Vidyanagara School",
+    "type": "relief_center",
+    "lat": null,
+    "lon": null,
+    "source": "ddmp-designated",
+    "confidence": "medium",
+    "geometry_verified": false,
+    "is_routable": false,
+    "routing_flag": "unroutable",
+    "stock": [
+      {
+        "resource": "food_rations",
+        "quantity": 1000,
+        "unit": "rations",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "water_liters",
+        "quantity": 5000,
+        "unit": "liters",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      },
+      {
+        "resource": "medical_kits",
+        "quantity": 20,
+        "unit": "kits",
+        "mode": "assumed",
+        "updated_by": "system_seed",
+        "updated_at": "2026-11-02T03:43:27.035466+00:00",
+        "is_stale": false,
+        "note": "Baseline assumed inventory"
+      }
+    ],
+    "has_stale_stock": false
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "2019-08-10": {
+    "event_date": "2019-08-10",
+    "smallest_stock_pct_for_40pct_floor_feasible": 40.56,
+    "stock_pct_unmet_demand_below_10pct": 90.01,
+    "stock_pct_linucb_collapse_below_1pct": 10.0,
+    "methodology": "Exact bisection over OR-Tools CBC MILP hard fairness constraint and 5-seed LinUCB contextual bandit evaluations."
+  },
+  "2024-07-31": {
+    "event_date": "2024-07-31",
+    "smallest_stock_pct_for_40pct_floor_feasible": 40.82,
+    "stock_pct_unmet_demand_below_10pct": 90.02,
+    "stock_pct_linucb_collapse_below_1pct": 10.0,
+    "methodology": "Exact bisection over OR-Tools CBC MILP hard fairness constraint and 5-seed LinUCB contextual bandit evaluations."
+  },
+  "2026-08-03": {
+    "event_date": "2026-08-03",
+    "smallest_stock_pct_for_40pct_floor_feasible": 40.73,
+    "stock_pct_unmet_demand_below_10pct": 90.0,
+    "stock_pct_linucb_collapse_below_1pct": 10.0,
+    "methodology": "Exact bisection over OR-Tools CBC MILP hard fairness constraint and 5-seed LinUCB contextual bandit evaluations."
+  }
+}

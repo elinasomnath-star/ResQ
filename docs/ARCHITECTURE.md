@@ -10,10 +10,10 @@ This document describes the checked-in implementation and cached artifacts, not 
 | Processing | 16-cell grid in `resq.subzones`; SAR/HAND features; rainfall aggregation; Module 5 severity/demand; road graph and closure matching | Implemented | The grid builder fails if an event SAR raster has no valid pixels in any cell. CHIRPS edge-cell point sampling is an implemented fallback. |
 | Decision | Module 6 OR-Tools MILP, LinUCB and proportional comparator; Module 8 repeated closure/stress allocation; Module 9 shortage alerts and partial transfers | Implemented | Stock/demand are assumptions. Module 8 also includes synthetic demand/hazard evolution. |
 | Serving | FastAPI routes and SQLite run/allocation/route/escalation persistence in `resq.api` | Implemented | Verified closure requests run Module 8/9 and Module 7 rerouting for all 16 cells. Single-process locking protects legacy fixed-file writers; this is not a multi-worker job queue. |
-| Presentation | `demo/build_assets.py`, six numbered Bantwal maps, charts, README and results | Partial | The static figures and docs are generated; a live frontend and user-facing interactive presentation are planned. Maps present SAR as a candidate VH-change signal, not verified flood extent. |
+| Presentation | `demo/build_assets.py`, maps, charts, README, and Module 10 interactive console in `/frontend` | Implemented | Interactive web console and static artifacts. Maps present SAR as a candidate VH-change signal, not verified flood extent. |
 | Storage (cross-cutting) | CSV, GeoJSON, GeoTIFF, GraphML, JSON plus SQLite service database | Implemented | Storage is shared by ingestion through presentation. SQLite provides local prototype persistence. Most `data/raw` and `data/processed` artifacts are git-ignored. |
 | Container deployment | `Dockerfile`, `docker-compose.yml`, `.dockerignore` | Implemented and locally smoke-tested | Compose image built and served API requests; generated spatial cache is mounted from the host and is not bundled in the image. |
-| Web UI / authentication / operational dispatch | None | Planned | No frontend, user accounts, role controls, live facility stock, dispatch integration or production deployment is present. |
+| Web UI & Authentication | `/frontend` dashboard, FastAPI JWT & bcrypt RBAC (`viewer`, `operator`) | Demo-level (two roles) | Implemented interactive Module 10 frontend with React, MapLibre GL, and offline fallback. Demo authentication supports `viewer` (replay access) and `operator` (closure and override actions). Still not covered: user management/registration, password reset, audit logging, multi-factor authentication (MFA), and HTTPS termination. Live municipal fleet dispatch remains planned. |
 
 ## Data flow
 
@@ -219,9 +219,83 @@ The inspected runtime inventory is:
 | Roads and closures | `resq.roads`, `resq.routing` | cached OSM road JSON; `road_graph.graphml`; `warehouses.geojson`; `closures_{date}.geojson`; `analysis_zones.geojson` | node mapping, `routes_analysis_{date}.csv/.geojson`, route metadata |
 | Static allocation | `resq.optimization.allocation.run_allocators` | `severity_demand_{date}.csv`; configured prototype inventory or the demo scenario stock | `allocation_matrix_{date}.csv`, `allocation_comparison_{date}.csv`, `allocation_zone_metrics_{date}.csv`, allocation metadata |
 | Dynamic allocation/escalation | `resq.module8.run_module8`, `resq.module9` | event demand, cached graph, verified event closure geometry, facility points, configured stock | `module8_dynamic_steps_{date}.csv`, `module8_dynamic_summary_{date}.json`, zone-unmet CSV, `escalation_log_{date}.csv`, transfer and redirect-trace CSVs |
-| HTTP service | `resq.api` | generated event/zone/demand/closure/graph inputs; `demo/adequate_supply_summary.csv` for simulated stock | SQLite `runs`, `allocations`, `routes`, and `escalations` tables in `resq_service.sqlite3` |
+| Facility & stock management | `resq.facilities` | `data/processed/facilities.json`, user CSV imports | SQLite `facilities`, `stock`, `stock_audit` tables in `resq_service.sqlite3` |
+| Scenario library | `resq.scenarios` | `config/scenarios.yaml`, event data, closure GeoJSON | Scenario comparison metrics across 7 standard scenarios |
+| Stock sweep & bisection | `validation.stock_sweep` | demand features, allocators, `resq.facilities` | `stock_sweep_{event}.csv/.json`, `stock_sweep_thresholds.json` |
+| HTTP service & API | `resq.api`, `resq.auth` | generated event/zone/demand/closure/graph inputs; `demo/adequate_supply_summary.csv` for simulated stock; SQLite | SQLite tables in `resq_service.sqlite3`; REST endpoints for simulation, routing, closures, facilities, sweep, admin override |
+| Module 10 Dashboard | `frontend/` (React/Vite/TS/MapLibre) | API endpoints or 45 offline snapshot files in `public/data/` | Interactive console: Map view, timeline rewind, engine comparison, scarcity curves, shelter inventory, admin override modal |
 
 These generated input files must exist before API calls that need them. Main pipeline outputs also include demo PNG figures and the validator matrix. `validation/validate_modules0_9.py` is the full current core suite.
+
+## Module 10 Dashboard Architecture
+
+Module 10 provides an interactive decision-support command console built with React 19, TypeScript, Vite, Tailwind CSS, MapLibre GL, and locally implemented React Bits visual components.
+
+- **Offline / Online Dual-Mode Routing**: The frontend detects whether the backend API is reachable at `http://127.0.0.1:8000`. When offline, it automatically falls back to 45 precomputed static analytical datasets served from `/data/` in `public/`, allowing full local demonstration without active backend processes.
+- **Dynamic Zone Stress Pulse**: Markers on the 16 analytical grid cells pulse with ring thickness and cycle frequency inversely proportional to allocation coverage (stress is highest below 40% coverage; rings remain static above 90%). Respects `@media (prefers-reduced-motion: reduce)`.
+- **RBAC Enforcement**: Demo authentication distinguishes `viewer` (read-only inspection of replays, routes, and shortage escalations) from `operator` (authorized to trigger corridor road closures, update facility stocks, and execute emergency allocation overrides).
+- **Honesty Disclaimers**: Strictly enfored UI chips:
+  - `REPLAY OF 3 FLOOD EVENTS`: Replaces misleading "LIVE" badges.
+  - `ASSUMED` (Violet): Attached to any figure derived from configured prototype stock.
+  - `ENTERED, UNVERIFIED` (Amber): Attached to operator-entered field inventory.
+  - `CANDIDATE VH-CHANGE SIGNAL`: Denotes SAR backscatter changes rather than confirmed flood outlines.
+  - `MODELED RELATIVE PRIORITY`: Labels zone severity rankings.
+  - `MANUAL OVERRIDE, NOT AN OPTIMIZATION RESULT`: Labels any human-in-the-loop allocation adjustment.
+
+## SQLite Facility Inventory Schema
+
+Facility stocks and operator audit trails are maintained in `data/processed/resq_service.sqlite3` across three tables:
+
+```sql
+CREATE TABLE facilities (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    facility_type TEXT NOT NULL,  -- 'warehouse' or 'shelter'
+    lat REAL NOT NULL,
+    lon REAL NOT NULL,
+    is_routable INTEGER NOT NULL DEFAULT 1,
+    verified INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE stock (
+    facility_id TEXT NOT NULL,
+    resource_type TEXT NOT NULL,  -- 'food_packets', 'water_liters', 'medical_kits'
+    quantity INTEGER NOT NULL,
+    updated_at TEXT NOT NULL,
+    entered_by TEXT NOT NULL,
+    PRIMARY KEY (facility_id, resource_type),
+    FOREIGN KEY (facility_id) REFERENCES facilities(id)
+);
+
+CREATE TABLE stock_audit (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    facility_id TEXT NOT NULL,
+    resource_type TEXT NOT NULL,
+    old_quantity INTEGER,
+    new_quantity INTEGER NOT NULL,
+    changed_by TEXT NOT NULL,
+    changed_at TEXT NOT NULL,
+    reason TEXT
+);
+```
+
+- **Staleness Tracking**: Stocks with `updated_at` older than 24 hours are marked stale in API responses and display an amber `>24h stale` badge.
+- **Unroutable Shelter Flagging**: Of the 51 mapped relief facilities, 16 candidate shelters lack routable OSM coordinates and are flagged with `is_routable = 0` to prevent dispatch lockups.
+
+## Scarcity Sweeper & Scenario Engine
+
+- **Stock Sweeper (`validation/stock_sweep.py`)**: Computes minimum zone coverage and unmet demand across 29 stock multipliers (10% to 150% in 5% increments) for MILP, LinUCB (5 random seeds), and Proportional engines.
+- **Bisection Thresholds**:
+  - Smallest stock ratio for a feasible 40% donor floor: **40.56%** (2019), **40.82%** (2024), **40.73%** (2026).
+  - Stock ratio where unmet demand drops below 10%: **90.01%** (2019), **90.02%** (2024), **90.00%** (2026).
+  - LinUCB severe starvation collapse threshold: **10.0%**.
+- **Scenario Deck (`config/scenarios.yaml`)**: Standardizes 7 benchmark scenarios comparing baseline prototype stock, full 100% adequate supply, isolated road closures (NH-73 / Mani), extreme scarcity (20%), and operator warehouse stock.
+
+## Docker Deployment Architecture
+
+`docker-compose.yml` orchestrates two containerized services:
+1. **`api`**: FastAPI service running under Python 3.11 with GDAL, GEOS, and PROJ libraries, mounting `data/processed` and `config/`.
+2. **`frontend`**: Nginx Alpine container serving the optimized production build (`frontend/dist`) on port 3000, with `/api/` reverse-proxied to the `api` container and CORS handling.
 
 The current `zones.geojson` contains one Bantwal taluk parent polygon; `analysis_zones.geojson` contains 16 clipped grid cells. The event CSV has Bantwal gauge event records. Configured 2011 Census values for Bantwal, Mangaluru, and Puttur are explicitly labeled reference-only; no census total is used to estimate or scale pipeline populations, and Mangaluru/Puttur are not active analysis zones or API-served zones. WorldPop raster values are people-per-pixel counts. `resq.population` assigns each valid pixel center to at most one polygon and sums its values; it does not split a taluk total by area or normalize to Census. The configured source is WorldPop Global2 R2025A v1 India, year 2025, constrained, 1 km (`1km_ua`): [official population data page](https://hub.worldpop.org/project/categories?id=3), [direct GeoTIFF](https://data.worldpop.org/GIS/Population/Global_2015_2030/R2025A/2025/IND/v1/1km_ua/constrained/ind_pop_2025_CN_1km_R2025A_UA_v1.tif). The raster sum inside the current Bantwal polygon is 677,985.36 over 674.38 km², or 1,005.35 people/km². This is 1.715 times the 2011 Census reference of 395,380 (about 71.5% higher); neither value was adjusted to match the other. This is a modeled 2025 estimate at 1 km resolution, so small cells can inherit coarse pixel patterns. A fresh clone must download the ignored raster and regenerate ignored spatial inputs before the full pipeline can run.
 

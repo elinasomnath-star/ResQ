@@ -67,9 +67,9 @@ Global input checks (Modules 0-3) are repeated across event columns; event-level
 | Module 8 | PASS | PASS | PASS |
 | Module 9 | PASS | PASS | PASS |
 
-Module 10 is not implemented in the checked-in source or validators. Module 11 is the report-generation/big-three validation script.
+Detailed output: `data/processed/validation_modules0_9.csv`.
 
-Machine-readable details: `data/processed/validation_modules0_9.csv`.
+Module 7 covers all 16 grid zones per event. Its PARTIAL PASS label describes unresolved closure inputs; it does not mean that routes were computed for only a subset of zones.
 
 ## Sources and limits
 

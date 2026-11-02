@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: #060A12;
+  color: #E6EDF7;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-feature-settings: 'cv11', 'ss01';
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  letter-spacing: -0.01em;
+}
+
+#root {
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* No scrollbar utility */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Frosted glass: white at 5%, 1px white border at 10%, blur 16px */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-panel-subtle {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-panel-elevated {
+  background: rgba(12, 20, 36, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Projector Mode: higher contrast and larger type */
+.projector-mode {
+  --text-size-multiplier: 1.15;
+}
+
+.projector-mode .glass-panel,
+.projector-mode .glass-panel-elevated,
+.projector-mode .glass-panel-subtle {
+  background: #090F1B !important;
+  border: 2px solid rgba(255, 255, 255, 0.35) !important;
+  backdrop-filter: none !important;
+}
+
+.projector-mode p,
+.projector-mode span,
+.projector-mode button,
+.projector-mode label {
+  font-size: 105%;
+}
+
+.projector-mode h1,
+.projector-mode h2,
+.projector-mode h3 {
+  font-weight: 700 !important;
+}
+
+/* Custom modern scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(6, 10, 18, 0.0);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.35);
+}
+
+/* MapLibre Canvas overrides */
+.maplibregl-canvas {
+  outline: none;
+}
+.maplibregl-ctrl-attrib {
+  background-color: rgba(6, 10, 18, 0.75) !important;
+  color: #8FA3BF !important;
+  font-size: 10px !important;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.maplibregl-ctrl-attrib a {
+  color: #22D3EE !important;
+}
+
+/* Zone Stress Pulse Animation & Accessibility */
+@keyframes zone-stress-pulse {
+  0% { transform: scale(0.92); opacity: 0.95; }
+  50% { transform: scale(1.38); opacity: 0.2; }
+  100% { transform: scale(0.92); opacity: 0.95; }
+}
+
+/* Animations for ambient hero and scanner */
+@keyframes orb-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 20px) scale(1.08); }
+}
+
+@keyframes orb-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(25px, -25px) scale(1.12); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes bar-grow {
+  0% { transform: scaleY(0.2); opacity: 0.3; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes ring-expand {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.animate-orb-1 {
+  animation: orb-float-1 8s ease-in-out infinite;
+}
+
+.animate-orb-2 {
+  animation: orb-float-2 10s ease-in-out infinite;
+}
+
+.animate-gradient-shift {
+  animation: gradient-shift 6s ease infinite;
+}
+
+.animate-bar-grow {
+  transform-origin: bottom;
+  animation: bar-grow 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-ring-expand {
+  animation: ring-expand 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+/* Shake animation for error states */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%, 45%, 75% { transform: translateX(-4px); }
+  30%, 60%, 90% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Scan line effect */
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(200%); }
+}
+
+.animate-scan {
+  animation: scan-line 3s linear infinite;
+}
+
+/* ─── Typography system ────────────────────────────────────────────────────── */
+
+/* Panel section labels (e.g. "Documented Flood Event") */
+.panel-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #E6EDF7;
+}
+
+/* Small monospace tags */
+.tag-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+/* Data values: large numeric readouts */
+.data-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #F5F8FF;
+}
+
+/* Body text in panels */
+.panel-body {
+  font-size: 12px;
+  line-height: 1.65;
+  color: #8FA3BF;
+}
+
+/* Caption text */
+.panel-caption {
+  font-size: 11px;
+  color: #5F738F;
+  letter-spacing: 0.01em;
+}

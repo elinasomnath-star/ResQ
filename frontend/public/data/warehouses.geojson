@@ -1,0 +1,744 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          75.0481939,
+          12.8726393
+        ]
+      },
+      "properties": {
+        "name": "SVS Kannada Medium School, Bantwal",
+        "warehouse_id": "svs_kannada_medium_school_bantwal",
+        "confidence": "high",
+        "source": "event-confirmed",
+        "event_source": "https://newskarnataka.com/mangaluru/deputy-commissioner-assesses-flood-damage-in-bantwal-announces-relief-measures/01082024/",
+        "osm_feature": "S.V.S Higher Primary School, OSM node 11975108565",
+        "route_origin": true,
+        "confidence_note": "Event report confirms the SVS Kannada Medium School relief centre. Point is the nearby OSM-mapped S.V.S Higher Primary School in Panemangaluru; school-name variant should be confirmed by local administration."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Someshwara relief centre",
+        "warehouse_id": "someshwara_relief_centre",
+        "confidence": "high",
+        "source": "event-confirmed",
+        "route_origin": false,
+        "event_source": "https://sahilonline.org/incessant-rain-continue-to-lash-dakshina-kannada-water-level-in-rivers-nethravathi-kumaradhara-recede",
+        "geocode_status": "unresolved",
+        "confidence_note": "Reporting confirms a relief centre was to open at Someshwara but names no facility. Nominatim did not resolve a matching OSM facility; no locality-centre coordinate substituted."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHPSchool Bengre",
+        "warehouse_id": "ddmp_shelter_01",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHPSchool Pandeshwar",
+        "warehouse_id": "ddmp_shelter_02",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "G.H.S. Hoige Bazar",
+        "warehouse_id": "ddmp_shelter_03",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZP School Hoige Bazar",
+        "warehouse_id": "ddmp_shelter_04",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZP School Bokkapatna",
+        "warehouse_id": "ddmp_shelter_05",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHPSchool Bajal",
+        "warehouse_id": "ddmp_shelter_06",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "H.M. DKZPHPSchool Bajal",
+        "warehouse_id": "ddmp_shelter_07",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Church School, Kuluru",
+        "warehouse_id": "ddmp_shelter_08",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Tippu Sultan Urdu Hna",
+        "warehouse_id": "ddmp_shelter_09",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHPS Ombathukere PSchool",
+        "warehouse_id": "ddmp_shelter_10",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Mogaveera Patna School",
+        "warehouse_id": "ddmp_shelter_11",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Ranipura HPSchool",
+        "warehouse_id": "ddmp_shelter_12",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHP School Permannur",
+        "warehouse_id": "ddmp_shelter_13",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHP School Amblamogaru",
+        "warehouse_id": "ddmp_shelter_14",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHP School Gadigadde",
+        "warehouse_id": "ddmp_shelter_15",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHPSchool Inoli",
+        "warehouse_id": "ddmp_shelter_16",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Ramakrishna High School Harekala",
+        "warehouse_id": "ddmp_shelter_17",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Muslim Charitable Trust Kannur",
+        "warehouse_id": "ddmp_shelter_18",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "English Medium HPS Kannur",
+        "warehouse_id": "ddmp_shelter_19",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHPSchool Ammembala",
+        "warehouse_id": "ddmp_shelter_20",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "G.Model HPS Bappanadu",
+        "warehouse_id": "ddmp_shelter_21",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "G.Model HPS Board School Bappanadu Mulki",
+        "warehouse_id": "ddmp_shelter_22",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPSchool Karnire",
+        "warehouse_id": "ddmp_shelter_23",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "GHPSchool Manampady",
+        "warehouse_id": "ddmp_shelter_24",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "GHPSchool Pachija",
+        "warehouse_id": "ddmp_shelter_25",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "UBMC HPSchool Haleyangadi",
+        "warehouse_id": "ddmp_shelter_26",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Vasudevarao Memorial Lower Primary School Attikaribettu",
+        "warehouse_id": "ddmp_shelter_27",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Old Panchayat Office Nadugodu",
+        "warehouse_id": "ddmp_shelter_28",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "G.H.S. Kilinjuru",
+        "warehouse_id": "ddmp_shelter_29",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "GHPschool Board School Bappanadu",
+        "warehouse_id": "ddmp_shelter_30",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHPSchool Addoor",
+        "warehouse_id": "ddmp_shelter_31",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Govt. PU College Gurupur",
+        "warehouse_id": "ddmp_shelter_32",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHPSchool Ulaibettu",
+        "warehouse_id": "ddmp_shelter_33",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHPSchool Adyapady",
+        "warehouse_id": "ddmp_shelter_34",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Grama Panchayath Adyar",
+        "warehouse_id": "ddmp_shelter_35",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Grama Chavadi",
+        "warehouse_id": "ddmp_shelter_36",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZPHPSchool Karambar",
+        "warehouse_id": "ddmp_shelter_37",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Panchayath Office Soorinje",
+        "warehouse_id": "ddmp_shelter_38",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "GHPSchool Panjimogaru",
+        "warehouse_id": "ddmp_shelter_39",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Vidyanagara School",
+        "warehouse_id": "ddmp_shelter_40",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Marakada HPSchool",
+        "warehouse_id": "ddmp_shelter_41",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Kunjathbail HPSchool",
+        "warehouse_id": "ddmp_shelter_42",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZP Model HPSchool Jokatte",
+        "warehouse_id": "ddmp_shelter_43",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "DKZP HPSchool Chelair",
+        "warehouse_id": "ddmp_shelter_44",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Kulur Church HP School",
+        "warehouse_id": "ddmp_shelter_45",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Aided HPSchool Uliya Kenjar village",
+        "warehouse_id": "ddmp_shelter_46",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "name": "Bhandar House school Mudushedde",
+        "warehouse_id": "ddmp_shelter_47",
+        "confidence": "medium",
+        "source": "ddmp-designated",
+        "route_origin": false,
+        "geocode_status": "unresolved",
+        "ddmp_source": "https://dk.nic.in/en/disaster-management/; District Disaster Management Plan 2022-23, pp. 58-60",
+        "confidence_note": "Named in the DDMP Safe Shelter table; facility coordinate not independently matched to an OSM point yet. Listed shelter is a candidate relief site, not a verified supply warehouse."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          74.83935,
+          12.86431
+        ]
+      },
+      "properties": {
+        "name": "Mini Town Hall, Mangaluru",
+        "warehouse_id": "mini_town_hall_mangaluru",
+        "confidence": "high",
+        "source": "event-confirmed",
+        "route_origin": true,
+        "event_source": "https://www.deccanherald.com/india/karnataka/as-heavy-rains-lash-mangaluru-flood-victims-worry-for-their-homes-3587163",
+        "osm_feature": "Town Hall, amenity=townhall, OSM way 184750322",
+        "osm_url": "https://www.openstreetmap.org/way/184750322",
+        "geocode_method": "OSM amenity=townhall feature; Nominatim exact-name lookup returned no result",
+        "confidence_note": "The cited report confirms a relief centre at Mini Town Hall. OSM maps a nearby Town Hall way tagged amenity=townhall; the OSM feature name omits “Mini”. The event report located is dated 15 June 2025, not a 2026 report."
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          75.0461226,
+          12.8726788
+        ]
+      },
+      "properties": {
+        "name": "Panemangaluru relief centre (Sharada High School)",
+        "warehouse_id": "panemangaluru_sharada_relief_centre",
+        "confidence": "high",
+        "source": "event-confirmed",
+        "route_origin": true,
+        "event_source": "https://newskarnataka.com/mangaluru/bantwal-on-flood-alert-as-netravati-nears-danger-mark/02082026/",
+        "osm_feature": "Panemangaluru, OSM node 922121551",
+        "osm_url": "https://www.openstreetmap.org/node/922121551",
+        "geocode_method": "reused locality_geocoding_log.csv automatic OSM place point",
+        "location_precision": "locality point, not building point",
+        "confidence_note": "The 2 Aug 2026 report names Panemangalore Sharada High School as a relief centre. Coordinate is the requested Panemangaluru OSM locality point, not a precise school-building coordinate."
+      }
+    }
+  ],
+  "resolution_status": "partial",
+  "note": "Confirmed relief-site candidates are included with source and location precision. Null-geometry DDMP facilities remain excluded from routing."
+}

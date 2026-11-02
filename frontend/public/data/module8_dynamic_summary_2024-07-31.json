@@ -1,0 +1,500 @@
+{
+  "event_date": "2024-07-31",
+  "steps": 8,
+  "zone_metadata": {
+    "event_date": "2024-07-31",
+    "zone_count": 16,
+    "mangaluru_ward_count": 0,
+    "zone_method": "16-cell regular grid clipped to Bantwal and checked for valid SAR coverage on every event date",
+    "population_method": "sum of WorldPop 2025 constrained 1 km population-count pixels within each Bantwal grid cell; unadjusted modeled estimate",
+    "analysis_zone_geojson": "C:\\GitHub\\ResQ\\data\\processed\\zones_module8_analysis_grid.geojson"
+  },
+  "disruption_model": "event-specific verified Module 7 closure geometry is removed from the cached OSM graph at the configured activation step; affected zones are identified by polygon intersection and route detours; a bounded hazard ramp and inventory depletion continue between rounds",
+  "road_network_note": "Real verified closure geometries remove directed cached graph edges; route changes and affected zones are recorded. Closure coordinates may be corridor-level rather than pinpoint flood points.",
+  "module7_closure_impact": {
+    "verified_closures": [
+      {
+        "closure_id": "2024-07-31_1",
+        "name": "NH at Panjala Uppinangady submerged",
+        "geometry_type": "MultiLineString",
+        "osm_way_ids": [
+          "1547134553",
+          "1361360021",
+          "134782103",
+          "1348732768",
+          "1361360022",
+          "1348732785",
+          "1348732770"
+        ]
+      }
+    ],
+    "removed_directed_edges": 35,
+    "closure_radius_m": 35.0,
+    "impacted_zone_ids": [],
+    "route_effects_by_zone": {
+      "bantwal_grid_01": {
+        "baseline_distance_m": 14496.163805528524,
+        "closed_distance_m": 14496.163805528524,
+        "route_changed": false,
+        "target_snap_distance_m": 495.867505780641
+      },
+      "bantwal_grid_02": {
+        "baseline_distance_m": 13666.047079772796,
+        "closed_distance_m": 13666.047079772796,
+        "route_changed": false,
+        "target_snap_distance_m": 605.1037917540268
+      },
+      "bantwal_grid_03": {
+        "baseline_distance_m": 17083.034189107493,
+        "closed_distance_m": 17083.034189107493,
+        "route_changed": false,
+        "target_snap_distance_m": 190.47035344205116
+      },
+      "bantwal_grid_04": {
+        "baseline_distance_m": 19209.210163522595,
+        "closed_distance_m": 19209.210163522595,
+        "route_changed": false,
+        "target_snap_distance_m": 1049.3197816927873
+      },
+      "bantwal_grid_05": {
+        "baseline_distance_m": 10821.017505407759,
+        "closed_distance_m": 10821.017505407759,
+        "route_changed": false,
+        "target_snap_distance_m": 450.7620003433539
+      },
+      "bantwal_grid_06": {
+        "baseline_distance_m": 3910.548000809103,
+        "closed_distance_m": 3910.548000809103,
+        "route_changed": false,
+        "target_snap_distance_m": 215.7193716126351
+      },
+      "bantwal_grid_07": {
+        "baseline_distance_m": 12978.372721140016,
+        "closed_distance_m": 12978.372721140016,
+        "route_changed": false,
+        "target_snap_distance_m": 91.51660307430416
+      },
+      "bantwal_grid_08": {
+        "baseline_distance_m": 21426.018684135208,
+        "closed_distance_m": 21426.018684135208,
+        "route_changed": false,
+        "target_snap_distance_m": 506.76032486929427
+      },
+      "bantwal_grid_09": {
+        "baseline_distance_m": null,
+        "closed_distance_m": null,
+        "route_changed": false,
+        "target_snap_distance_m": 207.7581353889535
+      },
+      "bantwal_grid_10": {
+        "baseline_distance_m": 11345.731207781837,
+        "closed_distance_m": 11345.731207781837,
+        "route_changed": false,
+        "target_snap_distance_m": 682.329960874021
+      },
+      "bantwal_grid_11": {
+        "baseline_distance_m": 13020.348989298443,
+        "closed_distance_m": 13020.348989298443,
+        "route_changed": false,
+        "target_snap_distance_m": 279.34893198884
+      },
+      "bantwal_grid_12": {
+        "baseline_distance_m": 20332.8752417148,
+        "closed_distance_m": 20332.8752417148,
+        "route_changed": false,
+        "target_snap_distance_m": 815.3101178164248
+      },
+      "bantwal_grid_13": {
+        "baseline_distance_m": 25934.241063702644,
+        "closed_distance_m": 25934.241063702644,
+        "route_changed": false,
+        "target_snap_distance_m": 224.6075865265175
+      },
+      "bantwal_grid_14": {
+        "baseline_distance_m": 27915.270949921978,
+        "closed_distance_m": 27915.270949921978,
+        "route_changed": false,
+        "target_snap_distance_m": 179.73601400113094
+      },
+      "bantwal_grid_15": {
+        "baseline_distance_m": 20332.877502977986,
+        "closed_distance_m": 20332.877502977986,
+        "route_changed": false,
+        "target_snap_distance_m": 136.4383848065517
+      },
+      "bantwal_grid_16": {
+        "baseline_distance_m": 25368.21437727204,
+        "closed_distance_m": 25368.21437727204,
+        "route_changed": false,
+        "target_snap_distance_m": 413.54993967377874
+      }
+    },
+    "method": "cached Module 7 graph edge removal; zone polygon intersection and multi-source shortest-route comparison"
+  },
+  "closure_activation_step": 2,
+  "shortage_threshold": 0.2,
+  "escalation_redirect_pct": 0.15,
+  "fairness_floor_pct_for_stopgap": 40.0,
+  "module9": {
+    "integrated": true,
+    "alert_log": "C:\\GitHub\\ResQ\\data\\processed\\escalation_log_2024-07-31.csv",
+    "reallocation_log": "C:\\GitHub\\ResQ\\data\\processed\\escalation_reallocation_2024-07-31.csv",
+    "redirect_trace_paths": {
+      "MILP": "C:\\GitHub\\ResQ\\data\\processed\\module9_redirect_trace_2024-07-31_MILP.csv",
+      "LinUCB_contextual_bandit": "C:\\GitHub\\ResQ\\data\\processed\\module9_redirect_trace_2024-07-31_LinUCB_contextual_bandit.csv",
+      "naive_proportional_baseline": "C:\\GitHub\\ResQ\\data\\processed\\module9_redirect_trace_2024-07-31_naive_proportional_baseline.csv"
+    },
+    "trigger_count": 24,
+    "transfer_count": 23,
+    "engines": {
+      "MILP": {
+        "trigger_count": 8,
+        "trigger_steps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "transfer_count": 8,
+        "mean_min_zone_coverage_before_pct": 26.787522448594036,
+        "mean_min_zone_coverage_after_pct": 26.787522448594036,
+        "mean_coverage_change_pct_points": 0.0
+      },
+      "LinUCB_contextual_bandit": {
+        "trigger_count": 8,
+        "trigger_steps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "transfer_count": 15,
+        "mean_min_zone_coverage_before_pct": 0.06061382429469553,
+        "mean_min_zone_coverage_after_pct": 0.09930175134366476,
+        "mean_coverage_change_pct_points": 0.03868792704896923
+      },
+      "naive_proportional_baseline": {
+        "trigger_count": 8,
+        "trigger_steps": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "transfer_count": 0,
+        "mean_min_zone_coverage_before_pct": 26.78718679071298,
+        "mean_min_zone_coverage_after_pct": 26.78718679071298,
+        "mean_coverage_change_pct_points": 0.0
+      }
+    }
+  },
+  "linucb_training": {
+    "episodes_per_resource": 720,
+    "base_synthetic_episodes": 120,
+    "broad_augmentation_episodes": 600,
+    "event_vectors": [
+      "2019-08-10",
+      "2024-07-31",
+      "2026-08-03"
+    ],
+    "training_wall_time_seconds": 9.017046799999662,
+    "basis": "synthetic perturbations across all three event demand vectors; not observed realizations"
+  },
+  "zone_shortfall_csv": "C:\\GitHub\\ResQ\\data\\processed\\module8_dynamic_zone_unmet_2024-07-31.csv",
+  "engines": {
+    "MILP": {
+      "cumulative_solve_or_inference_seconds": 0.013805300055537373,
+      "mean_step_seconds": 0.0017256625069421716,
+      "mean_step_unmet_demand_pct": 63.43872246986359,
+      "mean_step_weighted_service_objective": 60.18407356485149,
+      "final_minimum_zone_coverage_pct": 24.723774674461485,
+      "final_remaining_inventory": {
+        "food_rations": 0,
+        "medical_kits": 384,
+        "water_liters": 0
+      },
+      "final_per_zone_unmet": {
+        "bantwal_grid_01": {
+          "food_rations": 262,
+          "water_liters": 6631,
+          "medical_kits": 0
+        },
+        "bantwal_grid_02": {
+          "food_rations": 4079,
+          "water_liters": 20399,
+          "medical_kits": 0
+        },
+        "bantwal_grid_03": {
+          "food_rations": 1460,
+          "water_liters": 13961,
+          "medical_kits": 0
+        },
+        "bantwal_grid_04": {
+          "food_rations": 112,
+          "water_liters": 2844,
+          "medical_kits": 0
+        },
+        "bantwal_grid_05": {
+          "food_rations": 3918,
+          "water_liters": 19593,
+          "medical_kits": 0
+        },
+        "bantwal_grid_06": {
+          "food_rations": 10265,
+          "water_liters": 52664,
+          "medical_kits": 0
+        },
+        "bantwal_grid_07": {
+          "food_rations": 3211,
+          "water_liters": 16058,
+          "medical_kits": 0
+        },
+        "bantwal_grid_08": {
+          "food_rations": 422,
+          "water_liters": 10677,
+          "medical_kits": 0
+        },
+        "bantwal_grid_09": {
+          "food_rations": 8,
+          "water_liters": 210,
+          "medical_kits": 0
+        },
+        "bantwal_grid_10": {
+          "food_rations": 4539,
+          "water_liters": 22699,
+          "medical_kits": 0
+        },
+        "bantwal_grid_11": {
+          "food_rations": 5758,
+          "water_liters": 28964,
+          "medical_kits": 0
+        },
+        "bantwal_grid_12": {
+          "food_rations": 411,
+          "water_liters": 10383,
+          "medical_kits": 0
+        },
+        "bantwal_grid_13": {
+          "food_rations": 136,
+          "water_liters": 825,
+          "medical_kits": 0
+        },
+        "bantwal_grid_14": {
+          "food_rations": 303,
+          "water_liters": 7659,
+          "medical_kits": 0
+        },
+        "bantwal_grid_15": {
+          "food_rations": 457,
+          "water_liters": 11557,
+          "medical_kits": 0
+        },
+        "bantwal_grid_16": {
+          "food_rations": 326,
+          "water_liters": 3191,
+          "medical_kits": 0
+        }
+      }
+    },
+    "LinUCB_contextual_bandit": {
+      "cumulative_solve_or_inference_seconds": 0.02458900009514764,
+      "mean_step_seconds": 0.003073625011893455,
+      "mean_step_unmet_demand_pct": 63.43872246986359,
+      "mean_step_weighted_service_objective": 61.609998136507585,
+      "final_minimum_zone_coverage_pct": 0.2988565488565489,
+      "final_remaining_inventory": {
+        "food_rations": 0,
+        "medical_kits": 384,
+        "water_liters": 0
+      },
+      "final_per_zone_unmet": {
+        "bantwal_grid_01": {
+          "food_rations": 262,
+          "water_liters": 1312,
+          "medical_kits": 0
+        },
+        "bantwal_grid_02": {
+          "food_rations": 2420,
+          "water_liters": 26999,
+          "medical_kits": 0
+        },
+        "bantwal_grid_03": {
+          "food_rations": 553,
+          "water_liters": 2762,
+          "medical_kits": 0
+        },
+        "bantwal_grid_04": {
+          "food_rations": 112,
+          "water_liters": 562,
+          "medical_kits": 0
+        },
+        "bantwal_grid_05": {
+          "food_rations": 2706,
+          "water_liters": 25565,
+          "medical_kits": 0
+        },
+        "bantwal_grid_06": {
+          "food_rations": 13857,
+          "water_liters": 69361,
+          "medical_kits": 0
+        },
+        "bantwal_grid_07": {
+          "food_rations": 635,
+          "water_liters": 21247,
+          "medical_kits": 0
+        },
+        "bantwal_grid_08": {
+          "food_rations": 422,
+          "water_liters": 2113,
+          "medical_kits": 0
+        },
+        "bantwal_grid_09": {
+          "food_rations": 8,
+          "water_liters": 42,
+          "medical_kits": 0
+        },
+        "bantwal_grid_10": {
+          "food_rations": 5478,
+          "water_liters": 29614,
+          "medical_kits": 0
+        },
+        "bantwal_grid_11": {
+          "food_rations": 7673,
+          "water_liters": 38358,
+          "medical_kits": 0
+        },
+        "bantwal_grid_12": {
+          "food_rations": 411,
+          "water_liters": 2054,
+          "medical_kits": 0
+        },
+        "bantwal_grid_13": {
+          "food_rations": 136,
+          "water_liters": 682,
+          "medical_kits": 0
+        },
+        "bantwal_grid_14": {
+          "food_rations": 303,
+          "water_liters": 1515,
+          "medical_kits": 0
+        },
+        "bantwal_grid_15": {
+          "food_rations": 457,
+          "water_liters": 4105,
+          "medical_kits": 0
+        },
+        "bantwal_grid_16": {
+          "food_rations": 234,
+          "water_liters": 2024,
+          "medical_kits": 0
+        }
+      }
+    },
+    "naive_proportional_baseline": {
+      "cumulative_solve_or_inference_seconds": 0.0005091000348329544,
+      "mean_step_seconds": 6.36375043541193e-05,
+      "mean_step_unmet_demand_pct": 63.43872246986359,
+      "mean_step_weighted_service_objective": 59.446788249360246,
+      "final_minimum_zone_coverage_pct": 24.72319916634102,
+      "final_remaining_inventory": {
+        "food_rations": 0,
+        "medical_kits": 384,
+        "water_liters": 0
+      },
+      "final_per_zone_unmet": {
+        "bantwal_grid_01": {
+          "food_rations": 1035,
+          "water_liters": 6631,
+          "medical_kits": 0
+        },
+        "bantwal_grid_02": {
+          "food_rations": 3187,
+          "water_liters": 20399,
+          "medical_kits": 0
+        },
+        "bantwal_grid_03": {
+          "food_rations": 2182,
+          "water_liters": 13961,
+          "medical_kits": 0
+        },
+        "bantwal_grid_04": {
+          "food_rations": 444,
+          "water_liters": 2844,
+          "medical_kits": 0
+        },
+        "bantwal_grid_05": {
+          "food_rations": 3061,
+          "water_liters": 19593,
+          "medical_kits": 0
+        },
+        "bantwal_grid_06": {
+          "food_rations": 8228,
+          "water_liters": 52663,
+          "medical_kits": 0
+        },
+        "bantwal_grid_07": {
+          "food_rations": 2509,
+          "water_liters": 16058,
+          "medical_kits": 0
+        },
+        "bantwal_grid_08": {
+          "food_rations": 1668,
+          "water_liters": 10677,
+          "medical_kits": 0
+        },
+        "bantwal_grid_09": {
+          "food_rations": 32,
+          "water_liters": 210,
+          "medical_kits": 0
+        },
+        "bantwal_grid_10": {
+          "food_rations": 3546,
+          "water_liters": 22699,
+          "medical_kits": 0
+        },
+        "bantwal_grid_11": {
+          "food_rations": 4525,
+          "water_liters": 28964,
+          "medical_kits": 0
+        },
+        "bantwal_grid_12": {
+          "food_rations": 1622,
+          "water_liters": 10383,
+          "medical_kits": 0
+        },
+        "bantwal_grid_13": {
+          "food_rations": 129,
+          "water_liters": 825,
+          "medical_kits": 0
+        },
+        "bantwal_grid_14": {
+          "food_rations": 1196,
+          "water_liters": 7659,
+          "medical_kits": 0
+        },
+        "bantwal_grid_15": {
+          "food_rations": 1805,
+          "water_liters": 11558,
+          "medical_kits": 0
+        },
+        "bantwal_grid_16": {
+          "food_rations": 498,
+          "water_liters": 3191,
+          "medical_kits": 0
+        }
+      }
+    }
+  }
+}
