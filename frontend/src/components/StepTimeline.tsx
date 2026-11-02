@@ -1,32 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { AlertOctagon, Pause, Play, SkipBack, SkipForward, Zap } from 'lucide-react';
+import { AlertOctagon, Pause, Play, SkipBack, SkipForward } from 'lucide-react';
 import { StepRecord } from '../types';
 
 interface StepTimelineProps {
   currentStep: number;
   totalSteps?: number;
   onStepChange: (stepIndex: number) => void;
-  closureStep?: number;
   stepsData: StepRecord[];
   isClosureApplied: boolean;
-  onTriggerClosure?: () => void;
-  canTriggerClosure?: boolean;
 }
 
 export const StepTimeline: React.FC<StepTimelineProps> = ({
   currentStep,
   totalSteps = 8,
   onStepChange,
-  closureStep = 1,
   stepsData,
   isClosureApplied,
-  onTriggerClosure,
-  canTriggerClosure = false,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const activeStepData = stepsData[currentStep];
-  const closureIsActive = isClosureApplied && currentStep >= closureStep;
+  const closureIsActive = isClosureApplied;
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -108,24 +102,6 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
               <AlertOctagon size={12} /> Closure active
             </span>
           )}
-          {onTriggerClosure && (
-            <button
-              className={`closure-action ${isClosureApplied ? 'applied' : ''}`}
-              onClick={onTriggerClosure}
-              disabled={!canTriggerClosure || isClosureApplied}
-              aria-label={isClosureApplied ? 'Closure Applied' : 'Apply Verified Closure'}
-              title={
-                canTriggerClosure
-                  ? isClosureApplied
-                    ? 'Verified closure already applied'
-                    : 'Apply the first verified closure and recalculate routes'
-                  : 'Operator role required'
-              }
-            >
-              <Zap size={12} />
-              {isClosureApplied ? 'Closure applied' : 'Apply closure'}
-            </button>
-          )}
         </div>
       </div>
 
@@ -137,15 +113,14 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
           style={{ transform: `scaleX(${currentStep / Math.max(1, totalSteps - 1)})` }}
         />
         {Array.from({ length: totalSteps }, (_, index) => {
-          const closurePoint = index === closureStep;
           return (
             <button
               key={index}
-              className={`step-point ${index === currentStep ? 'current' : index < currentStep ? 'passed' : ''} ${closurePoint ? 'closure-point' : ''}`}
+              className={`step-point ${index === currentStep ? 'current' : index < currentStep ? 'passed' : ''}`}
               onClick={() => onStepChange(index)}
-              aria-label={`Round ${index + 1}${closurePoint ? ', closure step' : ''}`}
+              aria-label={`Round ${index + 1}`}
               aria-current={index === currentStep ? 'step' : undefined}
-              title={closurePoint ? 'Verified road closure step' : `Round ${index + 1}`}
+              title={`Round ${index + 1}`}
             >
               <span>{index + 1}</span>
             </button>

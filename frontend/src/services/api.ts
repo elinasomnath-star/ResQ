@@ -288,29 +288,23 @@ class ResQApiClient {
     if (this.isOfflineMode) {
       return this.offlineSimulate(eventDate, resolvedEngine, resolvedStockMode);
     }
-    try {
-      const res = await fetch(`${API_BASE}/simulate`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({ event: eventDate, engine: resolvedEngine, stock_mode: resolvedStockMode }),
-      });
-      if (res.status === 401) {
-        throw new Error('unauthorized');
-      }
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail?.message || 'Simulation solve failed');
-      }
-      const data = await res.json();
-      // Fetch the generated allocations
-      const allocRes = await this.getAllocations(data.run_id);
-      data.allocations = allocRes.allocations;
-      return data;
-    } catch (err: any) {
-      if (err.message === 'unauthorized') throw err;
-      return this.offlineSimulate(eventDate, resolvedEngine, resolvedStockMode);
+    const res = await fetch(`${API_BASE}/simulate`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({ event: eventDate, engine: resolvedEngine, stock_mode: resolvedStockMode }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail?.message || `Simulation solve failed (${res.status})`);
     }
+    const data = await res.json();
+    // Fetch the generated allocations. A failed live call must remain visible;
+    // silently substituting an offline snapshot makes the closure action fail
+    // later with an opaque offline_run_* error.
+    const allocRes = await this.getAllocations(data.run_id);
+    data.allocations = allocRes.allocations;
+    return data;
   }
 
   private async offlineSimulate(
@@ -368,7 +362,10 @@ class ResQApiClient {
     };
   }
 
-  public async getAllocations(runId: string): Promise<{ allocations: AllocationRow[] }> {
+  public async getAllocations(runId: string): Promise<{
+    allocations: AllocationRow[];
+    available_inventory?: { food_rations: number; water_liters: number; medical_kits: number };
+  }> {
     if (this.isOfflineMode || runId.startsWith('offline_run_')) {
       const parts = runId.split('_');
       const eventDate = parts[2] || '2019-08-10';
@@ -382,6 +379,30 @@ class ResQApiClient {
       credentials: 'include',
     });
     if (!res.ok) throw new Error('Allocations unavailable');
+    return res.json();
+  }
+
+  public async rerouteRoadScenario(scenarioId: string): Promise<{ scenario_id: string; blocked_road: string; route_count: number; routes: RouteFeature[] }> {
+    if (this.currentUser?.role !== 'operator') {
+      throw new Error('Operator role required to block roads and reroute.');
+    }
+    if (this.isOfflineMode) {
+      throw new Error('Connect the ResQ API to block this Bantwal road and calculate live detours.');
+    }
+    const res = await fetch(`${API_BASE}/scenario-reroutes`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({ scenario_id: scenarioId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const detail = typeof err.detail === 'string' ? err.detail : err.detail?.message;
+      if (res.status === 404 && detail === 'Not Found') {
+        throw new Error('The running ResQ API is outdated. Restart or rebuild the backend to enable fast road rerouting.');
+      }
+      throw new Error(detail || `Road scenario rerouting failed (HTTP ${res.status}).`);
+    }
     return res.json();
   }
 
@@ -779,23 +800,15 @@ class ResQApiClient {
   }
 
   public async getScenarios(): Promise<Scenario[]> {
-    if (!this.isOfflineMode) {
-      try {
-        const res = await fetch(`${API_BASE}/scenarios`, {
-          headers: this.getHeaders(),
-          credentials: 'include',
-        });
-        if (res.ok) {
-          const data = await res.json();
-          return Array.isArray(data) ? data : (data.scenarios || []);
-        }
-      } catch {
-        // Fallback
-      }
-    }
+    const normalizeScenarios = (rows: any[]): Scenario[] => rows
+      .filter((scenario) => Boolean(scenario.closure_id))
+      .map((scenario) => ({
+        ...scenario,
+        category: scenario.category || scenario.type || 'road_closure',
+      }));
     const res = await fetch(`/data/scenarios.json`);
     const data = await res.json();
-    return data.scenarios || data;
+    return normalizeScenarios(data.scenarios || data);
   }
 
   public async runScenario(scenarioId: string, seed?: number): Promise<ScenarioResult> {

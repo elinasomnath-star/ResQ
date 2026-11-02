@@ -5,7 +5,43 @@ import { api } from '../services/api';
 interface ScenarioDeckProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectScenario: (scenario: Scenario, seed?: number) => void;
+  onSelectScenario: (scenario: Scenario, seed?: number) => void | Promise<void>;
+}
+
+function scenarioHighlights(result: ScenarioResult): string[] {
+  if (result.category === 'road_closure') {
+    return ['Mapped main road blocked', 'Live Bantwal routes recalculated'];
+  }
+  const payload = result as unknown as Record<string, any>;
+  const metrics = payload.results?.MILP
+    ?? payload.surge_impact?.post_surge_metrics
+    ?? payload.stock_loss_impact?.post_loss_metrics
+    ?? payload.noise_impact?.metrics
+    ?? payload.custom_results?.MILP
+    ?? null;
+  if (metrics) {
+    const highlights: string[] = [];
+    const unmet = Number(metrics.aggregate_unmet_demand_pct);
+    const minimum = Number(metrics.minimum_zone_fairness_pct ?? metrics.minimum_zone_coverage_pct);
+    if (Number.isFinite(unmet)) highlights.push(`Unmet demand ${unmet.toFixed(1)}%`);
+    if (Number.isFinite(minimum)) highlights.push(`Minimum zone coverage ${minimum.toFixed(1)}%`);
+    if (Number.isFinite(Number(metrics.solve_or_inference_time_seconds))) {
+      highlights.push(`Solve ${Number(metrics.solve_or_inference_time_seconds).toFixed(3)} s`);
+    }
+    if (highlights.length) return highlights;
+  }
+  if (Array.isArray(payload.ladder_results)) {
+    const tiers = payload.ladder_results;
+    const finalTier = tiers.at(-1);
+    return [
+      `${tiers.length} stock tiers evaluated`,
+      finalTier ? `At ${finalTier.stock_pct}% stock: ${Number(finalTier.MILP?.unmet_pct ?? 0).toFixed(1)}% unmet` : '',
+    ].filter(Boolean);
+  }
+  if (payload.routing_impact) {
+    return [`${Number(payload.routing_impact.unreachable_zone_count ?? 0)} zones marked unreachable in the hypothetical stress case`];
+  }
+  return ['Scenario run completed with the selected event assumptions.'];
 }
 
 export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
@@ -57,9 +93,22 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
     setError(null);
     setResult(null);
     try {
-      const res = await api.runScenario(sc.id, randomSeed);
-      setResult(res);
-      onSelectScenario(sc, randomSeed);
+      if (sc.closure_id) {
+        await onSelectScenario(sc, randomSeed);
+        setResult({
+          scenario_id: sc.id,
+          scenario_title: sc.title,
+          category: sc.category || 'road_closure',
+          event_date: sc.event_date,
+          seed: randomSeed,
+          summary: {},
+          disclaimer: sc.assumptions_statement || '',
+        });
+      } else {
+        const res = await api.runScenario(sc.id, randomSeed);
+        setResult(res);
+        await onSelectScenario(sc, randomSeed);
+      }
     } catch (err: any) {
       setError(err.message || 'Execution failed');
     } finally {
@@ -78,11 +127,11 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-bold tracking-tight text-white">Scenario Evaluation Deck</h2>
               <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                7 Pre-Configured Benchmark Scenarios
+                3 Bantwal Road Blockage Scenarios
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Explore documented disaster replays and stress-test routing and allocation models under simulated extreme constraints.
+              Block mapped Bantwal roads and recalculate relief routes across the local road network.
             </p>
           </div>
           <button
@@ -112,7 +161,7 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
           </div>
           {isOffline && (
             <span className="px-2 py-0.5 rounded text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/30">
-              Offline Mode: Live custom execution disabled; displaying precomputed benchmarks
+              Road blockage scenarios need the live API to recalculate routes
             </span>
           )}
         </div>
@@ -127,18 +176,23 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
               (Array.isArray(scenarios) ? scenarios : []).map((sc) => {
                 const isSelected = selectedScenario?.id === sc.id;
                 const isCompSelected = comparisonScenario?.id === sc.id;
-                const isReplay = sc.category === 'documented_replay';
+                const isReplay = sc.category === 'road_closure';
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={sc.id}
+                    aria-pressed={isSelected}
+                    aria-label={`Run scenario: ${sc.title}`}
+                    disabled={executing}
                     onClick={() => {
                       if (isComparing && selectedScenario && selectedScenario.id !== sc.id) {
                         setComparisonScenario(sc);
                       } else {
                         setSelectedScenario(sc);
+                        void handleRunScenario(sc);
                       }
                     }}
-                    className={`p-3.5 rounded-xl border cursor-pointer transition flex flex-col gap-2 ${
+                    className={`w-full text-left p-3.5 rounded-xl border cursor-pointer transition flex flex-col gap-2 disabled:opacity-60 ${
                       isSelected
                         ? 'bg-indigo-950/40 border-indigo-500 shadow-md ring-1 ring-indigo-500/40'
                         : isCompSelected
@@ -155,17 +209,17 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
                             : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                         }`}
                       >
-                        {isReplay ? 'Documented Replay' : 'Hypothetical What-If'}
+                        {isReplay ? 'Bantwal Road Blockage' : 'Hypothetical What-If'}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
                       {sc.description}
                     </p>
                     <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono mt-1">
-                      <span>Event: {sc.event_date}</span>
-                      <span>ID: {sc.id}</span>
+                      <span>Map: Bantwal</span>
+                      <span>{String(sc.parameters?.highway || 'main road').toUpperCase()}</span>
                     </div>
-                  </div>
+                  </button>
                 );
               })
             )}
@@ -181,13 +235,13 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
                       <h3 className="text-base font-bold text-white">{selectedScenario.title}</h3>
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          selectedScenario.category === 'documented_replay'
+                          selectedScenario.category === 'road_closure'
                             ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                             : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                         }`}
                       >
-                        {selectedScenario.category === 'documented_replay'
-                          ? 'Documented Replay'
+                        {selectedScenario.category === 'road_closure'
+                          ? 'Bantwal Road Blockage'
                           : 'Hypothetical What-If'}
                       </span>
                     </div>
@@ -224,13 +278,13 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
                     <div className="grid grid-cols-2 gap-3 text-[11px] font-mono bg-slate-900 p-3 rounded-lg border border-slate-800">
                       <div>
                         <strong className="text-indigo-400 block mb-1">{selectedScenario.title}:</strong>
-                        <div>Event: {selectedScenario.event_date}</div>
+                        <div>Map: Bantwal</div>
                         <div>Category: {selectedScenario.category}</div>
                         <div>Stock Level: {selectedScenario.parameters?.stock_pct ?? 100}%</div>
                       </div>
                       <div>
                         <strong className="text-teal-400 block mb-1">{comparisonScenario.title}:</strong>
-                        <div>Event: {comparisonScenario.event_date}</div>
+                        <div>Map: Bantwal</div>
                         <div>Category: {comparisonScenario.category}</div>
                         <div>Stock Level: {comparisonScenario.parameters?.stock_pct ?? 100}%</div>
                       </div>
@@ -248,20 +302,30 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
                   {result && (
                     <div className="bg-emerald-950/40 border border-emerald-800/80 p-3 rounded-lg text-xs text-emerald-200 flex flex-col gap-1">
                       <div className="font-bold flex items-center justify-between">
-                        <span>✅ Scenario Run Completed (Seed: {result.seed ?? randomSeed})</span>
-                        <span className="font-mono text-[10px] text-emerald-400">{result.event_date}</span>
+                        <span>Road blocked · routes recalculated</span>
+                        <span className="font-mono text-[10px] text-emerald-400">Bantwal network</span>
                       </div>
-                      <p className="text-[11px] text-emerald-300/90">{result.disclaimer}</p>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+                        {isOffline ? 'Saved result · offline' : 'Live API run'}
+                      </span>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-[11px] text-emerald-100">
+                        {scenarioHighlights(result).map((highlight) => <span key={highlight}>{highlight}</span>)}
+                      </div>
+                      {(result as unknown as Record<string, any>).honesty_label && (
+                        <p className="pt-1 text-[10px] text-emerald-300/80">
+                          {(result as unknown as Record<string, any>).honesty_label}
+                        </p>
+                      )}
                     </div>
                   )}
 
                   <div className="flex items-center justify-end gap-3">
                     <button
-                      disabled={executing || (isOffline && selectedScenario.id !== 'scarcity_ladder')}
+                      disabled={executing}
                       onClick={() => handleRunScenario(selectedScenario)}
                       className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md transition disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {executing ? 'Executing Scenario...' : `Execute "${selectedScenario.title}"`}
+                      {executing ? 'Blocking road and recalculating routes...' : 'Run road blockage live'}
                     </button>
                   </div>
                 </div>

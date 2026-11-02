@@ -181,32 +181,35 @@ export const RightDrawer: React.FC<RightDrawerProps> = ({
           {
             icon: <Package className="w-3 h-3 text-amber-400" />,
             label: 'Food Rations',
-            alloc: foodAlloc?.allocated ?? zone.estimated_food_rations,
-            need: zone.estimated_food_rations,
+            alloc: Math.min(foodAlloc?.estimated_need ?? zone.estimated_food_rations, Math.max(0, foodAlloc?.allocated ?? 0)),
+            need: foodAlloc?.estimated_need ?? zone.estimated_food_rations,
+            loaded: Boolean(foodAlloc),
             barColor: 'bg-amber-400',
           },
           {
             icon: <Droplets className="w-3 h-3 text-accent-cyan" />,
             label: 'Water (Litres)',
-            alloc: waterAlloc?.allocated ?? zone.estimated_water_liters,
-            need: zone.estimated_water_liters,
+            alloc: Math.min(waterAlloc?.estimated_need ?? zone.estimated_water_liters, Math.max(0, waterAlloc?.allocated ?? 0)),
+            need: waterAlloc?.estimated_need ?? zone.estimated_water_liters,
+            loaded: Boolean(waterAlloc),
             barColor: 'bg-accent-cyan',
           },
           {
             icon: <HeartPulse className="w-3 h-3 text-rose-400" />,
             label: 'Medical Kits',
-            alloc: medicalAlloc?.allocated ?? zone.estimated_medical_kits,
-            need: zone.estimated_medical_kits,
+            alloc: Math.min(medicalAlloc?.estimated_need ?? zone.estimated_medical_kits, Math.max(0, medicalAlloc?.allocated ?? 0)),
+            need: medicalAlloc?.estimated_need ?? zone.estimated_medical_kits,
+            loaded: Boolean(medicalAlloc),
             barColor: 'bg-rose-400',
           },
-        ].map(({ icon, label, alloc, need, barColor }) => (
+        ].map(({ icon, label, alloc, need, loaded, barColor }) => (
           <div key={label} className="space-y-1">
             <div className="flex items-center justify-between text-[11px]">
               <span className="flex items-center gap-1 text-text-secondary">
                 {icon} {label}
               </span>
               <span className="font-mono text-[10px]">
-                <span className="text-text-primary font-bold">{alloc}</span>
+                <span className="text-text-primary font-bold">{loaded ? alloc.toLocaleString() : '—'}</span>
                 <span className="text-text-muted"> / {need}</span>
               </span>
             </div>

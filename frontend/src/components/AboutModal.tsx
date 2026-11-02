@@ -77,9 +77,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
-                <span className="text-xs font-mono text-amber-400 uppercase tracking-wider">Corridor-Level Closures</span>
+                <span className="text-xs font-mono text-amber-400 uppercase tracking-wider">Mapped Bantwal Road Blockages</span>
                 <p className="text-xs text-slate-400">
-                  Road closures represent corridor-level disruptions mapped to OSM segments, rather than telemetry from real-time police checkpoints.
+                  Scenarios block verified road segments in the Bantwal OSM map and recalculate routes through the ResQ API. They are planning simulations, not live traffic or checkpoint feeds.
                 </p>
               </div>
             </div>

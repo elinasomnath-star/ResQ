@@ -167,7 +167,7 @@
   letter-spacing: -0.01em;
 }
 
-.step-closure-actions { display: flex; align-items: center; justify-content: flex-end; }
+.step-closure-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .closure-action {
   display: inline-flex;
   align-items: center;
@@ -191,6 +191,9 @@
 .closure-action:disabled { opacity: .5; cursor: not-allowed; }
 .closure-action.applied { color: #b7f1d8; background: rgba(38, 161, 112, .12); border-color: rgba(77, 210, 151, .32); }
 .closure-pill { display: inline-flex; align-items: center; gap: 5px; color: #ff8d9e; font-size: 11px; white-space: nowrap; }
+.closure-feedback { max-width: 220px; color: #d7e0ee; font: 500 10px/1.35 'Inter', sans-serif; }
+.closure-feedback.success { color: #a8ead0; }
+.closure-feedback.error { color: #ff9dac; }
 
 /* ── Circles perfectly centered on the line ────────────────────── */
 .step-scrubber {

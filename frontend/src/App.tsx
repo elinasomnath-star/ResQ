@@ -31,6 +31,7 @@ export function App() {
     const checkSession = async () => {
       try {
         const isHealthy = await api.checkBackendHealth();
+        api.setOfflineMode(!isHealthy);
         setOfflineMode(!isHealthy);
         const currentUser = await api.getMe();
         if (isMounted && currentUser) {

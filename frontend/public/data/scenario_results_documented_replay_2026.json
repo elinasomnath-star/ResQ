@@ -18,7 +18,7 @@
     },
     "MILP": {
       "engine": "MILP",
-      "solve_or_inference_time_seconds": 0.002932600036729127,
+      "solve_or_inference_time_seconds": 0.050145499990321696,
       "aggregate_unmet_demand_pct": 42.926371162853364,
       "food_rations_unmet_demand_pct": 55.48908592386853,
       "water_liters_unmet_demand_pct": 73.29002756469156,

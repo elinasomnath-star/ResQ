@@ -114,6 +114,7 @@ export interface SimulationResult {
   hard_fairness_target_status: string;
   summary: any;
   allocations?: AllocationRow[];
+  available_inventory?: { food_rations: number; water_liters: number; medical_kits: number };
   unroutable_candidate_facilities?: string[];
   stock_status_chip?: string;
 }
@@ -223,6 +224,7 @@ export interface Scenario {
   event_date: string;
   parameters: Record<string, any>;
   assumptions_statement?: string;
+  closure_id?: string;
 }
 
 export interface ScenarioResult {

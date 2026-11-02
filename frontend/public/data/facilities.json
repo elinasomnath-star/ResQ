@@ -2070,51 +2070,6 @@
     "has_stale_stock": false
   },
   {
-    "id": "someshwara_relief_centre",
-    "name": "Someshwara relief centre",
-    "type": "relief_center",
-    "lat": null,
-    "lon": null,
-    "source": "event-confirmed",
-    "confidence": "high",
-    "geometry_verified": false,
-    "is_routable": false,
-    "routing_flag": "unroutable",
-    "stock": [
-      {
-        "resource": "food_rations",
-        "quantity": 1000,
-        "unit": "rations",
-        "mode": "assumed",
-        "updated_by": "system_seed",
-        "updated_at": "2026-11-02T03:43:27.035466+00:00",
-        "is_stale": false,
-        "note": "Baseline assumed inventory"
-      },
-      {
-        "resource": "water_liters",
-        "quantity": 5000,
-        "unit": "liters",
-        "mode": "assumed",
-        "updated_by": "system_seed",
-        "updated_at": "2026-11-02T03:43:27.035466+00:00",
-        "is_stale": false,
-        "note": "Baseline assumed inventory"
-      },
-      {
-        "resource": "medical_kits",
-        "quantity": 20,
-        "unit": "kits",
-        "mode": "assumed",
-        "updated_by": "system_seed",
-        "updated_at": "2026-11-02T03:43:27.035466+00:00",
-        "is_stale": false,
-        "note": "Baseline assumed inventory"
-      }
-    ],
-    "has_stale_stock": false
-  },
-  {
     "id": "ddmp_shelter_09",
     "name": "Tippu Sultan Urdu Hna",
     "type": "relief_center",

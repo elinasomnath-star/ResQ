@@ -21,9 +21,63 @@ import {
 import { ZoneData, RouteFeature, EngineType, AllocationRow } from '../types';
 import Dock, { DockItem } from './reactbits/Dock';
 
+function closureMarkerCollection(collection: any, closureId: string | null) {
+  const feature = collection?.features?.find((item: any) => item.properties?.closure_id === closureId);
+  if (!feature?.geometry) return { type: 'FeatureCollection', features: [] } as const;
+  const parts: number[][][] = feature.geometry.type === 'LineString'
+    ? [feature.geometry.coordinates]
+    : feature.geometry.type === 'MultiLineString' ? feature.geometry.coordinates : [];
+  const configuredPoint = feature.properties?.closure_point;
+  if (Array.isArray(configuredPoint) && configuredPoint.length >= 2) {
+    return {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        properties: { closure_id: closureId },
+        geometry: { type: 'Point', coordinates: configuredPoint },
+      }],
+    } as const;
+  }
+  const longest = parts.reduce((best, part) => part.length > best.length ? part : best, [] as number[][]);
+  if (!longest.length) return { type: 'FeatureCollection', features: [] } as const;
+  const midpoint = longest[Math.floor((longest.length - 1) / 2)];
+  return {
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      properties: { closure_id: closureId },
+      geometry: { type: 'Point', coordinates: midpoint },
+    }],
+  } as const;
+}
+
 // Resolve the worker through Vite so the built/Docker frontend serves it as a
 // same-origin asset instead of relying on a runtime blob import.
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
+
+const MINI_TOWN_HALL_SCENARIO_ID = 'bantwal_netravati_bridge';
+const MINI_TOWN_HALL_NAME = 'Mini Town Hall';
+const MINI_TOWN_HALL_COORDINATES: [number, number] = [74.83935, 12.86431];
+
+function fitReliefSiteBounds(
+  map: maplibregl.Map,
+  bounds: [number, number, number, number],
+  includeMiniTownHall: boolean,
+  duration: number,
+) {
+  const [west, south, east, north] = bounds;
+  const viewportHeight = map.getContainer().clientHeight;
+  const overlayReserve = Math.min(320, Math.max(250, viewportHeight * 0.35));
+  const fittedBounds: [[number, number], [number, number]] = [
+    [includeMiniTownHall ? Math.min(west, MINI_TOWN_HALL_COORDINATES[0]) : west, south],
+    [east, north],
+  ];
+  map.fitBounds(fittedBounds, {
+    padding: { top: 72, right: 350, bottom: overlayReserve, left: 340 },
+    duration,
+    maxZoom: 11,
+  });
+}
 
 interface MapConsoleProps {
   selectedEvent: string;
@@ -32,6 +86,8 @@ interface MapConsoleProps {
   selectedZoneId: string | null;
   selectedEngine: EngineType;
   isClosureActive: boolean;
+  appliedClosureId?: string | null;
+  closureRouteChangeCount?: number | null;
   closureDetourInfo?: { beforeDistanceKm: number; afterDistanceKm: number } | null;
   allocations?: AllocationRow[];
   routes?: RouteFeature[];
@@ -46,6 +102,8 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
   selectedZoneId,
   selectedEngine,
   isClosureActive,
+  appliedClosureId = null,
+  closureRouteChangeCount = null,
   closureDetourInfo,
   allocations = [],
   routes = [],
@@ -55,10 +113,15 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const facilityLabelMarkersRef = useRef<maplibregl.Marker[]>([]);
+  const miniTownHallMarkerRef = useRef<maplibregl.Marker | null>(null);
+  const mapBoundsRef = useRef<[number, number, number, number] | null>(null);
   const zonesRef = useRef(zones);
   const routesRef = useRef(routes);
+  const appliedClosureIdRef = useRef(appliedClosureId);
   zonesRef.current = zones;
   routesRef.current = routes;
+  appliedClosureIdRef.current = appliedClosureId;
 
   // Layer Visibility States
   const [showZones, setShowZones] = useState(true);
@@ -99,7 +162,7 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
       pitch: 0,
       bearing: 0,
       attributionControl: { compact: true },
-      preserveDrawingBuffer: true,
+      canvasContextAttributes: { preserveDrawingBuffer: true },
     });
 
     map.on('load', async () => {
@@ -160,13 +223,8 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
         map.addSource('zones_source', { type: 'geojson', data: zonesGeo });
         const bounds = await fetch('/data/bantwal_map_bounds.json').then((r) => r.json());
         if (Array.isArray(bounds) && bounds.length === 4) {
-          const viewportHeight = map.getContainer().clientHeight;
-          const overlayReserve = Math.min(320, Math.max(250, viewportHeight * 0.35));
-          map.fitBounds([[bounds[0], bounds[1]], [bounds[2], bounds[3]]], {
-            padding: { top: 72, right: 350, bottom: overlayReserve, left: 340 },
-            duration: 0,
-            maxZoom: 11,
-          });
+          mapBoundsRef.current = bounds as [number, number, number, number];
+          fitReliefSiteBounds(map, mapBoundsRef.current, false, 0);
         }
 
         // Flat fill layer
@@ -281,43 +339,202 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
             'circle-opacity': 0.9,
           },
         });
-        map.addLayer({
-          id: 'facilities_labels_layer',
-          type: 'symbol',
-          source: 'facilities_source',
-          layout: {
-            'text-field': ['get', 'name'],
-            'text-size': 10,
-            'text-offset': [0, 1.3],
-            'text-anchor': 'top',
-            'text-max-width': 16,
-          },
-          paint: {
-            'text-color': '#F6E9C9',
-            'text-halo-color': '#101B18',
-            'text-halo-width': 1.5,
-          },
+
+        // Facility coordinates are close together in Bantwal. Give each name a
+        // stable outward offset so both remain readable at the same zoom level.
+        // DOM markers keep these labels separate from the zone-number markers.
+        for (const feature of facData.features) {
+          const [longitude, latitude] = feature.geometry.coordinates as [number, number];
+          const name = String(feature.properties?.name ?? 'Relief facility');
+          const facilityId = String(feature.properties?.warehouse_id ?? '');
+          const isSvs = facilityId.includes('svs_');
+          const root = document.createElement('div');
+          Object.assign(root.style, {
+            position: 'relative',
+            width: '0',
+            height: '0',
+            pointerEvents: 'none',
+            zIndex: '4',
+          });
+          const label = document.createElement('div');
+          label.setAttribute('aria-label', name);
+          label.dataset.testid = 'facility-map-label';
+          Object.assign(label.style, {
+            position: 'absolute',
+            top: isSvs ? '-29px' : '10px',
+            left: isSvs ? '14px' : 'auto',
+            right: isSvs ? 'auto' : '14px',
+            width: 'max-content',
+            maxWidth: '220px',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: isSvs ? 'row' : 'row-reverse',
+            alignItems: 'center',
+            gap: '7px',
+            padding: '6px 9px',
+            border: '1px solid rgba(157, 169, 224, .48)',
+            borderRadius: '8px',
+            background: 'rgba(26, 32, 52, .88)',
+            backdropFilter: 'blur(9px)',
+            boxShadow: '0 4px 14px rgba(6, 10, 25, .32)',
+            color: '#EEF1FF',
+            font: '550 12px/1.35 Inter, Arial, sans-serif',
+            letterSpacing: '.01em',
+            textAlign: isSvs ? 'left' : 'right',
+            overflowWrap: 'anywhere',
+          });
+          const accent = document.createElement('span');
+          Object.assign(accent.style, {
+            flex: '0 0 7px',
+            width: '7px',
+            height: '7px',
+            borderRadius: '50%',
+            background: '#A5B4FC',
+            boxShadow: '0 0 7px rgba(165, 180, 252, .65)',
+          });
+          const title = document.createElement('span');
+          title.textContent = name;
+          label.append(accent, title);
+          root.appendChild(label);
+          facilityLabelMarkersRef.current.push(
+            new maplibregl.Marker({ element: root, anchor: 'center' })
+              .setLngLat([longitude, latitude])
+              .addTo(map),
+          );
+        }
+
+        const miniTownHallRoot = document.createElement('div');
+        Object.assign(miniTownHallRoot.style, {
+          position: 'relative',
+          width: '0',
+          height: '0',
+          pointerEvents: 'none',
+          zIndex: '5',
+          display: appliedClosureIdRef.current === MINI_TOWN_HALL_SCENARIO_ID ? '' : 'none',
         });
+        const miniTownHallLabel = document.createElement('div');
+        miniTownHallLabel.dataset.testid = 'mini-town-hall-map-label';
+        miniTownHallLabel.setAttribute('aria-label', MINI_TOWN_HALL_NAME);
+        Object.assign(miniTownHallLabel.style, {
+          position: 'absolute',
+          bottom: '18px',
+          left: '14px',
+          width: 'max-content',
+          maxWidth: '170px',
+          boxSizing: 'border-box',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '7px',
+          padding: '6px 9px',
+          border: '1px solid rgba(157, 169, 224, .48)',
+          borderRadius: '8px',
+          background: 'rgba(26, 32, 52, .88)',
+          backdropFilter: 'blur(9px)',
+          boxShadow: '0 4px 14px rgba(6, 10, 25, .32)',
+          color: '#EEF1FF',
+          font: '550 12px/1.35 Inter, Arial, sans-serif',
+          letterSpacing: '.01em',
+          textAlign: 'left',
+          overflowWrap: 'anywhere',
+        });
+        const miniTownHallDot = document.createElement('span');
+        Object.assign(miniTownHallDot.style, {
+          flex: '0 0 7px',
+          width: '7px',
+          height: '7px',
+          borderRadius: '50%',
+          background: '#A5B4FC',
+          boxShadow: '0 0 7px rgba(165, 180, 252, .65)',
+        });
+        const miniTownHallCircle = document.createElement('span');
+        Object.assign(miniTownHallCircle.style, {
+          position: 'absolute',
+          top: '-6px',
+          left: '-6px',
+          width: '12px',
+          height: '12px',
+          boxSizing: 'border-box',
+          borderRadius: '50%',
+          border: '2px solid #FFFFFF',
+          background: '#F59E0B',
+          boxShadow: '0 0 8px rgba(245, 158, 11, .7)',
+        });
+        const miniTownHallTitle = document.createElement('span');
+        miniTownHallTitle.textContent = MINI_TOWN_HALL_NAME;
+        miniTownHallLabel.append(miniTownHallDot, miniTownHallTitle);
+        miniTownHallRoot.appendChild(miniTownHallLabel);
+        miniTownHallRoot.appendChild(miniTownHallCircle);
+        miniTownHallMarkerRef.current = new maplibregl.Marker({ element: miniTownHallRoot, anchor: 'center' })
+          .setLngLat(MINI_TOWN_HALL_COORDINATES)
+          .addTo(map);
+        if (appliedClosureIdRef.current === MINI_TOWN_HALL_SCENARIO_ID && mapBoundsRef.current) {
+          fitReliefSiteBounds(map, mapBoundsRef.current, true, 0);
+        }
       } catch (err) {
         console.warn('Facilities load error:', err);
       }
 
       // 6. Closures GeoJSON
       try {
-        const closRes = await fetch(`/data/bantwal_closures_${selectedEvent}.geojson`);
+        const closRes = await fetch('/data/bantwal_scenario_closures.geojson');
         const closData = await closRes.json();
         map.addSource('closures_source', { type: 'geojson', data: closData });
+        map.addSource('closure_marker_source', {
+          type: 'geojson', data: closureMarkerCollection(closData, null),
+        });
 
+        map.addLayer({
+          id: 'closures_casing_layer',
+          type: 'line',
+          source: 'closures_source',
+          layout: { visibility: 'none', 'line-cap': 'round', 'line-join': 'round' },
+          paint: {
+            'line-color': '#280A17',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 8, 7, 12, 11, 15, 15],
+            'line-opacity': 0.96,
+          },
+        });
         map.addLayer({
           id: 'closures_layer',
           type: 'line',
           source: 'closures_source',
+          layout: { visibility: 'none', 'line-cap': 'round', 'line-join': 'round' },
+          paint: {
+            'line-color': '#FF263F',
+            'line-width': ['interpolate', ['linear'], ['zoom'], 8, 4.5, 12, 7, 15, 10],
+            'line-opacity': 1,
+          },
+        });
+        map.addLayer({
+          id: 'closure_marker_layer',
+          type: 'circle',
+          source: 'closure_marker_source',
           layout: { visibility: 'none' },
           paint: {
-            'line-color': '#FF3B5C',
-            'line-width': 4.5,
-            'line-opacity': 0.9,
-            'line-dasharray': [2, 1],
+            'circle-radius': 7,
+            'circle-color': '#FF263F',
+            'circle-stroke-color': '#FFF1F4',
+            'circle-stroke-width': 2,
+            'circle-opacity': 1,
+          },
+        });
+        map.addLayer({
+          id: 'closure_marker_label_layer',
+          type: 'symbol',
+          source: 'closure_marker_source',
+          layout: {
+            visibility: 'none',
+            'text-field': 'ROAD CLOSED',
+            'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+            'text-size': 10,
+            'text-offset': [0, 1.8],
+            'text-anchor': 'top',
+            'text-allow-overlap': true,
+          },
+          paint: {
+            'text-color': '#FFD8E0',
+            'text-halo-color': '#280A17',
+            'text-halo-width': 2,
           },
         });
       } catch (err) {
@@ -328,7 +545,12 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
       try {
         const routeRes = await fetch(`/data/bantwal_routes_${selectedEvent}.geojson`);
         const routeData = await routeRes.json();
-        map.addSource('routes_source', { type: 'geojson', data: routesRef.current.length ? { type: 'FeatureCollection', features: routesRef.current } : routeData });
+        map.addSource('routes_source', {
+          type: 'geojson',
+          data: routesRef.current.length || isClosureActive
+            ? { type: 'FeatureCollection', features: routesRef.current }
+            : routeData,
+        });
 
         // A dark casing keeps the selected path distinct from the OSM road layer.
         map.addLayer({
@@ -373,6 +595,12 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
       if (map.getLayer('roads_layer') && map.getLayer('facilities_layer')) {
         map.moveLayer('roads_layer', 'facilities_layer');
       }
+      // Closures are the most important route-state overlay. Keep the blocked
+      // segment above the route redraw so it remains visibly distinct.
+      if (map.getLayer('closures_casing_layer')) map.moveLayer('closures_casing_layer');
+      if (map.getLayer('closures_layer')) map.moveLayer('closures_layer');
+      if (map.getLayer('closure_marker_layer')) map.moveLayer('closure_marker_layer');
+      if (map.getLayer('closure_marker_label_layer')) map.moveLayer('closure_marker_label_layer');
     });
 
     mapRef.current = map;
@@ -380,6 +608,10 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
     
 
     return () => {
+      facilityLabelMarkersRef.current.forEach((marker) => marker.remove());
+      facilityLabelMarkersRef.current = [];
+      miniTownHallMarkerRef.current?.remove();
+      miniTownHallMarkerRef.current = null;
       map.remove();
       mapRef.current = null;
       (window as any).__resq_map = null;
@@ -401,25 +633,66 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
           coordinates: sarBounds[selectedEvent],
         });
       }
-      const closureData = await fetch(`/data/bantwal_closures_${selectedEvent}.geojson`).then((r) => r.json());
-      const closureSource = map.getSource('closures_source') as maplibregl.GeoJSONSource;
-      if (closureSource) closureSource.setData(closureData);
       const staticRoutes = await fetch(`/data/bantwal_routes_${selectedEvent}.geojson`).then((r) => r.json());
       const routeSource = map.getSource('routes_source') as maplibregl.GeoJSONSource;
-      if (routeSource) routeSource.setData(routesRef.current.length ? { type: 'FeatureCollection', features: routesRef.current } : staticRoutes);
+      if (routeSource) {
+        routeSource.setData(routesRef.current.length || isClosureActive
+          ? { type: 'FeatureCollection', features: routesRef.current }
+          : staticRoutes);
+      }
     };
     if (map.isStyleLoaded()) void updateEventLayers().catch(() => {});
     else map.once('load', () => { void updateEventLayers().catch(() => {}); });
-  }, [selectedEvent]);
+  }, [selectedEvent, isClosureActive]);
 
-  // Refresh route geometry after an allocation run or verified closure re-solve.
+  // Keep the map focused on the specific closure that the API actually applied.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded() || !map.getSource('routes_source')) return;
-    if (routes.length) {
-      (map.getSource('routes_source') as maplibregl.GeoJSONSource).setData({ type: 'FeatureCollection', features: routes });
+    if (!map) return;
+    const updateActiveClosure = async () => {
+      const collection = await fetch('/data/bantwal_scenario_closures.geojson').then((r) => {
+        if (!r.ok) throw new Error(`Closure map data unavailable (${r.status})`);
+        return r.json();
+      });
+      const markerSource = map.getSource('closure_marker_source') as maplibregl.GeoJSONSource | undefined;
+      markerSource?.setData(closureMarkerCollection(collection, isClosureActive ? appliedClosureId : null) as any);
+    };
+    const applyFilters = () => {
+      for (const layer of ['closures_layer', 'closures_casing_layer', 'closure_marker_layer', 'closure_marker_label_layer']) {
+        if (!map.getLayer(layer)) continue;
+        map.setFilter(layer, appliedClosureId
+          ? ['==', ['get', 'closure_id'], appliedClosureId]
+          : ['==', ['get', 'closure_id'], '__no_active_closure__']);
+        map.setLayoutProperty(layer, 'visibility', showClosures && isClosureActive ? 'visible' : 'none');
+      }
+      void updateActiveClosure().catch((err) => console.warn('Active closure map update failed:', err));
+    };
+    if (map.isStyleLoaded()) applyFilters();
+    else map.once('load', applyFilters);
+  }, [selectedEvent, appliedClosureId, isClosureActive, showClosures]);
+
+  // Show the Mangaluru relief centre only for scenario 1 and include its real
+  // location in the map view without changing the Bantwal facility labels.
+  useEffect(() => {
+    const map = mapRef.current;
+    const marker = miniTownHallMarkerRef.current;
+    if (!map || !marker) return;
+    const showMiniTownHall = showFacilities && isClosureActive
+      && appliedClosureId === MINI_TOWN_HALL_SCENARIO_ID;
+    marker.getElement().style.display = showMiniTownHall ? '' : 'none';
+    if (mapBoundsRef.current) {
+      fitReliefSiteBounds(map, mapBoundsRef.current, showMiniTownHall, 600);
     }
-  }, [routes]);
+  }, [appliedClosureId, isClosureActive, showFacilities]);
+
+  // Keep the map source in sync even when a scenario request clears routes.
+  // Otherwise the static cached route can remain visible while a new closure
+  // is being recalculated or if the request fails.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getSource('routes_source')) return;
+    (map.getSource('routes_source') as maplibregl.GeoJSONSource).setData({ type: 'FeatureCollection', features: routes });
+  }, [routes, isClosureActive]);
 
   // Show one path at a time: select a grid cell to inspect its facility-to-zone route.
   useEffect(() => {
@@ -489,11 +762,31 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
 
     if (map.getLayer('facilities_layer')) {
       map.setLayoutProperty('facilities_layer', 'visibility', showFacilities ? 'visible' : 'none');
-      map.setLayoutProperty('facilities_labels_layer', 'visibility', showFacilities ? 'visible' : 'none');
+      facilityLabelMarkersRef.current.forEach((marker) => {
+        const element = marker.getElement();
+        element.style.display = showFacilities ? '' : 'none';
+      });
+    }
+    const showMiniTownHall = showFacilities && isClosureActive
+      && appliedClosureId === MINI_TOWN_HALL_SCENARIO_ID;
+    if (miniTownHallMarkerRef.current) {
+      miniTownHallMarkerRef.current.getElement().style.display = showMiniTownHall ? '' : 'none';
     }
 
     if (map.getLayer('closures_layer')) {
       map.setLayoutProperty('closures_layer', 'visibility', showClosures && isClosureActive ? 'visible' : 'none');
+      map.setFilter('closures_layer', appliedClosureId
+        ? ['==', ['get', 'closure_id'], appliedClosureId]
+        : ['==', ['get', 'closure_id'], '__no_active_closure__']);
+    }
+    if (map.getLayer('closures_casing_layer')) {
+      map.setLayoutProperty('closures_casing_layer', 'visibility', showClosures && isClosureActive ? 'visible' : 'none');
+      map.setFilter('closures_casing_layer', appliedClosureId
+        ? ['==', ['get', 'closure_id'], appliedClosureId]
+        : ['==', ['get', 'closure_id'], '__no_active_closure__']);
+    }
+    for (const layer of ['closure_marker_layer', 'closure_marker_label_layer']) {
+      if (map.getLayer(layer)) map.setLayoutProperty(layer, 'visibility', showClosures && isClosureActive ? 'visible' : 'none');
     }
 
     if (map.getLayer('routes_road_layer')) {
@@ -507,8 +800,11 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
     showRiver,
     showRoads,
     showFacilities,
+    appliedClosureId,
+    isClosureActive,
     showClosures,
     isClosureActive,
+    appliedClosureId,
     showRoutes,
     is3DMode,
   ]);
@@ -652,18 +948,18 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
 
       {/* Verified closure state, without fabricated detour distances. */}
       {isClosureActive && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 rounded-full border border-accent-alert/50 bg-ink-950/90 px-4 py-1.5 shadow-[0_0_20px_rgba(255,59,92,0.4)] backdrop-blur-md">
+        <div role="status" aria-live="polite" className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 rounded-full border border-accent-alert/50 bg-ink-950/90 px-4 py-1.5 shadow-[0_0_20px_rgba(255,59,92,0.4)] backdrop-blur-md">
           <span className="flex h-2 w-2 relative">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-alert opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-alert" />
           </span>
           <span className="text-xs font-mono font-bold text-accent-alert uppercase">
-            Verified Closure Active
+            Bantwal Road Blocked
           </span>
           <span className="text-xs font-mono text-text-secondary border-l border-white/10 pl-2">
             {closureDetourInfo
-              ? `Distance: ${closureDetourInfo.beforeDistanceKm} km â†’ ${closureDetourInfo.afterDistanceKm} km (+${(closureDetourInfo.afterDistanceKm - closureDetourInfo.beforeDistanceKm).toFixed(1)} km)`
-              : '16 routes recalculated Â· select a zone to view its route'}
+              ? `Distance: ${closureDetourInfo.beforeDistanceKm} km to ${closureDetourInfo.afterDistanceKm} km (+${(closureDetourInfo.afterDistanceKm - closureDetourInfo.beforeDistanceKm).toFixed(1)} km)`
+            : `${closureRouteChangeCount ?? (routes.length || 16)} routes recalculated`}
           </span>
         </div>
       )}
@@ -673,11 +969,11 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
         if (!route) return null;
         const distanceM = Number((route.properties as any).distance_m ?? (route.properties as any).road_distance_m);
         const mode = route.properties.delivery_mode;
-        const routeLabel = mode === 'road' ? 'Road route' : mode === 'secondary' ? 'Secondary distance Â· payload check required' : 'No route available';
+        const routeLabel = mode === 'road' ? 'A*' : mode === 'secondary' ? 'Secondary distance' : 'No route available';
         return (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 rounded-xl border border-amber-200/25 bg-[#101b18]/95 px-4 py-2.5 shadow-xl backdrop-blur-md">
+          <div className={`absolute ${isClosureActive ? 'top-14' : 'top-3'} left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 rounded-xl border border-amber-200/25 bg-[#101b18]/95 px-4 py-2.5 shadow-xl backdrop-blur-md`}>
             <span className="w-2 h-2 rounded-full bg-amber-300 shadow-[0_0_12px_rgba(255,208,113,.8)]" />
-            <span className="grid gap-0.5"><strong className="text-xs text-amber-100">Zone {selectedZoneId.match(/(\d+)$/)?.[1]?.padStart(2, '0')} Â· {routeLabel}</strong><span className="text-[10px] text-slate-300">{Number.isFinite(distanceM) ? `${(distanceM / 1000).toFixed(1)} km along cached OSM route` : 'No road distance recorded'}</span></span>
+            <span className="grid gap-0.5"><strong className="text-xs text-amber-100">Zone {selectedZoneId.match(/(\d+)$/)?.[1]?.padStart(2, '0')} - {routeLabel}</strong><span className="text-[10px] text-slate-300">{Number.isFinite(distanceM) ? `${(distanceM / 1000).toFixed(1)} km along cached OSM route` : 'No road distance recorded'}</span></span>
           </div>
         );
       })()}

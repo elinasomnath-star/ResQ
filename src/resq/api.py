@@ -34,7 +34,7 @@ from .config import REPO_ROOT, configured_path, load_config
 from .events import load_events
 from .optimization.allocation import MilpInfeasible, RESOURCE_COLUMNS, run_allocators
 from .module8 import run_module8
-from .routing import _load_graph, run_routing
+from .routing import _load_graph, compute_routes, run_routing
 from .facilities import (
     init_facility_tables,
     get_all_facilities,
@@ -53,6 +53,9 @@ ENGINES = {
     "LinUCB": "LinUCB_contextual_bandit",
     "proportional": "naive_proportional_baseline",
 }
+
+MINI_TOWN_HALL_SCENARIO_ID = "bantwal_netravati_bridge"
+MINI_TOWN_HALL_ORIGIN_ID = "mini_town_hall_mangaluru"
 _RUN_LOCK = threading.RLock()  # protects the legacy pipeline's fixed output paths in one process
 
 
@@ -65,6 +68,10 @@ class SimulateRequest(BaseModel):
 class ClosureRequest(BaseModel):
     run_id: str
     closure_id: str = Field(min_length=1)
+
+
+class ScenarioRerouteRequest(BaseModel):
+    scenario_id: str = Field(min_length=1)
 
 
 class ZoneOverrideItem(BaseModel):
@@ -437,7 +444,9 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
                 raise HTTPException(status_code=404, detail={"code": "run_not_found", "message": f"Run '{body.run_id}' not found"})
 
             summary = json.loads(run_row["summary_json"] if isinstance(run_row, sqlite3.Row) else run_row[3])
-            inv_used = json.loads(summary.get("inventory_used", "{}"))
+            inv_used = summary.get("inventory_used", summary.get("available_inventory", {}))
+            if isinstance(inv_used, str):
+                inv_used = json.loads(inv_used)
 
             cursor.execute("SELECT zone_id, zone_name, resource, estimated_need, allocated, unmet, unmet_pct FROM allocations WHERE run_id = ?", (body.run_id,))
             alloc_rows = cursor.fetchall()
@@ -604,6 +613,11 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
                     summary_rows = _read_csv(processed / f"allocation_comparison_{body.event}.csv")
                     selected_summary = next(r for r in summary_rows if r["engine"] == engine)
                     allocations = [r for r in _read_csv(processed / f"allocation_matrix_{body.event}.csv") if r["engine"] == engine]
+            available_inventory = {
+                key: int(value) for key, value in run_config["resources"]["prototype_inventory"].items()
+            }
+            selected_summary = {**selected_summary, "inventory_used": available_inventory,
+                                "available_inventory": available_inventory}
             _insert_run(db_path, run_id=run_id, event_date=body.event, engine=engine,
                         stock_mode=body.stock_mode, inventory_basis=basis,
                         status="completed", summary=selected_summary)
@@ -620,6 +634,7 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
         status_chip = "ENTERED, UNVERIFIED" if body.stock_mode == "entered" else "ASSUMED"
         return {"run_id": run_id, "event": event.event_date.isoformat(), "engine": body.engine,
                 "stock_mode": body.stock_mode, "inventory_basis": basis,
+                "available_inventory": available_inventory,
                 "status_chip": status_chip,
                 "unroutable_facilities": unroutable,
                 "unroutable_facilities_count": len(unroutable),
@@ -705,6 +720,106 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
                                    "secondary_count": sum(r["delivery_mode"] == "secondary" for r in routes),
                                    "unreachable_count": sum(r["delivery_mode"] == "none" for r in routes)}}
 
+    @app.post("/scenario-reroutes", status_code=200)
+    def reroute_scenario(body: ScenarioRerouteRequest, current_user: User = Depends(require_role("operator"))):
+        """Recalculate routes only for a curated Bantwal main-road scenario."""
+        scenario_path = REPO_ROOT / "config" / "bantwal_road_scenarios.json"
+        try:
+            scenarios = json.loads(scenario_path.read_text(encoding="utf-8")).get("scenarios", [])
+        except (OSError, json.JSONDecodeError) as exc:
+            raise HTTPException(status_code=503, detail={
+                "code": "road_scenarios_unavailable", "message": "Bantwal road scenarios are unavailable."
+            }) from exc
+        scenario = next((item for item in scenarios if item.get("id") == body.scenario_id), None)
+        if scenario is None:
+            raise HTTPException(status_code=404, detail={
+                "code": "unknown_road_scenario", "message": "That Bantwal road scenario does not exist."
+            })
+        if scenario.get("highway") not in {"trunk", "primary"}:
+            raise HTTPException(status_code=422, detail={
+                "code": "invalid_road_scenario", "message": "Only mapped Bantwal trunk and primary roads can be blocked."
+            })
+        if app.state.road_graph is None:
+            raise HTTPException(status_code=503, detail={
+                "code": "road_graph_unavailable",
+                "message": f"Cannot recalculate routes until the cached road graph is available: {app.state.road_graph_error}",
+            })
+
+        data = config["data"]
+        processed = configured_path(data["processed_dir"])
+        zones_path = configured_path(data.get("analysis_zones_path", "data/processed/analysis_zones.geojson"))
+        point = scenario.get("closure_point")
+        try:
+            from shapely.geometry import LineString, Point, shape
+            from shapely.ops import unary_union
+
+            if not isinstance(point, list) or len(point) != 2:
+                raise ValueError("Invalid closure point")
+            closure_point = Point(float(point[0]), float(point[1]))
+            zones = json.loads(zones_path.read_text(encoding="utf-8"))
+            zone_shapes = [shape(feature["geometry"]) for feature in zones.get("features", [])
+                           if feature.get("geometry")]
+            boundary = unary_union(zone_shapes)
+            coordinate_parts = scenario.get("coordinate_parts")
+            if not isinstance(coordinate_parts, list) or not coordinate_parts:
+                raise ValueError("Scenario has no mapped road geometry")
+            closure_lines = []
+            for coordinates in coordinate_parts:
+                if not isinstance(coordinates, list) or len(coordinates) < 2:
+                    raise ValueError("Scenario contains an invalid road segment")
+                line = LineString(coordinates)
+                if not boundary.covers(line):
+                    raise ValueError("Blocked road geometry extends outside the Bantwal analysis boundary")
+                closure_lines.append(line)
+            if not boundary.covers(closure_point) or not any(line.distance(closure_point) < 0.00001 for line in closure_lines):
+                raise ValueError("Closure marker is not on a mapped Bantwal road")
+
+            warehouse_path = processed / "warehouses.geojson"
+            if warehouse_path.exists():
+                warehouse_collection = json.loads(warehouse_path.read_text(encoding="utf-8"))
+                origins = []
+                for feature in warehouse_collection.get("features", []):
+                    geometry = feature.get("geometry")
+                    props = feature.get("properties", {})
+                    if geometry and geometry.get("type") == "Point" and props.get("route_origin", True):
+                        lon, lat = geometry["coordinates"][:2]
+                        origins.append({"origin_id": str(props.get("warehouse_id", props.get("name", len(origins)))),
+                                        "lon": float(lon), "lat": float(lat),
+                                        "origin_source": props.get("source", "warehouses_geojson")})
+            else:
+                origins = [{"origin_id": str(w.get("warehouse_id", w.get("name", i))),
+                            "lon": float(w["lon"]), "lat": float(w["lat"]),
+                            "origin_source": "configured_warehouse"}
+                           for i, w in enumerate(config.get("warehouses", []))]
+            if body.scenario_id != MINI_TOWN_HALL_SCENARIO_ID:
+                origins = [origin for origin in origins
+                           if origin["origin_id"] != MINI_TOWN_HALL_ORIGIN_ID]
+            graph_path = configured_path(data["road_graph_path"])
+            route_rows, details = compute_routes(
+                graph_path=graph_path,
+                zone_path=zones_path,
+                origins=origins,
+                closure_lines=[{"closure_id": body.scenario_id,
+                                "name": scenario["name"],
+                                "coordinate_parts": coordinate_parts}],
+                # Block the full mapped road corridor, including nearby graph
+                # edges whose OSM classification or centerline differs from
+                # the displayed way. This keeps selected-zone routes clear of
+                # the visible closure and its endpoint junctions.
+                closure_highways=None,
+                closure_radius_m=500.0,
+                max_snap_distance_m=float(config.get("routing", {}).get("max_snap_distance_m", 5000)),
+                secondary_max_distance_km=float(config.get("routing", {}).get("secondary_max_distance_km", 10)),
+                secondary_payload_kg=float(config["resources"].get("secondary_payload_kg", 50)),
+                cached_graph=app.state.road_graph,
+            )
+        except (FileNotFoundError, ValueError, KeyError) as exc:
+            raise HTTPException(status_code=422, detail={
+                "code": "road_scenario_failed", "message": str(exc)
+            }) from exc
+        return {"scenario_id": body.scenario_id, "blocked_road": scenario["name"],
+                "route_count": len(route_rows), "routes": details["route_features"]}
+
     @app.get("/routes/{run_id}")
     def get_routes(run_id: str, current_user: User = Depends(require_role("viewer"))):
         with _db_connection(db_path) as db:
@@ -726,6 +841,7 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
         return {"run_id": run_id, "event": run["event_date"], "engine": run["engine"],
                 "stock_mode": run["stock_mode"], "inventory_basis": run["inventory_basis"],
                 "status": run["status"], "summary": json.loads(run["summary_json"]),
+                "available_inventory": json.loads(run["summary_json"]).get("available_inventory", {}),
                 "allocations": [dict(row) for row in allocations]}
 
     @app.get("/escalations/{run_id}")

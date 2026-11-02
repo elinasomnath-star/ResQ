@@ -74,10 +74,12 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
   // Simulation & Timeline State
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isClosureApplied, setIsClosureApplied] = useState<boolean>(false);
+  const [appliedClosureId, setAppliedClosureId] = useState<string | null>(null);
+  const [closureRouteChangeCount, setClosureRouteChangeCount] = useState<number | null>(null);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [currentRunId, setCurrentRunId] = useState<string>('');
-  const [closureMessage, setClosureMessage] = useState<string | null>(null);
   const [stockTotals, setStockTotals] = useState({ food_rations: 0, water_liters: 0, medical_kits: 0 });
+  const [runInventory, setRunInventory] = useState<{ food_rations: number; water_liters: number; medical_kits: number } | null>(null);
   const [closureDetourInfo, setClosureDetourInfo] = useState<{
     beforeDistanceKm: number;
     afterDistanceKm: number;
@@ -121,12 +123,18 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
   }, [selectedEvent]);
 
   // Load Event-Specific Data (Routes, Steps, Allocations, Escalations)
-  const loadEventData = useCallback(async (eventDate: string, runId?: string, allocationOverride?: AllocationRow[]) => {
+  const loadEventData = useCallback(async (
+    eventDate: string,
+    runId?: string,
+    allocationOverride?: AllocationRow[],
+    stockModeOverride?: StockMode,
+  ): Promise<RouteFeature[]> => {
+    const dataStockMode = stockModeOverride ?? stockMode;
     try {
       const [routeFeatures, steps, escs] = await Promise.all([
         api.getRouteGeometries(eventDate, runId),
-        stockMode === 'entered' ? Promise.resolve([]) : api.getStepResults(eventDate, stockMode),
-        stockMode === 'entered' && (!runId || runId.startsWith('offline_run_')) ? Promise.resolve([]) : api.getEscalations(eventDate, runId, stockMode),
+        dataStockMode === 'entered' ? Promise.resolve([]) : api.getStepResults(eventDate, dataStockMode),
+        dataStockMode === 'entered' && (!runId || runId.startsWith('offline_run_')) ? Promise.resolve([]) : api.getEscalations(eventDate, runId, dataStockMode),
       ]);
 
       setRoutes(routeFeatures);
@@ -153,16 +161,18 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
       let allocationRows: AllocationRow[];
       if (allocationOverride) {
         allocationRows = allocationOverride;
-      } else if (stockMode === 'entered' && (!runId || runId.startsWith('offline_run_'))) {
+      } else if (dataStockMode === 'entered' && (!runId || runId.startsWith('offline_run_'))) {
         allocationRows = [];
       } else if (runId && !runId.startsWith('offline_run_') && !offlineMode) {
         try {
-          allocationRows = (await api.getAllocations(runId)).allocations;
+          const allocationResult = await api.getAllocations(runId);
+          allocationRows = allocationResult.allocations;
+          setRunInventory(allocationResult.available_inventory || null);
         } catch {
           allocationRows = [];
         }
       } else {
-        const matrixPath = stockMode === 'simulated'
+        const matrixPath = dataStockMode === 'simulated'
           ? `/data/allocation_matrix_simulated_${eventDate}.json`
           : `/data/allocation_matrix_${eventDate}.json`;
         const matrix = await fetch(matrixPath).then((r) => r.ok ? r.json() : []);
@@ -174,10 +184,10 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
       }
       setAllocations(allocationRows);
 
-      const metadataPath = stockMode === 'simulated'
+      const metadataPath = dataStockMode === 'simulated'
         ? `/data/allocation_metadata_simulated_${eventDate}.json`
         : `/data/allocation_metadata_${eventDate}.json`;
-      if (stockMode === 'entered') {
+      if (dataStockMode === 'entered') {
         const summary = await api.getStockSummary();
         setStockTotals({
           food_rations: Number(summary.totals.food_rations?.quantity ?? 0),
@@ -188,6 +198,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
         const metadata = await fetch(metadataPath).then((r) => r.ok ? r.json() : null).catch(() => null);
         setStockTotals(metadata?.prototype_inventory_assumption || { food_rations: 0, water_liters: 0, medical_kits: 0 });
       }
+      return routeFeatures;
     } catch (err) {
       console.error('Error loading event data:', err);
       // Do not leave the prior event/run's routes or allocations painted as current.
@@ -195,6 +206,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
       setStepsData([]);
       setEscalations([]);
       setAllocations([]);
+      return [];
     }
   }, [selectedEngine, offlineMode, stockMode]);
 
@@ -207,6 +219,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
   // Handle Simulation Run
   const handleRunSimulation = async () => {
     setIsSimulating(true);
+    setRunInventory(null);
     try {
       const res = await api.simulate({
         event_date: selectedEvent,
@@ -215,7 +228,16 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
       });
       if (res && res.run_id) {
         setCurrentRunId(res.run_id);
-        await loadEventData(selectedEvent, res.run_id, res.allocations);
+        setRunInventory(res.available_inventory || null);
+        setIsClosureApplied(false);
+        setAppliedClosureId(null);
+        setClosureRouteChangeCount(null);
+        const baselineRoutes = await loadEventData(selectedEvent, res.run_id, res.allocations);
+        if (!selectedZone) {
+          const firstRoadRoute = baselineRoutes.find((route) => route.properties.delivery_mode === 'road');
+          const routeZone = firstRoadRoute && zones.find((zone) => zone.zone_id === firstRoadRoute.properties.zone_id);
+          if (routeZone) setSelectedZone(routeZone);
+        }
       }
     } catch (err) {
       console.error('Simulation error:', err);
@@ -224,29 +246,28 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
     }
   };
 
-  // Re-solve after applying the first verified event closure from the cached source.
-  const handleTriggerClosure = async () => {
-    setClosureMessage(null);
+  const handleSelectScenario = async (scenario: Scenario) => {
+    setSelectedZone(null);
+    setRoutes([]);
+    setIsClosureApplied(false);
+    setAppliedClosureId(null);
+    setClosureRouteChangeCount(null);
+    setClosureDetourInfo(null);
+    // Road blockage scenarios only recalculate routes. They skip allocation
+    // simulation and the repeated-disruption benchmark to keep the response fast.
+    setIsSimulating(true);
     try {
-      if (offlineMode) throw new Error('Closure re-solving needs the API and cached road graph; static replay data is read-only.');
-      let runId = currentRunId;
-      if (!runId) {
-        const simulation = await api.simulate({ event_date: selectedEvent, engine: selectedEngine, stock_mode: stockMode });
-        runId = simulation.run_id;
-        setCurrentRunId(runId);
-      }
-      const closureData = await fetch(`/data/closures_${selectedEvent}.geojson`).then((r) => r.json());
-      const verified = closureData.features.find((feature: any) => feature.properties?.status === 'verified' && feature.geometry);
-      if (!verified) throw new Error('This event has no verified closure geometry to apply.');
-      const result = await api.applyClosure(runId, verified.properties.closure_id);
+      const result = await api.rerouteRoadScenario(scenario.id);
+      setRoutes(result.routes);
       setIsClosureApplied(true);
-      setClosureDetourInfo(null);
-      setStepsData(result.steps);
-      await loadEventData(selectedEvent, result.run_id);
-      setStepsData(result.steps);
-      setClosureMessage(`Applied ${verified.properties.name}; allocation and routes were recalculated.`);
-    } catch (err) {
-      setClosureMessage(err instanceof Error ? err.message : 'Closure could not be applied.');
+      setAppliedClosureId(result.scenario_id);
+      setClosureRouteChangeCount(result.route_count);
+      const baselineRoutes = result.routes;
+      const firstRoadRoute = baselineRoutes.find((route) => route.properties.delivery_mode === 'road');
+      const routeZone = firstRoadRoute && zones.find((zone) => zone.zone_id === firstRoadRoute.properties.zone_id);
+      if (routeZone) setSelectedZone(routeZone);
+    } finally {
+      setIsSimulating(false);
     }
   };
 
@@ -319,6 +340,8 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
           coveragePreview={selectedCoveragePreview}
           coveragePreviewStockPct={stockPct}
           isClosureActive={isClosureApplied}
+          appliedClosureId={appliedClosureId}
+          closureRouteChangeCount={closureRouteChangeCount}
           closureDetourInfo={closureDetourInfo}
           allocations={allocations}
         />
@@ -334,7 +357,10 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
             onSelectEvent={(evt) => {
               setSelectedEvent(evt);
               setSelectedZone(null);
+              setRunInventory(null);
               setIsClosureApplied(false);
+              setAppliedClosureId(null);
+              setClosureRouteChangeCount(null);
               setClosureDetourInfo(null);
               setCurrentRunId('');
               setCurrentStep(0);
@@ -342,15 +368,21 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
             selectedEngine={selectedEngine}
             onSelectEngine={(engine) => {
               setSelectedEngine(engine);
+              setRunInventory(null);
               setIsClosureApplied(false);
+              setAppliedClosureId(null);
+              setClosureRouteChangeCount(null);
               setCurrentRunId('');
               setCurrentStep(0);
             }}
             stockMode={stockMode}
             onToggleStockMode={(mode) => {
               setStockMode(mode);
+              setRunInventory(null);
               setCurrentRunId('');
               setIsClosureApplied(false);
+              setAppliedClosureId(null);
+              setClosureRouteChangeCount(null);
               setCurrentStep(0);
             }}
             onRunSimulation={handleRunSimulation}
@@ -420,12 +452,6 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
             stepNumber={currentStep + 1}
           />
         </div>
-        {closureMessage && (
-          <div role="status" className="absolute top-[22rem] right-4 z-30 max-w-xs rounded-lg border border-white/15 bg-slate-950/95 px-3 py-2 text-[11px] text-slate-100 shadow-xl">
-            {closureMessage}
-          </div>
-        )}
-
         {/* Bottom Center: Scarcity Sweeper + Step Timeline stacked */}
         <div className="console-bottom-overlays absolute bottom-3 z-20 flex flex-col items-center gap-2 pointer-events-none">
           {/* Scarcity Slider sits just above the step timeline */}
@@ -447,11 +473,8 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
               currentStep={currentStep}
               totalSteps={8}
               onStepChange={setCurrentStep}
-              closureStep={1}
               stepsData={stepsData}
               isClosureApplied={isClosureApplied}
-              onTriggerClosure={handleTriggerClosure}
-              canTriggerClosure={user?.role === 'operator'}
             />
           </div>
         </div>
@@ -507,7 +530,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
           onClose={() => setIsOverrideOpen(false)}
           runId={currentRunId}
           allocations={allocations}
-          availableInventory={stockTotals}
+          availableInventory={runInventory || stockTotals}
           offlineMode={offlineMode}
           user={user}
           onOverrideApplied={(newAllocations) => {
@@ -519,14 +542,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
         <ScenarioDeck
           isOpen={isScenariosOpen}
           onClose={() => setIsScenariosOpen(false)}
-          onSelectScenario={(sc: Scenario) => {
-            if (sc.event_date && sc.event_date !== selectedEvent) {
-              setSelectedEvent(sc.event_date);
-            }
-            if (sc.parameters?.stock_pct) {
-              setStockPct(sc.parameters.stock_pct);
-            }
-          }}
+          onSelectScenario={handleSelectScenario}
         />
 
         {/* Shelter & Warehouse Inventory Modal */}
@@ -537,6 +553,13 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
           offlineMode={offlineMode}
           onStockModeChanged={(mode) => {
             setStockMode(mode);
+            setCurrentRunId('');
+            setRunInventory(null);
+            setAllocations([]);
+            setIsClosureApplied(false);
+            setAppliedClosureId(null);
+            setClosureRouteChangeCount(null);
+            void loadEventData(selectedEvent, undefined, undefined, mode);
           }}
         />
 

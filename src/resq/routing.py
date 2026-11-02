@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import networkx as nx
-from shapely.geometry import LineString, shape
+from shapely.geometry import LineString, Point, shape
 
 from .config import configured_path, load_config
 from .events import load_events
@@ -61,13 +61,16 @@ def _segment_distance(point: tuple[float, float], a: tuple[float, float], b: tup
 
 
 def block_near_points(graph: nx.DiGraph, points: list[tuple[float, float]], zone: int,
-                      radius_m: float) -> list[dict[str, Any]]:
+                      radius_m: float,
+                      allowed_highways: set[str] | None = None) -> list[dict[str, Any]]:
     """Remove road edges within `radius_m` of each (lon,lat) closure point."""
     removed: list[dict[str, Any]] = []
     for lon, lat in points:
         px, py, _, _ = utm_project(lon, lat, zone)
         candidates = []
         for u, v, data in graph.edges(data=True):
+            if allowed_highways is not None and str(data.get("highway", "")) not in allowed_highways:
+                continue
             coordinates = data.get("geometry") or [
                 [graph.nodes[u]["lon"], graph.nodes[u]["lat"]],
                 [graph.nodes[v]["lon"], graph.nodes[v]["lat"]],
@@ -88,8 +91,9 @@ def block_near_points(graph: nx.DiGraph, points: list[tuple[float, float]], zone
 
 
 def block_matching_lines(graph: nx.DiGraph, closures: list[dict[str, Any]], zone: int,
-                         tolerance_m: float = 3.0) -> list[dict[str, Any]]:
-    """Remove cached graph edges geometrically coincident with verified OSM way lines."""
+                         tolerance_m: float = 3.0,
+                         allowed_highways: set[str] | None = None) -> list[dict[str, Any]]:
+    """Remove cached graph edges inside a verified closure's safety corridor."""
     removed: list[dict[str, Any]] = []
     for closure in closures:
         coordinate_parts = closure.get("coordinate_parts") or [closure["coordinates"]]
@@ -100,6 +104,8 @@ def block_matching_lines(graph: nx.DiGraph, closures: list[dict[str, Any]], zone
             raise ValueError(f"Closure {closure.get('closure_id', closure.get('name'))} has empty line geometry")
         candidates = []
         for u, v, data in graph.edges(data=True):
+            if allowed_highways is not None and str(data.get("highway", "")) not in allowed_highways:
+                continue
             edge_coords = data.get("geometry") or [
                 [graph.nodes[u]["lon"], graph.nodes[u]["lat"]],
                 [graph.nodes[v]["lon"], graph.nodes[v]["lat"]],
@@ -108,13 +114,14 @@ def block_matching_lines(graph: nx.DiGraph, closures: list[dict[str, Any]], zone
                                     for lon, lat in edge_coords])
             if edge_line.is_empty or edge_line.length == 0:
                 continue
-            matches = []
-            for closure_line in closure_lines:
-                distance = edge_line.distance(closure_line)
-                if distance <= tolerance_m:
-                    overlap = edge_line.intersection(closure_line.buffer(tolerance_m)).length / edge_line.length
-                    if overlap >= 0.8:
-                        matches.append(distance)
+            # The rendered closure and cached routing graph can contain
+            # slightly offset or differently classified representations of
+            # the same physical road. Block every edge in the closure buffer,
+            # including connector edges at its endpoints, so routes cannot
+            # turn onto the closed segment and appear to pass through it.
+            matches = [edge_line.distance(closure_line)
+                       for closure_line in closure_lines
+                       if edge_line.distance(closure_line) <= tolerance_m]
             if matches:
                 candidates.append((u, v, min(matches), data.get("length", 0.0)))
         if not candidates:
@@ -169,6 +176,8 @@ def _heuristic(graph: nx.DiGraph, target: str):
 def compute_routes(*, graph_path: Path, zone_path: Path, origins: list[dict[str, Any]],
                    closure_points: list[tuple[float, float]] | None = None,
                    closure_lines: list[dict[str, Any]] | None = None,
+                   closure_highways: set[str] | None = None,
+                   cached_graph: tuple[nx.DiGraph, int] | None = None,
                    closure_radius_m: float = 25.0, max_snap_distance_m: float = 5000.0,
                    secondary_max_distance_km: float = 10.0,
                    secondary_payload_kg: float = 50.0) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -179,10 +188,24 @@ def compute_routes(*, graph_path: Path, zone_path: Path, origins: list[dict[str,
         raise ValueError("secondary payload capacity must be positive and maximum distance cannot be negative")
     if max_snap_distance_m < 0 or closure_radius_m < 0:
         raise ValueError("snap distances and closure radius cannot be negative")
-    graph, zone_number = _load_graph(graph_path)
-    closures = block_near_points(graph, closure_points or [], zone_number, closure_radius_m)
+    graph, zone_number = cached_graph if cached_graph is not None else _load_graph(graph_path)
+    closure_guard = [
+        LineString([utm_project(float(lon), float(lat), zone_number)[:2] for lon, lat in coordinates])
+        .buffer(closure_radius_m)
+        for closure in (closure_lines or [])
+        for coordinates in (closure.get("coordinate_parts") or [closure["coordinates"]])
+        if len(coordinates) >= 2
+    ]
+    closure_guard.extend(
+        Point(utm_project(float(lon), float(lat), zone_number)[:2]).buffer(closure_radius_m)
+        for lon, lat in (closure_points or [])
+    )
+    graph = graph.copy()
+    closures = block_near_points(graph, closure_points or [], zone_number, closure_radius_m,
+                                 allowed_highways=closure_highways)
     closures.extend(block_matching_lines(graph, closure_lines or [], zone_number,
-                                         tolerance_m=closure_radius_m))
+                                         tolerance_m=closure_radius_m,
+                                         allowed_highways=closure_highways))
     snapped_origins = []
     rejected_origins = []
     for origin in origins:
@@ -233,9 +256,27 @@ def compute_routes(*, graph_path: Path, zone_path: Path, origins: list[dict[str,
                                                   "origin_id": origin["origin_id"], "distance_m": distance,
                                                   "delivery_mode": "road"}})
         else:
-            origin = min(snapped_origins, key=lambda item: haversine_m(item["lon"], item["lat"], target["lon"], target["lat"]))
-            straight_km = haversine_m(origin["lon"], origin["lat"], target["lon"], target["lat"]) / 1000.0
-            within_limit = straight_km <= secondary_max_distance_km
+            secondary_candidates = []
+            for candidate_origin in snapped_origins:
+                candidate_km = haversine_m(candidate_origin["lon"], candidate_origin["lat"],
+                                           target["lon"], target["lat"]) / 1000.0
+                candidate_line = LineString([
+                    utm_project(candidate_origin["lon"], candidate_origin["lat"], zone_number)[:2],
+                    utm_project(target["lon"], target["lat"], zone_number)[:2],
+                ])
+                clear = not any(candidate_line.intersects(guard) for guard in closure_guard)
+                if candidate_km <= secondary_max_distance_km and clear:
+                    secondary_candidates.append((candidate_km, candidate_origin))
+            if secondary_candidates:
+                straight_km, origin = min(secondary_candidates, key=lambda item: item[0])
+                secondary_clear = True
+            else:
+                origin = min(snapped_origins, key=lambda item: haversine_m(
+                    item["lon"], item["lat"], target["lon"], target["lat"]))
+                straight_km = haversine_m(origin["lon"], origin["lat"], target["lon"], target["lat"]) / 1000.0
+                secondary_clear = False
+            within_distance_limit = straight_km <= secondary_max_distance_km
+            within_limit = within_distance_limit and secondary_clear
             payload = target.get("payload_kg_required")
             try:
                 payload_value = float(payload)
@@ -243,7 +284,8 @@ def compute_routes(*, graph_path: Path, zone_path: Path, origins: list[dict[str,
             except (TypeError, ValueError):
                 payload_value, payload_known = 0.0, False
             trips = math.ceil(payload_value / secondary_payload_kg) if payload_known else None
-            secondary_status = ("REQUIRES_PAYLOAD_CHECK" if within_limit and not payload_known else
+            secondary_status = ("BLOCKED_BY_ROAD_CLOSURE" if within_distance_limit and not secondary_clear else
+                                "REQUIRES_PAYLOAD_CHECK" if within_limit and not payload_known else
                                 "AVAILABLE" if within_limit and trips <= 1 else
                                 "REQUIRES_MULTIPLE_TRIPS" if within_limit and trips and trips > 1 else
                                 "EXCEEDS_DISTANCE_LIMIT")

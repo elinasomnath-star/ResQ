@@ -25,20 +25,6 @@
       "type": "Feature",
       "geometry": null,
       "properties": {
-        "name": "Someshwara relief centre",
-        "warehouse_id": "someshwara_relief_centre",
-        "confidence": "high",
-        "source": "event-confirmed",
-        "route_origin": false,
-        "event_source": "https://sahilonline.org/incessant-rain-continue-to-lash-dakshina-kannada-water-level-in-rivers-nethravathi-kumaradhara-recede",
-        "geocode_status": "unresolved",
-        "confidence_note": "Reporting confirms a relief centre was to open at Someshwara but names no facility. Nominatim did not resolve a matching OSM facility; no locality-centre coordinate substituted."
-      }
-    },
-    {
-      "type": "Feature",
-      "geometry": null,
-      "properties": {
         "name": "DKZPHPSchool Bengre",
         "warehouse_id": "ddmp_shelter_01",
         "confidence": "medium",

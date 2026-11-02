@@ -40,12 +40,11 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
     setLoading(true);
     try {
       const data = await api.getFacilities();
-      // This project considered four event-confirmed relief-site records.
+      // This project considers three event-confirmed relief-site records.
       // DDMP-listed candidates without event confirmation are not presented as
       // operational facilities in the student demo.
       const consideredIds = new Set([
         'svs_kannada_medium_school_bantwal',
-        'someshwara_relief_centre',
         'mini_town_hall_mangaluru',
         'panemangaluru_sharada_relief_centre',
       ]);
@@ -53,9 +52,9 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
         consideredIds.has(facility.id) && facility.source === 'event-confirmed',
       );
       setFacilities(consideredSites);
-      if (consideredSites.length > 0 && !selectedFacility) {
-        setSelectedFacility(consideredSites[0]);
-      }
+      setSelectedFacility((previous) =>
+        consideredSites.find((facility) => facility.id === previous?.id) ?? consideredSites[0] ?? null,
+      );
     } catch (err) {
       console.error('Failed to load facilities:', err);
     } finally {

@@ -66,43 +66,60 @@ def init_facility_tables(db: sqlite3.Connection, processed_dir: Path) -> None:
     CREATE INDEX IF NOT EXISTS idx_stock_audit_facility ON stock_audit(facility_id);
     """)
 
-    # Seed facilities from warehouses.geojson if empty
+    # Keep seeded event-confirmed inventory aligned with the authoritative
+    # warehouses file so removed sites and their old stock cannot reappear
+    # from the persistent service database.
     cursor = db.cursor()
+    warehouses_path = processed_dir / "warehouses.geojson"
+    warehouse_data = None
+    if warehouses_path.exists():
+        warehouse_data = json.loads(warehouses_path.read_text(encoding="utf-8"))
+        current_event_ids = {
+            str(feature.get("properties", {}).get("warehouse_id") or feature.get("properties", {}).get("id") or feature.get("properties", {}).get("name"))
+            for feature in warehouse_data.get("features", [])
+            if feature.get("properties", {}).get("source") == "event-confirmed"
+        }
+        cursor.execute("SELECT id FROM facilities WHERE source = 'event-confirmed'")
+        stale_event_ids = [row[0] for row in cursor.fetchall() if row[0] not in current_event_ids]
+        for facility_id in stale_event_ids:
+            db.execute("DELETE FROM stock_audit WHERE facility_id = ?", (facility_id,))
+            db.execute("DELETE FROM stock WHERE facility_id = ?", (facility_id,))
+            db.execute("DELETE FROM facilities WHERE id = ?", (facility_id,))
+
+    # Seed facilities from warehouses.geojson if empty
     cursor.execute("SELECT COUNT(*) FROM facilities")
     count = cursor.fetchone()[0]
-    if count == 0:
-        warehouses_path = processed_dir / "warehouses.geojson"
-        if warehouses_path.exists():
-            data = json.loads(warehouses_path.read_text(encoding="utf-8"))
-            now_iso = datetime.now(timezone.utc).isoformat()
-            for feature in data.get("features", []):
-                props = feature.get("properties", {})
-                geom = feature.get("geometry")
-                f_id = props.get("warehouse_id") or props.get("id") or props.get("name")
-                f_name = props.get("name", "Unnamed Facility")
-                f_source = props.get("source", "ddmp-designated")
-                f_confidence = props.get("confidence", "medium")
-                lat, lon = None, None
-                geom_verified = 0
-                if geom and geom.get("type") == "Point" and geom.get("coordinates"):
-                    coords = geom["coordinates"]
-                    lon, lat = float(coords[0]), float(coords[1])
-                    geom_verified = 1 if props.get("route_origin") or props.get("confidence") == "high" else 0
+    if count == 0 and warehouse_data is not None:
+        data = warehouse_data
+        now_iso = datetime.now(timezone.utc).isoformat()
+        for feature in data.get("features", []):
+            props = feature.get("properties", {})
+            geom = feature.get("geometry")
+            f_id = props.get("warehouse_id") or props.get("id") or props.get("name")
+            f_name = props.get("name", "Unnamed Facility")
+            f_source = props.get("source", "ddmp-designated")
+            f_confidence = props.get("confidence", "medium")
+            lat, lon = None, None
+            geom_verified = 0
+            if geom and geom.get("type") == "Point" and geom.get("coordinates"):
+                coords = geom["coordinates"]
+                lon, lat = float(coords[0]), float(coords[1])
+                geom_verified = 1 if props.get("route_origin") or props.get("confidence") == "high" else 0
 
+            db.execute("""
+            INSERT OR IGNORE INTO facilities (id, name, type, lat, lon, source, confidence, geometry_verified)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (f_id, f_name, "relief_center", lat, lon, f_source, f_confidence, geom_verified))
+
+            # Baseline stock seed
+            for res, cfg in RESOURCE_LIMITS.items():
+                default_qty = 5000 if res == "water_liters" else (1000 if res == "food_rations" else 20)
+                default_unit = cfg["units"][0]
                 db.execute("""
-                INSERT OR IGNORE INTO facilities (id, name, type, lat, lon, source, confidence, geometry_verified)
+                INSERT OR IGNORE INTO stock (facility_id, resource, quantity, unit, mode, updated_by, updated_at, note)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (f_id, f_name, "relief_center", lat, lon, f_source, f_confidence, geom_verified))
-
-                # Baseline stock seed
-                for res, cfg in RESOURCE_LIMITS.items():
-                    default_qty = 5000 if res == "water_liters" else (1000 if res == "food_rations" else 20)
-                    default_unit = cfg["units"][0]
-                    db.execute("""
-                    INSERT OR IGNORE INTO stock (facility_id, resource, quantity, unit, mode, updated_by, updated_at, note)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (f_id, res, default_qty, default_unit, "assumed", "system_seed", now_iso, "Baseline assumed inventory"))
-            db.commit()
+                """, (f_id, res, default_qty, default_unit, "assumed", "system_seed", now_iso, "Baseline assumed inventory"))
+        db.commit()
 
 
 def get_all_facilities(db: sqlite3.Connection) -> list[dict[str, Any]]:

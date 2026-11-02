@@ -126,7 +126,7 @@ export const LandingView: React.FC<LandingViewProps> = ({ onLaunchConsole }) => 
           <article className="pillar-card pillar-blue">
             <span className="pillar-tag">03 / RESPONSE</span>
             <h3>Trace a delivery plan</h3>
-            <p>Compare allocation approaches, inspect delivery routes and test verified road closure scenarios in real-time.</p>
+            <p>Compare allocation approaches, inspect delivery routes and block mapped Bantwal roads to see live rerouting.</p>
           </article>
         </div>
       </section>

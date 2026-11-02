@@ -1,0 +1,49 @@
+{
+  "scenario_id": "custom_scenario",
+  "title": "Hypothetical \u2014 Composite Multi-Hazard Stress Scenario",
+  "description": "Custom composite scenario combining 50% stock shortage, NH-73 corridor severance, demand surge, and \u00b110% severity noise.",
+  "type": "hypothetical",
+  "event_date": "2024-07-31",
+  "seed": 42,
+  "parameters": {
+    "stock_pct": 50.0,
+    "extra_closure": true,
+    "demand_surge": true,
+    "severity_noise_pct": 10.0
+  },
+  "honesty_label": "Hypothetical stress test (synthetic perturbation)",
+  "custom_results": {
+    "stock_pct": 50.0,
+    "inventory": {
+      "food_rations": 25818,
+      "water_liters": 129070,
+      "medical_kits": 348
+    },
+    "MILP": {
+      "engine": "MILP",
+      "solve_or_inference_time_seconds": 0.004317199985962361,
+      "aggregate_unmet_demand_pct": 50.023653789546906,
+      "food_rations_unmet_demand_pct": 49.999031664568605,
+      "water_liters_unmet_demand_pct": 50.00019369259436,
+      "medical_kits_unmet_demand_pct": 50.07173601147776,
+      "minimum_zone_fairness_pct": 40.0,
+      "critical_medical_demand_satisfied_pct": 49.92826398852224,
+      "population_coverage_pct": 49.53977342717379,
+      "weighted_allocation_objective": 92.1782880032107,
+      "inventory_used": "{\"food_rations\": 25818, \"water_liters\": 129070, \"medical_kits\": 348}"
+    },
+    "Proportional": {
+      "engine": "naive_proportional_baseline",
+      "solve_or_inference_time_seconds": 0.0,
+      "aggregate_unmet_demand_pct": 50.023653789546906,
+      "food_rations_unmet_demand_pct": 49.999031664568605,
+      "water_liters_unmet_demand_pct": 50.00019369259436,
+      "medical_kits_unmet_demand_pct": 50.07173601147776,
+      "minimum_zone_fairness_pct": 48.837209302325576,
+      "critical_medical_demand_satisfied_pct": 49.92826398852224,
+      "population_coverage_pct": 49.57343110818861,
+      "weighted_allocation_objective": 70.70168365081123,
+      "inventory_used": "{\"food_rations\": 25818, \"water_liters\": 129070, \"medical_kits\": 348}"
+    }
+  }
+}

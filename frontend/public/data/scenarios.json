@@ -1,121 +1,46 @@
 {
   "scenarios": [
     {
-      "id": "documented_replay_2019",
-      "title": "Documented Replay \u2014 2019 Record Inundation (11.6 m)",
-      "description": "Replay of the historical August 2019 record monsoon flood across Bantwal with verified road closures and modeled demand.",
-      "type": "documented_replay",
-      "event_date": "2019-08-10",
-      "seed": 42,
-      "parameters": {
-        "stock_mode": "assumed_configured",
-        "stock_pct": 100.0
-      }
-    },
-    {
-      "id": "documented_replay_2024",
-      "title": "Documented Replay \u2014 2024 Panjala Submergence (9.3 m)",
-      "description": "Replay of the July 2024 event with verified NH-75 Panjala submergence and corridor access disruptions.",
-      "type": "documented_replay",
+      "id": "bantwal_netravati_bridge",
+      "title": "Block Netravati Bridge",
+      "description": "Block the full mapped Netravati Bridge road feature inside the Bantwal analysis boundary and recalculate routes across the local network.",
+      "type": "road_closure",
       "event_date": "2024-07-31",
-      "seed": 42,
+      "closure_id": "bantwal_netravati_bridge",
       "parameters": {
-        "stock_mode": "assumed_configured",
-        "stock_pct": 100.0
-      }
+        "blocked_road": "Netravati Bridge",
+        "highway": "trunk",
+        "boundary": "Bantwal analysis zones"
+      },
+      "assumptions_statement": "The blockage is placed on a mapped main road inside the Bantwal analysis boundary. Routes are recalculated by the live ResQ road graph."
     },
     {
-      "id": "documented_replay_2026",
-      "title": "Documented Replay \u2014 2026 Riverbank Pulse (8.5 m)",
-      "description": "Replay of the August 2026 localized flood pulse with warning mark water levels affecting low-lying riverfront hamlets.",
-      "type": "documented_replay",
-      "event_date": "2026-08-03",
-      "seed": 42,
-      "parameters": {
-        "stock_mode": "assumed_configured",
-        "stock_pct": 100.0
-      }
-    },
-    {
-      "id": "scarcity_ladder",
-      "title": "Hypothetical \u2014 Scarcity Ladder Stress Test",
-      "description": "Evaluates multi-engine allocation behavior across 6 progressive inventory tiers (20%, 40%, 60%, 80%, 100%, 120% of modeled need).",
-      "type": "hypothetical",
+      "id": "bantwal_kalladka_highway",
+      "title": "Block Kalladka-Kanhangad Highway",
+      "description": "Block the full mapped Kalladka-Kanhangad primary-road feature inside the Bantwal analysis boundary and recalculate local routes.",
+      "type": "road_closure",
       "event_date": "2024-07-31",
-      "seed": 42,
+      "closure_id": "bantwal_kalladka_highway",
       "parameters": {
-        "stock_ladder_pcts": [
-          20.0,
-          40.0,
-          60.0,
-          80.0,
-          100.0,
-          120.0
-        ]
-      }
+        "blocked_road": "Kalladka-Kanhangad Highway",
+        "highway": "primary",
+        "boundary": "Bantwal analysis zones"
+      },
+      "assumptions_statement": "The blockage is placed on a mapped main road inside the Bantwal analysis boundary. Routes are recalculated by the live ResQ road graph."
     },
     {
-      "id": "extra_hypothetical_closure",
-      "title": "Hypothetical \u2014 Severe NH-73 Mani-Shirady Road Severance",
-      "description": "Simulates an additional catastrophic road blockage on the vital NH-73 freight corridor, cutting off secondary relief access.",
-      "type": "hypothetical",
+      "id": "bantwal_bakrabail_road",
+      "title": "Block Bakrabail-Salethur-Vitla Road",
+      "description": "Block the full mapped Bakrabail-Salethur-Vitla primary-road feature inside the Bantwal analysis boundary and recalculate local routes.",
+      "type": "road_closure",
       "event_date": "2024-07-31",
-      "seed": 42,
+      "closure_id": "bantwal_bakrabail_road",
       "parameters": {
-        "extra_closure_id": "hypothetical_nh73_severance",
-        "extra_closure_road": "NH-73 Mani-Shirady Corridor",
-        "extra_closure_type": "total_hypothetical_blockage"
-      }
-    },
-    {
-      "id": "demand_surge_step4",
-      "title": "Hypothetical \u2014 Dynamic Demand Surge (1.5x at Step 4)",
-      "description": "Perturbs simulation step 4 by injecting a 1.5\u00d7 demand spike in the highest-severity zone to stress donor reallocation.",
-      "type": "hypothetical",
-      "event_date": "2024-07-31",
-      "seed": 42,
-      "parameters": {
-        "surge_multiplier": 1.5,
-        "surge_step": 4,
-        "target_zone": "highest_severity"
-      }
-    },
-    {
-      "id": "stock_loss_step3",
-      "title": "Hypothetical \u2014 District Stock Loss (30% Loss at Step 3)",
-      "description": "Simulates warehouse flooding or spoilage causing an abrupt 30% drop in available district relief inventory at step 3.",
-      "type": "hypothetical",
-      "event_date": "2024-07-31",
-      "seed": 42,
-      "parameters": {
-        "stock_loss_pct": 30.0,
-        "loss_step": 3
-      }
-    },
-    {
-      "id": "severity_noise",
-      "title": "Hypothetical \u2014 Severe Sensor & Model Uncertainty (\u00b120% Noise)",
-      "description": "Applies a reproducible pseudo-random \u00b120% perturbation across zone severity scores to assess allocator stability.",
-      "type": "hypothetical",
-      "event_date": "2024-07-31",
-      "seed": 1042,
-      "parameters": {
-        "severity_noise_pct": 20.0
-      }
-    },
-    {
-      "id": "custom_scenario",
-      "title": "Hypothetical \u2014 Composite Multi-Hazard Stress Scenario",
-      "description": "Custom composite scenario combining 50% stock shortage, NH-73 corridor severance, demand surge, and \u00b110% severity noise.",
-      "type": "hypothetical",
-      "event_date": "2024-07-31",
-      "seed": 42,
-      "parameters": {
-        "stock_pct": 50.0,
-        "extra_closure": true,
-        "demand_surge": true,
-        "severity_noise_pct": 10.0
-      }
+        "blocked_road": "Bakrabail-Salethur-Vitla Road",
+        "highway": "primary",
+        "boundary": "Bantwal analysis zones"
+      },
+      "assumptions_statement": "The blockage is placed on a mapped main road inside the Bantwal analysis boundary. Routes are recalculated by the live ResQ road graph."
     }
   ]
 }

@@ -39,9 +39,9 @@ const DEMO_STEPS: StepItem[] = [
   },
   {
     id: 'timeline-closures',
-    title: '5. Multi-Step Timeline & Corridor-Level Closures',
+    title: '5. Timeline & Bantwal Road Blockage Scenarios',
     description:
-      'The timeline scrub bar advances through the 8 sequential steps. At step 3, an alert indicates corridor-level road closure (e.g. BC Road - Jakribettu corridor), triggering network re-routing.',
+      'Use the Scenario Deck to block one of the mapped Bantwal road segments. The ResQ API recalculates routes across the local network and the map highlights the blocked segment.',
   },
   {
     id: 'route-morphing',
