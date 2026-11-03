@@ -110,6 +110,7 @@ export interface SimulationResult {
   event: string;
   engine: EngineType;
   stock_mode: StockMode;
+  stock_pct_of_modeled_need?: number | null;
   inventory_basis: string;
   hard_fairness_target_status: string;
   summary: any;
@@ -219,23 +220,12 @@ export interface FacilityStockSummary {
 export interface Scenario {
   id: string;
   title: string;
-  category: 'documented_replay' | 'hypothetical_what_if' | string;
+  category: 'road_closure';
   description: string;
   event_date: string;
   parameters: Record<string, any>;
   assumptions_statement?: string;
   closure_id?: string;
-}
-
-export interface ScenarioResult {
-  scenario_id: string;
-  scenario_title: string;
-  category: string;
-  event_date: string;
-  seed?: number;
-  summary: Record<string, any>;
-  steps?: StepRecord[];
-  disclaimer: string;
 }
 
 export interface AdminOverrideItem {

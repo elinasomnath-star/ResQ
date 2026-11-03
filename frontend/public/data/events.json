@@ -1,14 +1,14 @@
 {
   "scope": "Bantwal taluk; 16 analytical grid zones",
-  "danger_mark_m": 8,
-  "warning_level_m": 7,
+  "danger_mark_m": 9,
+  "warning_level_m": 8.0,
   "events": [
     {
       "event_date": "2019-08-10",
       "river_gauge": "Bantwal",
       "water_level_m": 11.6,
-      "danger_mark_m": 8,
-      "warning_level_m": 7,
+      "danger_mark_m": 9,
+      "warning_level_m": 8.0,
       "affected_localities": [
         "Bantwal Kelagina Pete",
         "Panemangaluru",
@@ -41,8 +41,8 @@
       "event_date": "2024-07-31",
       "river_gauge": "Bantwal",
       "water_level_m": 9.3,
-      "danger_mark_m": 8,
-      "warning_level_m": 7,
+      "danger_mark_m": 9,
+      "warning_level_m": 8.0,
       "affected_localities": [
         "Aladka",
         "Bastipadpu",
@@ -69,8 +69,8 @@
       "event_date": "2026-08-03",
       "river_gauge": "Bantwal",
       "water_level_m": 8.5,
-      "danger_mark_m": 8,
-      "warning_level_m": 7,
+      "danger_mark_m": 9,
+      "warning_level_m": 8.0,
       "affected_localities": [
         "Panemangaluru",
         "Aladkapadpu"

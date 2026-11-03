@@ -59,8 +59,8 @@ export const GaugeRewind: React.FC<GaugeRewindProps> = ({ eventDate }) => {
   }
 
   const current = readings[selectedIndex] ?? readings[0];
-  const danger = current.danger_mark_m || 8.0;
-  const warning = current.warning_level_m || 7.0;
+  const danger = current.danger_mark_m ?? 9.0;
+  const warning = current.warning_level_m ?? 8.0;
   const level = current.water_level_m;
   const aboveDanger = level >= danger;
   const atWarning = level >= warning;

@@ -10,6 +10,8 @@ interface ScarcitySliderProps {
   onOpenChart?: () => void;
   comparisonRows?: StockSweepRow[];
   selectedEngine?: EngineType;
+  disabled?: boolean;
+  disabledMessage?: string;
 }
 
 const metric = (value: number | undefined) =>
@@ -23,6 +25,8 @@ export const ScarcitySlider: React.FC<ScarcitySliderProps> = ({
   onOpenChart,
   comparisonRows = [],
   selectedEngine = 'MILP',
+  disabled = false,
+  disabledMessage,
 }) => {
   const engines: { engine: EngineType; color: string; label: string }[] = [
     { engine: 'MILP', color: '#60A5FA', label: 'MILP' },
@@ -69,7 +73,9 @@ export const ScarcitySlider: React.FC<ScarcitySliderProps> = ({
             min={10} max={150} step={5}
             value={stockPct}
             onChange={(e) => onChange(Number(e.target.value))}
-            className="relative z-10 h-2 w-full cursor-pointer appearance-none rounded-full
+            disabled={disabled}
+            title={disabled ? disabledMessage : 'This percentage is applied to modeled need when you run an allocation'}
+            className="relative z-10 h-2 w-full cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 appearance-none rounded-full
                        bg-gradient-to-r from-rose-500/80 via-accent-violet/80 to-accent-cyan/80
                        accent-accent-violet my-0"
           />
@@ -101,7 +107,7 @@ export const ScarcitySlider: React.FC<ScarcitySliderProps> = ({
               Floor: {floorThreshold.toFixed(1)}%
             </span>
           </div>
-          <span className="text-slate-400 hidden lg:block text-[10px]">Illustrative sweep · not configured inventory</span>
+          <span className="text-slate-400 hidden lg:block text-[10px]">{disabled ? disabledMessage : 'Applied to pool on next run · assumed supply'}</span>
           <span className="text-slate-300 font-bold">150%</span>
         </div>
       </div>

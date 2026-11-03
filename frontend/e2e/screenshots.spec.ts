@@ -50,12 +50,16 @@ test('Refresh current ResQ interface screenshots', async ({ page }) => {
   expect(legendOverlap).toBe(false);
   const mapAttribution = page.locator('.maplibregl-ctrl-attrib');
   await expect(mapAttribution).toBeVisible();
-  const attributionOverlapsLayerControls = await mapAttribution.evaluate((attribution) => {
+  const attributionLayout = await mapAttribution.evaluate((attribution) => {
     const attributionBox = attribution.getBoundingClientRect();
     const controlsBox = document.querySelector('.map-layer-controls')?.getBoundingClientRect();
-    return Boolean(controlsBox && attributionBox.left < controlsBox.right && attributionBox.right > controlsBox.left && attributionBox.top < controlsBox.bottom && attributionBox.bottom > controlsBox.top);
+    return {
+      overlaps: Boolean(controlsBox && attributionBox.left < controlsBox.right && attributionBox.right > controlsBox.left && attributionBox.top < controlsBox.bottom && attributionBox.bottom > controlsBox.top),
+      attribution: { left: attributionBox.left, top: attributionBox.top, right: attributionBox.right, bottom: attributionBox.bottom },
+      controls: controlsBox && { left: controlsBox.left, top: controlsBox.top, right: controlsBox.right, bottom: controlsBox.bottom },
+    };
   });
-  expect(attributionOverlapsLayerControls).toBe(false);
+  expect(attributionLayout.overlaps, `map attribution must not cover layer controls: ${JSON.stringify(attributionLayout)}`).toBe(false);
   const overlayAlignment = await page.locator('.console-bottom-overlays').evaluate((container) => {
     const stock = container.querySelector('.stock-sensitivity')?.getBoundingClientRect();
     const timeline = container.querySelector('.step-timeline')?.getBoundingClientRect();
@@ -70,13 +74,13 @@ test('Refresh current ResQ interface screenshots', async ({ page }) => {
   expect(overlayAlignment.sameRight).toBe(true);
   expect(overlayAlignment.controlsGap).toBeGreaterThanOrEqual(12);
   const resourcePool = page.getByLabel('Assumed Resource Pool');
-  await expect(resourcePool.getByText('This round +25,000')).toBeVisible();
-  await expect(resourcePool.getByText('This round +75,000')).toBeVisible();
-  await expect(resourcePool.getByText('This round +697')).toBeVisible();
-  await page.getByRole('button', { name: 'Go to round 2, closure scenario step' }).click();
-  await expect(resourcePool.getByText('This round +0').first()).toBeVisible();
-  await expect(resourcePool.getByText('This round +16')).toBeVisible();
-  await page.getByRole('button', { name: 'Go to round 1' }).click();
+  await expect(resourcePool.getByText('25,000 allocated')).toBeVisible();
+  await expect(resourcePool.getByText('75,000 allocated')).toBeVisible();
+  await expect(resourcePool.getByText('697 allocated')).toBeVisible();
+  await page.getByRole('button', { name: 'Round 2', exact: true }).click();
+  await expect(resourcePool.getByText('0 allocated').first()).toBeVisible();
+  await expect(resourcePool.getByText('16 allocated')).toBeVisible();
+  await page.getByRole('button', { name: 'Round 1', exact: true }).click();
   const timelineOverlaps = await page.locator('.step-timeline-toolbar').evaluate((toolbar) => {
     const boxes = Array.from(toolbar.children).map((child) => child.getBoundingClientRect());
     return boxes.some((box, index) => boxes.slice(index + 1).some((other) =>
@@ -107,13 +111,20 @@ test('Refresh current ResQ interface screenshots', async ({ page }) => {
     { button: 'Shelters', close: 'Close Shelter Inventory', file: 'screenshot_shelter_inventory.png' },
     { button: 'Override', close: 'Close Admin Override', file: 'screenshot_admin_override.png' },
     { button: 'Compare', close: 'Close comparison', file: 'screenshot_compare_view.png' },
-    { button: 'Alerts', close: 'Close Alerts', file: 'screenshot_escalations.png' },
+    { selector: 'button[title="Shortage alerts"]', close: 'Close Alerts', file: 'screenshot_escalation.png' },
   ];
   for (const item of targets) {
-    const button = page.getByRole('button', { name: item.button, exact: true });
+    const button = 'selector' in item
+      ? page.locator(item.selector)
+      : page.getByRole('button', { name: item.button, exact: true });
     if (!(await button.isVisible().catch(() => false))) continue;
     await button.click();
     await page.waitForTimeout(350);
+    if (item.file === 'screenshot_scenario_deck.png') {
+      await expect(page.getByText('5 Bantwal Road Blockage Scenarios')).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Run scenario: Block Netravati Bridge + Kalladka Highway' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Run scenario: Block Three Bantwal Main Roads' })).toBeVisible();
+    }
     if (item.file === 'screenshot_shelter_inventory.png') {
       await expect(page.getByText(/Showing \d+ of \d+ event-confirmed sites/)).toBeVisible();
       await expect(page.getByText(/ddmp-designated/)).toHaveCount(0);
@@ -121,6 +132,11 @@ test('Refresh current ResQ interface screenshots', async ({ page }) => {
     await page.screenshot({ path: path.join(demoDir, item.file) });
     await page.getByRole('button', { name: item.close }).click();
   }
+
+  await page.locator('header button[title="Data sources & limitations"]').click();
+  await expect(page.getByRole('heading', { name: 'About ResQ & Analytical Boundaries' })).toBeVisible();
+  await page.screenshot({ path: path.join(demoDir, 'screenshot_about_limits.png') });
+  await page.locator('.glass-panel-elevated button').first().click();
 });
 
 test('Shelter names remain readable and do not overlap on the map', async ({ page }) => {
@@ -148,56 +164,78 @@ test('Shelter names remain readable and do not overlap on the map', async ({ pag
   await page.screenshot({ path: path.join(demoDir, 'screenshot_console_shelter_labels.png') });
 });
 
-test('Selecting a scenario executes it live and loads an allocation run into the console', async ({ page }) => {
-  test.setTimeout(120000);
+test('Selecting each road scenario recalculates all Bantwal routes live', async ({ page }) => {
+  test.setTimeout(180000);
   await enterAsOperator(page);
   await page.getByRole('button', { name: 'Scenarios', exact: true }).click();
-  const scenarioRun = page.waitForResponse((response) =>
-    response.url().endsWith('/scenarios/run') && response.request().method() === 'POST', { timeout: 60000 });
-  const allocationRun = page.waitForResponse((response) =>
-    response.url().endsWith('/simulate') && response.request().method() === 'POST', { timeout: 60000 });
-  await page.getByRole('button', { name: /Run scenario: Documented Replay.*2019/ }).click();
-  const [scenarioResponse, allocationResponse] = await Promise.all([scenarioRun, allocationRun]);
-  expect(scenarioResponse.ok()).toBeTruthy();
-  expect(allocationResponse.ok()).toBeTruthy();
-  const allocation = await allocationResponse.json();
-  expect(allocation.run_id).not.toMatch(/^offline_run_/);
-  await expect(page.getByText('Live API run')).toBeVisible();
-  await expect(page.getByText(/Unmet demand \d+(?:\.\d+)?%/)).toBeVisible();
-});
-
-test('Verified road closure recalculates routes against the cached OSM graph', async ({ page }) => {
-  test.setTimeout(240000);
-  const runtimeErrors: string[] = [];
-  page.on('pageerror', (error) => { runtimeErrors.push(error.message); });
-  page.on('console', (message) => { if (message.type() === 'error') console.error('Browser console error:', message.text()); });
-  await enterAsOperator(page);
-  await expect(page.getByRole('button', { name: 'ONLINE' })).toBeVisible({ timeout: 10000 });
-  await expect(page.locator('.maplibregl-canvas')).toBeVisible({ timeout: 15000 });
-  const responsePromise = page.waitForResponse((response) =>
-    response.url().endsWith('/closures') && response.request().method() === 'POST', { timeout: 220000 });
-  await page.getByRole('button', { name: 'Apply Verified Closure' }).click();
-  await expect(page.getByRole('button', { name: 'Applying Verified Closure' })).toBeVisible();
-  const response = await responsePromise;
-  expect(response.ok()).toBeTruthy();
-  const payload = await response.json();
-  expect(payload.applied_closure_id).toBeTruthy();
-  expect(payload.module7_routes.zone_count).toBe(16);
-  expect(payload.module7_routes.road_count + payload.module7_routes.secondary_count + payload.module7_routes.unreachable_count).toBe(16);
-  await expect(page.getByRole('button', { name: 'Closure Applied' })).toBeVisible({ timeout: 30000 });
-  await expect(page.getByRole('status')).toContainText('16 routes recalculated', { timeout: 30000 });
-  await page.waitForFunction(() => {
-    const map = (window as any).__resq_map;
-    return map?.getLayoutProperty('closure_marker_label_layer', 'visibility') === 'visible'
-      && map.querySourceFeatures('closure_marker_source').length > 0;
-  });
-  const allocationPanel = await page.getByText('Allocated vs Need', { exact: true }).locator('..').locator('..').innerText();
-  for (const resource of ['Food Rations', 'Water (Litres)', 'Medical Kits']) {
-    const escapedResource = resource.replace('(', '\\(').replace(')', '\\)');
-    const match = allocationPanel.match(new RegExp(`${escapedResource}\\s+([\\d,]+)\\s*\\/\\s*([\\d,]+)`));
-    expect(match, `${resource} should show one consistent demand value`).toBeTruthy();
-    expect(Number(match![1].replaceAll(',', ''))).toBeLessThanOrEqual(Number(match![2].replaceAll(',', '')));
+  await expect(page.getByRole('button', { name: 'Run scenario: Block Netravati Bridge', exact: true })).toBeVisible();
+  const scenarios: [string, string, number][] = [
+    ['bantwal_netravati_bridge', 'Block Netravati Bridge', 1],
+    ['bantwal_kalladka_highway', 'Block Kalladka-Kanhangad Highway', 1],
+    ['bantwal_bakrabail_road', 'Block Bakrabail-Salethur-Vitla Road', 1],
+    ['bantwal_netravati_kalladka_multi', 'Block Netravati Bridge + Kalladka Highway', 2],
+    ['bantwal_three_main_roads_multi', 'Block Three Bantwal Main Roads', 3],
+  ];
+  const closureDataResponse = await page.request.get('/data/bantwal_scenario_closures.geojson');
+  expect(closureDataResponse.ok()).toBe(true);
+  const closureFeatures = (await closureDataResponse.json()).features as Array<{
+    properties: { closure_id: string; closure_points: number[][] };
+    geometry: { type: string; coordinates: number[][][] };
+  }>;
+  for (const [scenarioId, , blockedRoadCount] of scenarios) {
+    const feature = closureFeatures.find((item) => item.properties.closure_id === scenarioId);
+    expect(feature, `${scenarioId} red map feature should exist`).toBeDefined();
+    expect(feature?.properties.closure_points).toHaveLength(blockedRoadCount);
+    expect(feature?.geometry.type).toBe('MultiLineString');
   }
-  expect(runtimeErrors).toEqual([]);
+  for (const [scenarioId, title, blockedRoadCount] of scenarios) {
+    const reroute = page.waitForResponse((response) =>
+      response.url().endsWith('/scenario-reroutes') && response.request().method() === 'POST'
+      && response.request().postDataJSON()?.scenario_id === scenarioId, { timeout: 60000 });
+    await page.getByRole('button', { name: `Run scenario: ${title}`, exact: true }).click();
+    const response = await reroute;
+    expect(response.ok(), `${title} should reroute successfully`).toBeTruthy();
+    const result = await response.json();
+    expect(result.blocked_roads, `${scenarioId} blocked road response: ${JSON.stringify(result)}`).toHaveLength(blockedRoadCount);
+    expect(result.closure_points, `${scenarioId} closure marker response: ${JSON.stringify(result.closure_points)}`).toHaveLength(blockedRoadCount);
+    const usesMiniTownHall = result.blocked_roads.includes('Netravati Bridge');
+    const miniTownHallRoutes = result.zone_routes.filter(
+      (route: { origin_id: string }) => route.origin_id === 'mini_town_hall_mangaluru',
+    );
+    if (usesMiniTownHall) {
+      expect(result.routing_origin_ids).toContain('mini_town_hall_mangaluru');
+      expect(miniTownHallRoutes.length, `${scenarioId} should route at least one zone from Mini Town Hall`).toBeGreaterThan(0);
+      await expect(page.getByTestId('mini-town-hall-map-label')).toBeVisible();
+    } else {
+      expect(result.routing_origin_ids, `${scenarioId} should omit Mini Town Hall`).not.toContain('mini_town_hall_mangaluru');
+      expect(miniTownHallRoutes).toHaveLength(0);
+      await expect(page.getByTestId('mini-town-hall-map-label')).toBeHidden();
+    }
+    expect(result.route_count).toBe(16);
+    expect(result.zone_routes).toHaveLength(16);
+    expect(new Set(result.zone_routes.map((route: { zone_id: string }) => route.zone_id)).size).toBe(16);
+    expect(result.routes.length).toBeLessThanOrEqual(16);
+    for (const zoneRoute of result.zone_routes) {
+      const hasMapGeometry = result.routes.some((route: { properties: { zone_id: string } }) =>
+        route.properties.zone_id === zoneRoute.zone_id,
+      );
+      expect(hasMapGeometry).toBe(zoneRoute.delivery_mode !== 'none');
+    }
+    await expect(page.getByRole('status')).toContainText('16 routes recalculated', { timeout: 15000 });
+  }
+  const nonNetravatiReroute = page.waitForResponse((response) =>
+    response.url().endsWith('/scenario-reroutes') && response.request().method() === 'POST'
+    && response.request().postDataJSON()?.scenario_id === 'bantwal_kalladka_highway', { timeout: 60000 });
+  await page.getByRole('button', { name: 'Run scenario: Block Kalladka-Kanhangad Highway', exact: true }).click();
+  const nonNetravatiResult = await nonNetravatiReroute;
+  expect(nonNetravatiResult.ok()).toBe(true);
+  expect((await nonNetravatiResult.json()).blocked_roads).toEqual(['Kalladka-Kanhangad Highway']);
+  await expect(page.getByTestId('mini-town-hall-map-label')).toBeHidden();
+  await page.getByRole('button', { name: 'Close Scenario Deck' }).click();
+  await expect(page.locator('aside.w-80')).toBeVisible();
+  await page.locator('.resq-zone-marker').nth(15).click();
+  await page.waitForTimeout(250);
+  await expect(page.getByRole('heading', { name: 'Bantwal zone 16' })).toBeVisible();
+  await page.screenshot({ path: path.join(demoDir, 'screenshot_zone_drawer.png') });
   await page.screenshot({ path: path.join(demoDir, 'screenshot_timeline_closure.png') });
 });

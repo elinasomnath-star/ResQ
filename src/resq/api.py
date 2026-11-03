@@ -63,6 +63,7 @@ class SimulateRequest(BaseModel):
     event: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
     engine: Literal["MILP", "LinUCB", "proportional"]
     stock_mode: Literal["configured", "assumed_configured", "simulated", "assumed_sufficient", "entered"] = "configured"
+    stock_pct: float | None = Field(default=None, ge=10, le=150)
 
 
 class ClosureRequest(BaseModel):
@@ -245,10 +246,25 @@ def _simulated_stock(processed: Path, event_date: str) -> dict[str, int]:
 
 
 def _stock_config(config: dict[str, Any], processed: Path, event_date: str,
-                  stock_mode: str, db_path: Path | None = None) -> tuple[dict[str, Any], str, list[str]]:
+                  stock_mode: str, db_path: Path | None = None,
+                  stock_pct: float | None = None) -> tuple[dict[str, Any], str, list[str]]:
     run_config = copy.deepcopy(config)
     unroutable: list[str] = []
-    if stock_mode in ("configured", "assumed_configured"):
+    if stock_pct is not None:
+        if stock_mode == "entered":
+            raise ValueError("A modeled-need percentage cannot scale operator-entered stock")
+        demand_rows = _read_csv(processed / f"severity_demand_{event_date}.csv")
+        if not demand_rows:
+            raise FileNotFoundError(f"No modeled demand rows found for {event_date}")
+        stock = {
+            resource: int(round(sum(
+                math.ceil(max(0.0, float(row.get(column, 0) or 0)))
+                for row in demand_rows
+            ) * stock_pct / 100.0))
+            for resource, column in RESOURCE_COLUMNS.items()
+        }
+        basis = f"assumed_inventory: {stock_pct:g}% of {event_date} modeled need"
+    elif stock_mode in ("configured", "assumed_configured"):
         stock = {k: int(v) for k, v in run_config["resources"]["prototype_inventory"].items()}
         basis = "assumed_inventory: config/region.yaml prototype_inventory"
     elif stock_mode in ("simulated", "assumed_sufficient"):
@@ -559,7 +575,7 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
         return {"scope": "Bantwal taluk; 16 analytical grid zones", "events": [
             {"event_date": d, "river_gauge": e.river_gauge, "water_level_m": e.water_level_m,
              "danger_mark_m": float(gauge_by_event.get(d, {}).get("danger_level_m") or 9.0),
-             "warning_level_m": float(gauge_by_event.get(d, {}).get("warning_level_m") or 8.5),
+             "warning_level_m": float(gauge_by_event.get(d, {}).get("warning_level_m") or 8.0),
              "affected_localities": list(e.affected_localities), "roads_blocked": list(e.roads_blocked),
              "houses_affected": e.houses_affected, "source_urls": list(e.source_urls)}
             for d, e in known.items()]}
@@ -603,9 +619,17 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
     @app.post("/simulate", status_code=201)
     def simulate(body: SimulateRequest, current_user: User = Depends(require_role("viewer"))):
         event = _event_or_404(body.event)
+        if body.stock_mode == "entered" and body.stock_pct is not None:
+            raise HTTPException(status_code=422, detail={
+                "code": "stock_percentage_not_supported",
+                "message": "Modeled-need percentages cannot scale operator-entered stock.",
+            })
         engine = ENGINES[body.engine]
         run_id = str(uuid.uuid4())
-        run_config, basis, unroutable = _stock_config(config, processed, body.event, body.stock_mode, db_path=db_path)
+        run_config, basis, unroutable = _stock_config(
+            config, processed, body.event, body.stock_mode, db_path=db_path,
+            stock_pct=body.stock_pct,
+        )
         try:
             with _RUN_LOCK:
                 with _preserve_artifacts(_allocator_artifacts(processed, body.event)):
@@ -616,7 +640,8 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
             available_inventory = {
                 key: int(value) for key, value in run_config["resources"]["prototype_inventory"].items()
             }
-            selected_summary = {**selected_summary, "inventory_used": available_inventory,
+            selected_summary = {**selected_summary, "stock_pct_of_modeled_need": body.stock_pct,
+                                "inventory_used": available_inventory,
                                 "available_inventory": available_inventory}
             _insert_run(db_path, run_id=run_id, event_date=body.event, engine=engine,
                         stock_mode=body.stock_mode, inventory_basis=basis,
@@ -634,6 +659,7 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
         status_chip = "ENTERED, UNVERIFIED" if body.stock_mode == "entered" else "ASSUMED"
         return {"run_id": run_id, "event": event.event_date.isoformat(), "engine": body.engine,
                 "stock_mode": body.stock_mode, "inventory_basis": basis,
+                "stock_pct_of_modeled_need": body.stock_pct,
                 "available_inventory": available_inventory,
                 "status_chip": status_chip,
                 "unroutable_facilities": unroutable,
@@ -657,7 +683,14 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
         existing = json.loads(run["closure_ids_json"])
         if body.closure_id in existing:
             raise HTTPException(status_code=409, detail={"code": "closure_already_applied", "message": "This closure has already been applied to the run."})
-        run_config, basis, unroutable = _stock_config(config, processed, event_date, str(run["stock_mode"]), db_path=db_path)
+        run_config, _, unroutable = _stock_config(config, processed, event_date, str(run["stock_mode"]), db_path=db_path)
+        run_summary = json.loads(run["summary_json"])
+        run_inventory = run_summary.get("available_inventory")
+        if run_inventory:
+            run_config["resources"]["prototype_inventory"] = {
+                key: int(value) for key, value in run_inventory.items()
+            }
+        basis = str(run["inventory_basis"])
         try:
             with _RUN_LOCK:
                 with _preserve_artifacts(_module8_artifacts(processed, event_date)
@@ -735,10 +768,6 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail={
                 "code": "unknown_road_scenario", "message": "That Bantwal road scenario does not exist."
             })
-        if scenario.get("highway") not in {"trunk", "primary"}:
-            raise HTTPException(status_code=422, detail={
-                "code": "invalid_road_scenario", "message": "Only mapped Bantwal trunk and primary roads can be blocked."
-            })
         if app.state.road_graph is None:
             raise HTTPException(status_code=503, detail={
                 "code": "road_graph_unavailable",
@@ -748,31 +777,49 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
         data = config["data"]
         processed = configured_path(data["processed_dir"])
         zones_path = configured_path(data.get("analysis_zones_path", "data/processed/analysis_zones.geojson"))
-        point = scenario.get("closure_point")
         try:
             from shapely.geometry import LineString, Point, shape
             from shapely.ops import unary_union
 
-            if not isinstance(point, list) or len(point) != 2:
-                raise ValueError("Invalid closure point")
-            closure_point = Point(float(point[0]), float(point[1]))
             zones = json.loads(zones_path.read_text(encoding="utf-8"))
             zone_shapes = [shape(feature["geometry"]) for feature in zones.get("features", [])
                            if feature.get("geometry")]
             boundary = unary_union(zone_shapes)
-            coordinate_parts = scenario.get("coordinate_parts")
-            if not isinstance(coordinate_parts, list) or not coordinate_parts:
-                raise ValueError("Scenario has no mapped road geometry")
             closure_lines = []
-            for coordinates in coordinate_parts:
-                if not isinstance(coordinates, list) or len(coordinates) < 2:
-                    raise ValueError("Scenario contains an invalid road segment")
-                line = LineString(coordinates)
-                if not boundary.covers(line):
-                    raise ValueError("Blocked road geometry extends outside the Bantwal analysis boundary")
-                closure_lines.append(line)
-            if not boundary.covers(closure_point) or not any(line.distance(closure_point) < 0.00001 for line in closure_lines):
-                raise ValueError("Closure marker is not on a mapped Bantwal road")
+            road_by_id = {item.get("id"): item for item in scenarios if item.get("id")}
+            road_ids = scenario.get("road_ids") or [scenario["id"]]
+            if not isinstance(road_ids, list) or not road_ids:
+                raise ValueError("Scenario must contain at least one mapped road")
+            blocked_roads = []
+            closure_points = []
+            for road_id in road_ids:
+                road = road_by_id.get(road_id)
+                if road is None or road.get("highway") not in {"trunk", "primary"}:
+                    raise ValueError(f"Scenario road {road_id!r} is not a mapped Bantwal trunk or primary road")
+                point = road.get("closure_point")
+                coordinate_parts = road.get("coordinate_parts")
+                if not isinstance(point, list) or len(point) != 2:
+                    raise ValueError(f"Road {road_id!r} has an invalid closure marker")
+                if not isinstance(coordinate_parts, list) or not coordinate_parts:
+                    raise ValueError(f"Road {road_id!r} has no mapped geometry")
+                closure_point = Point(float(point[0]), float(point[1]))
+                road_lines = []
+                for coordinates in coordinate_parts:
+                    if not isinstance(coordinates, list) or len(coordinates) < 2:
+                        raise ValueError(f"Road {road_id!r} contains an invalid mapped segment")
+                    line = LineString(coordinates)
+                    if not boundary.covers(line):
+                        raise ValueError(f"Blocked road {road['name']!r} extends outside the Bantwal analysis boundary")
+                    road_lines.append(line)
+                if not boundary.covers(closure_point) or not any(line.distance(closure_point) < 0.00001 for line in road_lines):
+                    raise ValueError(f"Closure marker for {road['name']!r} is not on its mapped Bantwal road")
+                closure_lines.append({
+                    "closure_id": road_id,
+                    "name": road["name"],
+                    "coordinate_parts": coordinate_parts,
+                })
+                closure_points.append([float(point[0]), float(point[1])])
+                blocked_roads.append(road["name"])
 
             warehouse_path = processed / "warehouses.geojson"
             if warehouse_path.exists():
@@ -791,7 +838,7 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
                             "lon": float(w["lon"]), "lat": float(w["lat"]),
                             "origin_source": "configured_warehouse"}
                            for i, w in enumerate(config.get("warehouses", []))]
-            if body.scenario_id != MINI_TOWN_HALL_SCENARIO_ID:
+            if MINI_TOWN_HALL_SCENARIO_ID not in road_ids:
                 origins = [origin for origin in origins
                            if origin["origin_id"] != MINI_TOWN_HALL_ORIGIN_ID]
             graph_path = configured_path(data["road_graph_path"])
@@ -799,9 +846,7 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
                 graph_path=graph_path,
                 zone_path=zones_path,
                 origins=origins,
-                closure_lines=[{"closure_id": body.scenario_id,
-                                "name": scenario["name"],
-                                "coordinate_parts": coordinate_parts}],
+                closure_lines=closure_lines,
                 # Block the full mapped road corridor, including nearby graph
                 # edges whose OSM classification or centerline differs from
                 # the displayed way. This keeps selected-zone routes clear of
@@ -817,8 +862,11 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
             raise HTTPException(status_code=422, detail={
                 "code": "road_scenario_failed", "message": str(exc)
             }) from exc
-        return {"scenario_id": body.scenario_id, "blocked_road": scenario["name"],
-                "route_count": len(route_rows), "routes": details["route_features"]}
+        return {"scenario_id": body.scenario_id, "blocked_road": ", ".join(blocked_roads),
+                "blocked_roads": blocked_roads, "closure_points": closure_points,
+                "routing_origin_ids": sorted(origin["origin_id"] for origin in origins),
+                "route_count": len(route_rows), "zone_routes": route_rows,
+                "routes": details["route_features"]}
 
     @app.get("/routes/{run_id}")
     def get_routes(run_id: str, current_user: User = Depends(require_role("viewer"))):

@@ -31,14 +31,14 @@ def export():
     events_data = {
         "scope": "Bantwal taluk; 16 analytical grid zones",
         "danger_mark_m": 9.0,
-        "warning_level_m": 8.5,
+        "warning_level_m": 8.0,
         "events": [
             {
                 "event_date": e.event_date.isoformat(),
                 "river_gauge": e.river_gauge,
                 "water_level_m": e.water_level_m,
                 "danger_mark_m": float(gauge_thresholds.get(e.event_date.isoformat(), {}).get("danger_level_m") or 9.0),
-                "warning_level_m": float(gauge_thresholds.get(e.event_date.isoformat(), {}).get("warning_level_m") or 8.5),
+                "warning_level_m": float(gauge_thresholds.get(e.event_date.isoformat(), {}).get("warning_level_m") or 8.0),
                 "affected_localities": list(e.affected_localities),
                 "roads_blocked": list(e.roads_blocked),
                 "houses_affected": e.houses_affected,
@@ -196,6 +196,8 @@ def export():
     # Clip map display layers and SAR previews to the 16-zone Bantwal footprint.
     from build_frontend_map_assets import build as build_bantwal_map_assets
     build_bantwal_map_assets()
+    from export_bantwal_road_scenarios import export as export_bantwal_road_scenarios
+    export_bantwal_road_scenarios()
     print("Export complete.")
 
 

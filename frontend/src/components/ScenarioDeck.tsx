@@ -1,47 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import type { Scenario, ScenarioResult } from '../types';
+import type { Scenario } from '../types';
 import { api } from '../services/api';
 
 interface ScenarioDeckProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectScenario: (scenario: Scenario, seed?: number) => void | Promise<void>;
-}
-
-function scenarioHighlights(result: ScenarioResult): string[] {
-  if (result.category === 'road_closure') {
-    return ['Mapped main road blocked', 'Live Bantwal routes recalculated'];
-  }
-  const payload = result as unknown as Record<string, any>;
-  const metrics = payload.results?.MILP
-    ?? payload.surge_impact?.post_surge_metrics
-    ?? payload.stock_loss_impact?.post_loss_metrics
-    ?? payload.noise_impact?.metrics
-    ?? payload.custom_results?.MILP
-    ?? null;
-  if (metrics) {
-    const highlights: string[] = [];
-    const unmet = Number(metrics.aggregate_unmet_demand_pct);
-    const minimum = Number(metrics.minimum_zone_fairness_pct ?? metrics.minimum_zone_coverage_pct);
-    if (Number.isFinite(unmet)) highlights.push(`Unmet demand ${unmet.toFixed(1)}%`);
-    if (Number.isFinite(minimum)) highlights.push(`Minimum zone coverage ${minimum.toFixed(1)}%`);
-    if (Number.isFinite(Number(metrics.solve_or_inference_time_seconds))) {
-      highlights.push(`Solve ${Number(metrics.solve_or_inference_time_seconds).toFixed(3)} s`);
-    }
-    if (highlights.length) return highlights;
-  }
-  if (Array.isArray(payload.ladder_results)) {
-    const tiers = payload.ladder_results;
-    const finalTier = tiers.at(-1);
-    return [
-      `${tiers.length} stock tiers evaluated`,
-      finalTier ? `At ${finalTier.stock_pct}% stock: ${Number(finalTier.MILP?.unmet_pct ?? 0).toFixed(1)}% unmet` : '',
-    ].filter(Boolean);
-  }
-  if (payload.routing_impact) {
-    return [`${Number(payload.routing_impact.unreachable_zone_count ?? 0)} zones marked unreachable in the hypothetical stress case`];
-  }
-  return ['Scenario run completed with the selected event assumptions.'];
+  onSelectScenario: (scenario: Scenario) => void | Promise<void>;
 }
 
 export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
@@ -53,10 +17,9 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   const [comparisonScenario, setComparisonScenario] = useState<Scenario | null>(null);
   const [isComparing, setIsComparing] = useState<boolean>(false);
-  const [randomSeed, setRandomSeed] = useState<number>(42);
   const [loading, setLoading] = useState<boolean>(true);
   const [executing, setExecuting] = useState<boolean>(false);
-  const [result, setResult] = useState<ScenarioResult | null>(null);
+  const [result, setResult] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isOffline = api.getOfflineMode();
@@ -83,32 +46,13 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
     };
   }, []);
 
-  const handleRandomizeSeed = () => {
-    const nextSeed = Math.floor(Math.random() * 90000) + 1000;
-    setRandomSeed(nextSeed);
-  };
-
   const handleRunScenario = async (sc: Scenario) => {
     setExecuting(true);
     setError(null);
-    setResult(null);
+    setResult(false);
     try {
-      if (sc.closure_id) {
-        await onSelectScenario(sc, randomSeed);
-        setResult({
-          scenario_id: sc.id,
-          scenario_title: sc.title,
-          category: sc.category || 'road_closure',
-          event_date: sc.event_date,
-          seed: randomSeed,
-          summary: {},
-          disclaimer: sc.assumptions_statement || '',
-        });
-      } else {
-        const res = await api.runScenario(sc.id, randomSeed);
-        setResult(res);
-        await onSelectScenario(sc, randomSeed);
-      }
+      await onSelectScenario(sc);
+      setResult(true);
     } catch (err: any) {
       setError(err.message || 'Execution failed');
     } finally {
@@ -127,7 +71,7 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-bold tracking-tight text-white">Scenario Evaluation Deck</h2>
               <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                3 Bantwal Road Blockage Scenarios
+                {scenarios.length} Bantwal Road Blockage Scenarios
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
@@ -146,12 +90,6 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
         {/* Evaluator Toolbar */}
         <div className="bg-slate-950/40 px-6 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs">
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleRandomizeSeed}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-mono transition flex items-center gap-1.5"
-            >
-              🎲 Randomize Seed: <strong className="text-indigo-400">{randomSeed}</strong>
-            </button>
             <button
               onClick={() => setIsComparing(!isComparing)}
               className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${isComparing ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'}`}
@@ -176,7 +114,6 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
               (Array.isArray(scenarios) ? scenarios : []).map((sc) => {
                 const isSelected = selectedScenario?.id === sc.id;
                 const isCompSelected = comparisonScenario?.id === sc.id;
-                const isReplay = sc.category === 'road_closure';
                 return (
                   <button
                     type="button"
@@ -203,13 +140,9 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-bold text-white leading-snug">{sc.title}</span>
                       <span
-                        className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 ${
-                          isReplay
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                        }`}
+                        className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider shrink-0 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                       >
-                        {isReplay ? 'Bantwal Road Blockage' : 'Hypothetical What-If'}
+                        Bantwal Road Blockage
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
@@ -234,15 +167,9 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
                     <div className="flex items-center gap-2">
                       <h3 className="text-base font-bold text-white">{selectedScenario.title}</h3>
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          selectedScenario.category === 'road_closure'
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                        }`}
+                        className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                       >
-                        {selectedScenario.category === 'road_closure'
-                          ? 'Bantwal Road Blockage'
-                          : 'Hypothetical What-If'}
+                        Bantwal Road Blockage
                       </span>
                     </div>
                     <p className="text-xs text-slate-300 mt-1 leading-relaxed">
@@ -280,13 +207,15 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
                         <strong className="text-indigo-400 block mb-1">{selectedScenario.title}:</strong>
                         <div>Map: Bantwal</div>
                         <div>Category: {selectedScenario.category}</div>
-                        <div>Stock Level: {selectedScenario.parameters?.stock_pct ?? 100}%</div>
+                        <div>Blocked roads: {(selectedScenario.parameters?.blocked_roads || [selectedScenario.parameters?.blocked_road]).filter(Boolean).join(', ')}</div>
+                        <div>Road class: {selectedScenario.parameters?.highway}</div>
                       </div>
                       <div>
                         <strong className="text-teal-400 block mb-1">{comparisonScenario.title}:</strong>
                         <div>Map: Bantwal</div>
                         <div>Category: {comparisonScenario.category}</div>
-                        <div>Stock Level: {comparisonScenario.parameters?.stock_pct ?? 100}%</div>
+                        <div>Blocked roads: {(comparisonScenario.parameters?.blocked_roads || [comparisonScenario.parameters?.blocked_road]).filter(Boolean).join(', ')}</div>
+                        <div>Road class: {comparisonScenario.parameters?.highway}</div>
                       </div>
                     </div>
                   </div>
@@ -306,16 +235,12 @@ export const ScenarioDeck: React.FC<ScenarioDeckProps> = ({
                         <span className="font-mono text-[10px] text-emerald-400">Bantwal network</span>
                       </div>
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
-                        {isOffline ? 'Saved result · offline' : 'Live API run'}
+                        Live API route calculation
                       </span>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-[11px] text-emerald-100">
-                        {scenarioHighlights(result).map((highlight) => <span key={highlight}>{highlight}</span>)}
+                        <span>{Number(selectedScenario.parameters?.road_count || 1)} mapped main road{Number(selectedScenario.parameters?.road_count || 1) === 1 ? '' : 's'} blocked</span>
+                        <span>All 16 Bantwal zones evaluated</span>
                       </div>
-                      {(result as unknown as Record<string, any>).honesty_label && (
-                        <p className="pt-1 text-[10px] text-emerald-300/80">
-                          {(result as unknown as Record<string, any>).honesty_label}
-                        </p>
-                      )}
                     </div>
                   )}
 

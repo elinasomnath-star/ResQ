@@ -61,7 +61,7 @@ const ResourceMeter: React.FC<ResourceMeterProps> = ({ label, icon, remaining, t
 
       <div className="flex items-center justify-between text-[10.5px] font-mono leading-none pt-0.5">
         <span className="text-cyan-300 font-bold bg-cyan-950/60 border border-cyan-400/30 px-2 py-0.5 rounded-md">
-          +{Math.max(0, allocatedThisStep).toLocaleString()} this round
+          {Math.max(0, allocatedThisStep).toLocaleString()} allocated
         </span>
         <span className={`font-bold ${depleted ? 'text-rose-300' : 'text-slate-200'}`}>
           {safeRemaining.toLocaleString()} left &middot; {remainingPct.toFixed(0)}%
@@ -80,6 +80,7 @@ interface InventoryPanelProps {
   medicalTotal: number;
   stepAllocation: { food_rations: number; water_liters: number; medical_kits: number };
   stepNumber: number;
+  hasRoundData: boolean;
   className?: string;
 }
 
@@ -92,6 +93,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
   medicalTotal,
   stepAllocation,
   stepNumber,
+  hasRoundData,
   className = '',
 }) => {
   return (
@@ -113,7 +115,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
             ASSUMED
           </span>
           <span className="text-[10.5px] font-mono font-bold text-slate-200 bg-black/50 px-2 py-0.5 rounded-md border border-white/10">
-            Round {stepNumber}/8
+            {hasRoundData ? `Round ${stepNumber}/8` : 'Run result'}
           </span>
         </div>
       </div>
@@ -162,12 +164,12 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
       <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
         <span className="flex items-center gap-1.5 text-rose-300 font-bold">
           <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-          <span>Mark = 20% threshold</span>
+          <span>Mark = 20% remaining</span>
         </span>
         <span className="text-slate-300 font-medium truncate max-w-[190px]">
           {foodRemaining <= 0 && waterRemaining <= 0
             ? 'Food/water depleted; meds remain'
-            : '80% allocated threshold'}
+            : '80% of pool used'}
         </span>
       </div>
     </section>

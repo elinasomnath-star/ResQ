@@ -34,8 +34,8 @@ export const LeftRail: React.FC<LeftRailProps> = ({
 }) => {
   const currentEventData = events.find((e) => e.event_date === selectedEvent) || events[0];
   const waterLevel = currentEventData?.water_level_m;
-  const dangerLine = currentEventData?.danger_mark_m ?? 8.0;
-  const warningLine = currentEventData?.warning_level_m ?? 7.0;
+  const dangerLine = currentEventData?.danger_mark_m ?? 9.0;
+  const warningLine = currentEventData?.warning_level_m ?? 8.0;
   const maxScale = 13.0;
   const waterPct = waterLevel == null ? 0 : Math.min(Math.max((waterLevel / maxScale) * 100, 10), 100);
   const dangerPct = (dangerLine / maxScale) * 100;

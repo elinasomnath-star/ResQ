@@ -23,13 +23,24 @@ export const StepTimeline: React.FC<StepTimelineProps> = ({
   const closureIsActive = isClosureApplied;
 
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || stepsData.length === 0) return;
     const timer = window.setInterval(() => {
       if (currentStep >= totalSteps - 1) setIsPlaying(false);
       else onStepChange(currentStep + 1);
     }, 1800 / playbackSpeed);
     return () => window.clearInterval(timer);
-  }, [isPlaying, playbackSpeed, totalSteps, currentStep, onStepChange]);
+  }, [isPlaying, playbackSpeed, totalSteps, currentStep, onStepChange, stepsData.length]);
+
+  if (stepsData.length === 0) {
+    return (
+      <section className="step-timeline frost-panel" aria-label="Allocation replay status" role="status">
+        <div className="step-round-summary">
+          <strong>Round-by-round replay unavailable</strong>
+          <span>The current run shows its selected engine and applied resource pool. No matching eight-round replay is available for this pool.</span>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="step-timeline frost-panel" aria-label="Eight-round allocation timeline">

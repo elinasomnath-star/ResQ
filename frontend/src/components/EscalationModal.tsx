@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, AlertTriangle, ArrowRight, RefreshCw, ShieldAlert, Zap } from 'lucide-react';
+import { X, AlertTriangle, RefreshCw, ShieldAlert } from 'lucide-react';
 import { EscalationRecord } from '../types';
 import AnimatedList from './reactbits/AnimatedList';
 

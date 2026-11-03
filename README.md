@@ -87,7 +87,7 @@ Invoke-RestMethod -Method Post http://127.0.0.1:8000/simulate `
 
 Use `stock_mode: "simulated"` only to run the separately labeled pooled-stock assumption. All stock modes are assumed inventory, never live facility stock. `/closures` accepts a verified closure ID from that event's closure GeoJSON, runs Module 8 and reroutes all 16 zones with Module 7. Module 8 and Module 7 consume all verified closures in that event file. Run, selected-engine allocations/escalations, and per-zone route outputs are persisted in `data/processed/resq_service.sqlite3`; fetch the routes with `GET /routes/{run_id}`.
 
-Docker Compose builds the backend API (port 8000) and the static frontend (port 3000) into images. Generate the ignored road graph, analysis zones, event features, and closure files with the pipeline commands above first; the API container mounts `data/processed`. The frontend image serves its built bundle and checked-in offline snapshots, with API CORS configured for localhost ports 3000 and 5173. Then run:
+Docker Compose builds the backend API (port 8000) and static frontend (port 3000). The API image installs its Python dependencies; it does not include the ignored spatial cache. Generate the road graph, analysis zones, event features, and closure files first; Compose mounts `data/processed` from the host. The browser calls the API at `http://127.0.0.1:8000` and the API allows the local 3000/5173 origins, so this setup is intended for a browser on the same machine as Docker. It is not configured for remote-host deployment or TLS. The frontend image includes checked-in snapshots for read-only replay.
 
 ```powershell
 docker compose up --build -d
@@ -95,13 +95,13 @@ docker compose ps
 docker compose logs -f api
 ```
 
-Stop the services with `docker compose down`. The API serves live calculations on `http://localhost:8000`, while the frontend is served on `http://localhost:3000`.
+Check `docker compose ps` and `docker compose logs -f api`; the API health check only confirms `/events` responds. Verify `http://localhost:3000` and `http://localhost:8000/health` in a browser. The API can serve live allocations and road reroutes only when the generated artifacts are present in the mounted `data/processed` directory. Stop the services with `docker compose down`.
 
 ## Run the Frontend
 
 Module 10 is an interactive command console built with React, TypeScript, Vite, MapLibre GL, and locally implemented React Bits components (Aurora, GradientText, SpotlightCard, and StarBorder).
 
-The console map is restricted to the 16 Bantwal grid zones, cached Bantwal roads, the Netravati river, and mapped facility points. A verified closure is drawn in red; applying it calls the API, removes the matched graph edges, recomputes the 16 zone routes, and reruns the dynamic allocation replay. Select a zone to inspect its route. Routing uses the cached OSM graph and offline map layers; it does not query live OSM services. The 2024 verified corridor is slightly outside the analytical polygon, so the map canvas includes that short segment while retaining only Bantwal zones.
+The console map shows the 16 Bantwal grid zones, cached Bantwal roads, the Netravati river, and mapped facility points. The Scenario Deck has five mapped trunk or primary road blockage scenarios inside the Bantwal analysis boundary: three single-road cases, one two-road case, and one three-road case. Every failed road is drawn in red, with a closure marker, and the API recalculates routes for all 16 zones on the cached OSM graph. Scenarios that close the Netravati Bridge also include and display the Mini Town Hall in Mangaluru as a routing origin. These fast route-only actions do not run the allocation replay. Select a zone to inspect its route; a disconnected zone is labeled unavailable rather than shown with a false road route. Routing does not query live OSM services.
 
 ```powershell
 cd frontend
@@ -110,7 +110,7 @@ npm run build    # Produces frontend/dist, including public offline snapshots
 npm run preview  # Previews the static build at http://localhost:4173
 ```
 
-The static build includes local Bantwal map layers, gauge readings, event replays, allocation snapshots, and stock-sweep curves. Without the API, these are read-only; edits and reallocation require the backend. To refresh snapshots after regenerating processed results, run `python scripts/export_frontend_data.py` from the repository root before building.
+The static build includes local Bantwal map layers, gauge readings, event replays, allocation snapshots, and stock-sweep curves. Without the API, these are read-only; allocation edits/reruns, stock updates, overrides, and live road-blockage rerouting require the backend. Offline mode means no API connection, not an installable or fully self-contained offline web app: serve the static build locally, and expect remote Google Fonts to use fallback fonts when internet access is unavailable. To refresh snapshots after regenerating processed results, run `python scripts/export_frontend_data.py` from the repository root before building.
 
 Demo login presets:
 - **Viewer** (`viewer` / `viewer2026`): Inspects replays, routes, scarcity curves, and shortage escalations.
@@ -122,10 +122,13 @@ Demo login presets:
 |---|---|---|
 | **Bantwal Console** | ![Bantwal console](demo/screenshot_console_main.png) | Shows all 16 zone coverage labels, event gauge, resource status, stock sensitivity, and the eight-round timeline. |
 | **Scarcity Curves** | ![Scarcity Curves](demo/screenshot_scarcity_curves.png) | SVG curves of minimum zone coverage and unmet demand across stock levels (10% to 150%) for MILP, LinUCB (five-seed envelope), and Proportional. |
-| **Scenario Deck** | ![Scenario Deck](demo/screenshot_scenario_deck.png) | 7 benchmark scenarios with `DOCUMENTED REPLAY` vs `HYPOTHETICAL WHAT-IF` chips and side-by-side comparison mode. |
-| **Shelter Inventory** | ![Shelter Inventory](demo/screenshot_shelter_inventory.png) | Lists the four event-confirmed sites; their stock is assumed or manually entered and is not live inventory. |
+| **Scenario Deck** | ![Scenario Deck](demo/screenshot_scenario_deck.png) | Five Bantwal main-road blockage scenarios, including simultaneous two-road and three-road failures; each recalculates routes on the cached graph. |
+| **Shelter Inventory** | ![Shelter Inventory](demo/screenshot_shelter_inventory.png) | Lists three event-confirmed sites; their stock is assumed or manually entered and is not live inventory. |
+| **Shortage Escalations** | ![Shortage escalations](demo/screenshot_escalation.png) | Shows the recorded shortage alerts and resource reallocation triggers for the selected replay. |
 | **Admin Override** | ![Admin Override](demo/screenshot_admin_override.png) | Editable allocation table blocks edits exceeding inventory or dropping below the donor floor, labeled "manual override, not an optimization result". |
-| **Verified Closure Replay** | ![Verified Closure Replay](demo/screenshot_timeline_closure.png) | Applies the documented 2024 closure through the API and shows the verified closure segment, recalculation status, and 16 returned route results. |
+| **Road Blockage & Rerouting** | ![Road blockage and rerouting](demo/screenshot_timeline_closure.png) | Shows a selected Bantwal main road in red and the route-only recalculation status. |
+| **Zone Details** | ![Zone details](demo/screenshot_zone_drawer.png) | Inspects a selected Bantwal analysis zone and its allocation and route data. |
+| **Data Sources & Limits** | ![Data sources and limits](demo/screenshot_about_limits.png) | Summarizes analytical boundaries, data sources, and limitations. |
 
 ### System design diagrams
 
@@ -140,7 +143,7 @@ Demo login presets:
 Install dependencies and run test and validation suites:
 
 ```powershell
-# Python API and module test suites (all 27 tests passing)
+# Python API and module test suites
 python -m pytest --basetemp=.pytest-tmp tests
 
 # Modules 0-9 core validator matrix
@@ -157,7 +160,7 @@ cd frontend
 npx playwright test
 ```
 
-On the current checked-out data, the pytest suite passes all 27 tests, Playwright E2E passes, and the Modules 0-9 and Module 11 validator suites pass for all three event dates. Module 7 computes a road route or secondary-distance candidate for all 16 zones in each event; its event-data status remains partial because some reported closure labels are unresolved.
+The pytest and Playwright commands above cover the API and browser interface. The Modules 0-9 and Module 11 validators check the analytical pipeline for all three event dates. Module 7 computes a road route or secondary-distance candidate for all 16 zones in each event; its event-data status remains partial because some reported closure labels are unresolved.
 
 The scaling benchmark uses generated workload rows and is not a disaster outcome:
 

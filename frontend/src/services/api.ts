@@ -17,7 +17,6 @@ import type {
   Facility,
   FacilityStockSummary,
   Scenario,
-  ScenarioResult,
   AdminOverrideItem,
   AdminOverrideResponse,
 } from '../types';
@@ -277,22 +276,26 @@ class ResQApiClient {
   }
 
   public async simulate(
-    eventDateOrOpts: string | { event_date: string; engine: EngineType; stock_mode?: StockMode },
+    eventDateOrOpts: string | { event_date: string; engine: EngineType; stock_mode?: StockMode; stock_pct?: number },
     engine?: EngineType,
     stockMode?: StockMode
   ): Promise<SimulationResult> {
     const eventDate = typeof eventDateOrOpts === 'string' ? eventDateOrOpts : eventDateOrOpts.event_date;
     const resolvedEngine = typeof eventDateOrOpts === 'string' ? (engine || 'MILP') : eventDateOrOpts.engine;
     const resolvedStockMode = typeof eventDateOrOpts === 'string' ? (stockMode || 'configured') : (eventDateOrOpts.stock_mode || 'configured');
+    const stockPct = typeof eventDateOrOpts === 'string' ? undefined : eventDateOrOpts.stock_pct;
 
     if (this.isOfflineMode) {
+      if (stockPct != null) {
+        throw new Error('Percentage-based allocation runs require the API; offline snapshots use fixed inventory pools.');
+      }
       return this.offlineSimulate(eventDate, resolvedEngine, resolvedStockMode);
     }
     const res = await fetch(`${API_BASE}/simulate`, {
       method: 'POST',
       headers: this.getHeaders(),
       credentials: 'include',
-      body: JSON.stringify({ event: eventDate, engine: resolvedEngine, stock_mode: resolvedStockMode }),
+      body: JSON.stringify({ event: eventDate, engine: resolvedEngine, stock_mode: resolvedStockMode, stock_pct: stockPct }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -382,7 +385,16 @@ class ResQApiClient {
     return res.json();
   }
 
-  public async rerouteRoadScenario(scenarioId: string): Promise<{ scenario_id: string; blocked_road: string; route_count: number; routes: RouteFeature[] }> {
+  public async rerouteRoadScenario(scenarioId: string): Promise<{
+    scenario_id: string;
+    blocked_road: string;
+    blocked_roads: string[];
+    closure_points: [number, number][];
+    routing_origin_ids: string[];
+    route_count: number;
+    zone_routes: Array<{ zone_id: string; status: string; delivery_mode: 'road' | 'secondary' | 'none' }>;
+    routes: RouteFeature[];
+  }> {
     if (this.currentUser?.role !== 'operator') {
       throw new Error('Operator role required to block roads and reroute.');
     }
@@ -421,25 +433,21 @@ class ResQApiClient {
       throw new Error('Closure re-solving requires the API and cached road graph; offline replay is read-only.');
     }
 
-    try {
-      const res = await fetch(`${API_BASE}/closures`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({ run_id: runId, closure_id: resolvedClosureId }),
-      });
-      if (res.status === 403) {
-        throw new Error('Operator role required to apply road closures.');
-      }
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail?.message || 'Closure benchmark failed');
-      }
-      const result = await res.json();
-      return { ...result, steps: (result.steps || []).map(normalizeStepRecord) };
-    } catch (err: any) {
-      throw err;
+    const res = await fetch(`${API_BASE}/closures`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({ run_id: runId, closure_id: resolvedClosureId }),
+    });
+    if (res.status === 403) {
+      throw new Error('Operator role required to apply road closures.');
     }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail?.message || 'Closure benchmark failed');
+    }
+    const result = await res.json();
+    return { ...result, steps: (result.steps || []).map(normalizeStepRecord) };
   }
 
   public async getRoutes(eventDate: string = '2024-07-31', runId?: string): Promise<RouteFeature[]> {
@@ -641,8 +649,8 @@ class ResQApiClient {
   public async getGaugeReadings(eventDate?: string): Promise<GaugeReading[]> {
     const normalize = (row: any): GaugeReading => {
       const waterLevel = Number(row.water_level_m);
-      const dangerLevel = Number(row.danger_mark_m ?? row.danger_level_m ?? 8.0);
-      const warningLevel = Number(row.warning_level_m ?? row.warning_mark_m ?? 7.0);
+      const dangerLevel = Number(row.danger_mark_m ?? row.danger_level_m ?? 9.0);
+      const warningLevel = Number(row.warning_level_m ?? row.warning_mark_m ?? 8.0);
       const readingType = String(row.reading_type ?? '').toLowerCase();
       const peakValue = row.is_peak_reading;
       return {
@@ -804,33 +812,11 @@ class ResQApiClient {
       .filter((scenario) => Boolean(scenario.closure_id))
       .map((scenario) => ({
         ...scenario,
-        category: scenario.category || scenario.type || 'road_closure',
+        category: 'road_closure' as const,
       }));
     const res = await fetch(`/data/scenarios.json`);
     const data = await res.json();
     return normalizeScenarios(data.scenarios || data);
-  }
-
-  public async runScenario(scenarioId: string, seed?: number): Promise<ScenarioResult> {
-    if (this.isOfflineMode) {
-      const res = await fetch(`/data/scenario_results_${scenarioId}.json`);
-      if (!res.ok) throw new Error('No saved result exists for this scenario in offline mode.');
-      return res.json();
-    }
-    try {
-      const res = await fetch(`${API_BASE}/scenarios/run`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({ scenario_id: scenarioId, seed }),
-      });
-      if (res.ok) {
-        return res.json();
-      }
-    } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Scenario run failed; no result was generated.');
-    }
-    throw new Error('Scenario run failed; no result was generated.');
   }
 
   public async applyAllocationOverride(

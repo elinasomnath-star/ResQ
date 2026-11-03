@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, AlertTriangle, Download, Upload } from 'lucide-react';
 import type { Facility, User } from '../types';
 import { api } from '../services/api';
 import { exportToCSV } from '../utils/export';
@@ -21,8 +20,6 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
 }) => {
   const isOperator = user?.role === 'operator';
   const [facilities, setFacilities] = useState<Facility[]>([]);
-  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filterType, setFilterType] = useState<'all' | 'routable' | 'unroutable' | 'stale'>('all');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -37,7 +34,6 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
   });
 
   const loadFacilities = async () => {
-    setLoading(true);
     try {
       const data = await api.getFacilities();
       // This project considers three event-confirmed relief-site records.
@@ -52,13 +48,8 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
         consideredIds.has(facility.id) && facility.source === 'event-confirmed',
       );
       setFacilities(consideredSites);
-      setSelectedFacility((previous) =>
-        consideredSites.find((facility) => facility.id === previous?.id) ?? consideredSites[0] ?? null,
-      );
     } catch (err) {
       console.error('Failed to load facilities:', err);
-    } finally {
-      setLoading(false);
     }
   };
 

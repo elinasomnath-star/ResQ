@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   X,
-  MapPin,
   Users,
   Package,
   Droplets,
@@ -55,7 +54,7 @@ export const RightDrawer: React.FC<RightDrawerProps> = ({
     severityScore > 0.65 ? 'High Priority' : severityScore > 0.35 ? 'Moderate' : 'Low Priority';
 
   const routeProps = route?.properties;
-  const deliveryMode = routeProps?.delivery_mode || 'road';
+  const deliveryMode = routeProps?.delivery_mode || 'none';
   const isSecondary = deliveryMode === 'secondary';
   const roadDistanceKm = routeProps?.road_distance_m ? (routeProps.road_distance_m / 1000).toFixed(1) : null;
   const secondaryDistanceKm = routeProps?.secondary_distance_km ? routeProps.secondary_distance_km.toFixed(1) : null;
@@ -234,10 +233,12 @@ export const RightDrawer: React.FC<RightDrawerProps> = ({
             className={`text-[10px] font-mono px-2 py-0.5 rounded-md font-bold uppercase ${
               isSecondary
                 ? 'bg-accent-violet/15 text-accent-violet border border-accent-violet/25'
+              : deliveryMode === 'none'
+              ? 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
                 : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
             }`}
           >
-            {isSecondary ? 'Secondary' : 'Road Routed'}
+            {isSecondary ? 'Secondary' : deliveryMode === 'none' ? 'Unavailable' : 'Road Routed'}
           </span>
         </div>
 
@@ -248,6 +249,10 @@ export const RightDrawer: React.FC<RightDrawerProps> = ({
               Straight-line secondary ({secondaryDistanceKm} km). Water/air navigability not confirmed.
             </p>
           </div>
+        ) : deliveryMode === 'none' ? (
+          <p className="rounded-xl bg-rose-500/[0.08] border border-rose-500/20 p-2.5 text-[10px] leading-relaxed text-rose-200">
+            No route is available for this zone with the current road closure.
+          </p>
         ) : (
           <div className="flex items-center justify-between font-mono text-[11px]">
             <span className="text-text-muted">Road distance</span>

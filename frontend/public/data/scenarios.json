@@ -3,44 +3,90 @@
     {
       "id": "bantwal_netravati_bridge",
       "title": "Block Netravati Bridge",
-      "description": "Block the full mapped Netravati Bridge road feature inside the Bantwal analysis boundary and recalculate routes across the local network.",
+      "description": "Block the mapped Netravati Bridge trunk road inside Bantwal and recalculate routes.",
       "type": "road_closure",
       "event_date": "2024-07-31",
       "closure_id": "bantwal_netravati_bridge",
       "parameters": {
-        "blocked_road": "Netravati Bridge",
+        "blocked_roads": [
+          "Netravati Bridge"
+        ],
+        "road_count": 1,
         "highway": "trunk",
         "boundary": "Bantwal analysis zones"
       },
-      "assumptions_statement": "The blockage is placed on a mapped main road inside the Bantwal analysis boundary. Routes are recalculated by the live ResQ road graph."
+      "assumptions_statement": "A mapped Bantwal main-road corridor is blocked; routes are recalculated against the remaining cached road graph."
     },
     {
       "id": "bantwal_kalladka_highway",
       "title": "Block Kalladka-Kanhangad Highway",
-      "description": "Block the full mapped Kalladka-Kanhangad primary-road feature inside the Bantwal analysis boundary and recalculate local routes.",
+      "description": "Block the mapped Kalladka-Kanhangad primary road inside Bantwal and recalculate routes.",
       "type": "road_closure",
       "event_date": "2024-07-31",
       "closure_id": "bantwal_kalladka_highway",
       "parameters": {
-        "blocked_road": "Kalladka-Kanhangad Highway",
+        "blocked_roads": [
+          "Kalladka-Kanhangad Highway"
+        ],
+        "road_count": 1,
         "highway": "primary",
         "boundary": "Bantwal analysis zones"
       },
-      "assumptions_statement": "The blockage is placed on a mapped main road inside the Bantwal analysis boundary. Routes are recalculated by the live ResQ road graph."
+      "assumptions_statement": "A mapped Bantwal main-road corridor is blocked; routes are recalculated against the remaining cached road graph."
     },
     {
       "id": "bantwal_bakrabail_road",
       "title": "Block Bakrabail-Salethur-Vitla Road",
-      "description": "Block the full mapped Bakrabail-Salethur-Vitla primary-road feature inside the Bantwal analysis boundary and recalculate local routes.",
+      "description": "Block the mapped Bakrabail-Salethur-Vitla primary road inside Bantwal and recalculate routes.",
       "type": "road_closure",
       "event_date": "2024-07-31",
       "closure_id": "bantwal_bakrabail_road",
       "parameters": {
-        "blocked_road": "Bakrabail-Salethur-Vitla Road",
+        "blocked_roads": [
+          "Bakrabail-Salethur-Vitla Road"
+        ],
+        "road_count": 1,
         "highway": "primary",
         "boundary": "Bantwal analysis zones"
       },
-      "assumptions_statement": "The blockage is placed on a mapped main road inside the Bantwal analysis boundary. Routes are recalculated by the live ResQ road graph."
+      "assumptions_statement": "A mapped Bantwal main-road corridor is blocked; routes are recalculated against the remaining cached road graph."
+    },
+    {
+      "id": "bantwal_netravati_kalladka_multi",
+      "title": "Block Netravati Bridge + Kalladka Highway",
+      "description": "Simulate simultaneous closures on the mapped Netravati Bridge trunk road and Kalladka-Kanhangad primary road inside Bantwal, then recalculate routes.",
+      "type": "road_closure",
+      "event_date": "2024-07-31",
+      "closure_id": "bantwal_netravati_kalladka_multi",
+      "parameters": {
+        "blocked_roads": [
+          "Netravati Bridge",
+          "Kalladka-Kanhangad Highway"
+        ],
+        "road_count": 2,
+        "highway": "trunk + primary",
+        "boundary": "Bantwal analysis zones"
+      },
+      "assumptions_statement": "Mapped Bantwal main-road corridors are blocked together; routes are recalculated against the remaining cached road graph."
+    },
+    {
+      "id": "bantwal_three_main_roads_multi",
+      "title": "Block Three Bantwal Main Roads",
+      "description": "Simulate simultaneous closures on all three mapped Bantwal trunk and primary roads, then recalculate routes across the remaining network.",
+      "type": "road_closure",
+      "event_date": "2024-07-31",
+      "closure_id": "bantwal_three_main_roads_multi",
+      "parameters": {
+        "blocked_roads": [
+          "Netravati Bridge",
+          "Kalladka-Kanhangad Highway",
+          "Bakrabail-Salethur-Vitla Road"
+        ],
+        "road_count": 3,
+        "highway": "trunk + primary",
+        "boundary": "Bantwal analysis zones"
+      },
+      "assumptions_statement": "Mapped Bantwal main-road corridors are blocked together; routes are recalculated against the remaining cached road graph."
     }
   ]
 }

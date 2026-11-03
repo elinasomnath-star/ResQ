@@ -133,7 +133,9 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
     try {
       const [routeFeatures, steps, escs] = await Promise.all([
         api.getRouteGeometries(eventDate, runId),
-        dataStockMode === 'entered' ? Promise.resolve([]) : api.getStepResults(eventDate, dataStockMode),
+        dataStockMode === 'entered' || (runId && !runId.startsWith('offline_run_'))
+          ? Promise.resolve([])
+          : api.getStepResults(eventDate, dataStockMode),
         dataStockMode === 'entered' && (!runId || runId.startsWith('offline_run_')) ? Promise.resolve([]) : api.getEscalations(eventDate, runId, dataStockMode),
       ]);
 
@@ -159,18 +161,16 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
         MILP: 'MILP', LinUCB: 'LinUCB_contextual_bandit', proportional: 'naive_proportional_baseline',
       };
       let allocationRows: AllocationRow[];
-      if (allocationOverride) {
+      let actualRunInventory: { food_rations: number; water_liters: number; medical_kits: number } | null = null;
+      if (runId && !runId.startsWith('offline_run_') && !offlineMode) {
+        const allocationResult = await api.getAllocations(runId);
+        actualRunInventory = allocationResult.available_inventory || null;
+        setRunInventory(actualRunInventory);
+        allocationRows = allocationOverride || allocationResult.allocations;
+      } else if (allocationOverride) {
         allocationRows = allocationOverride;
       } else if (dataStockMode === 'entered' && (!runId || runId.startsWith('offline_run_'))) {
         allocationRows = [];
-      } else if (runId && !runId.startsWith('offline_run_') && !offlineMode) {
-        try {
-          const allocationResult = await api.getAllocations(runId);
-          allocationRows = allocationResult.allocations;
-          setRunInventory(allocationResult.available_inventory || null);
-        } catch {
-          allocationRows = [];
-        }
       } else {
         const matrixPath = dataStockMode === 'simulated'
           ? `/data/allocation_matrix_simulated_${eventDate}.json`
@@ -194,6 +194,8 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
           water_liters: Number(summary.totals.water_liters?.quantity ?? 0),
           medical_kits: Number(summary.totals.medical_kits?.quantity ?? 0),
         });
+      } else if (actualRunInventory) {
+        setStockTotals(actualRunInventory);
       } else {
         const metadata = await fetch(metadataPath).then((r) => r.ok ? r.json() : null).catch(() => null);
         setStockTotals(metadata?.prototype_inventory_assumption || { food_rations: 0, water_liters: 0, medical_kits: 0 });
@@ -225,10 +227,12 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
         event_date: selectedEvent,
         engine: selectedEngine,
         stock_mode: stockMode,
+        ...(stockMode !== 'entered' && !offlineMode ? { stock_pct: stockPct } : {}),
       });
       if (res && res.run_id) {
         setCurrentRunId(res.run_id);
         setRunInventory(res.available_inventory || null);
+        if (res.available_inventory) setStockTotals(res.available_inventory);
         setIsClosureApplied(false);
         setAppliedClosureId(null);
         setClosureRouteChangeCount(null);
@@ -297,11 +301,28 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
         : previousInventoryStep.remaining_inventory;
     }
   } catch { previousInventory = { ...stockTotals }; }
-  const stepAllocation = {
+  const roundAllocation = {
     food_rations: Math.max(0, Number(previousInventory.food_rations ?? stockTotals.food_rations) - Number(remainingInventory.food_rations ?? stockTotals.food_rations)),
     water_liters: Math.max(0, Number(previousInventory.water_liters ?? stockTotals.water_liters) - Number(remainingInventory.water_liters ?? stockTotals.water_liters)),
     medical_kits: Math.max(0, Number(previousInventory.medical_kits ?? stockTotals.medical_kits) - Number(remainingInventory.medical_kits ?? stockTotals.medical_kits)),
   };
+  const hasRoundData = Boolean(inventoryStep?.remaining_inventory);
+  const totalAllocated = allocations.reduce((totals, row) => {
+    if (row.resource in totals) totals[row.resource as keyof typeof totals] += Math.max(0, Number(row.allocated) || 0);
+    return totals;
+  }, { food_rations: 0, water_liters: 0, medical_kits: 0 });
+  const resourcePoolRemaining = hasRoundData
+    ? {
+      food_rations: Number(remainingInventory.food_rations ?? stockTotals.food_rations),
+      water_liters: Number(remainingInventory.water_liters ?? stockTotals.water_liters),
+      medical_kits: Number(remainingInventory.medical_kits ?? stockTotals.medical_kits),
+    }
+    : {
+      food_rations: Math.max(0, stockTotals.food_rations - totalAllocated.food_rations),
+      water_liters: Math.max(0, stockTotals.water_liters - totalAllocated.water_liters),
+      medical_kits: Math.max(0, stockTotals.medical_kits - totalAllocated.medical_kits),
+    };
+  const stepAllocation = hasRoundData ? roundAllocation : totalAllocated;
 
   // Selected Zone Route
   const selectedZoneRoute = selectedZone
@@ -335,7 +356,6 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
           zones={zones}
           onSelectZone={setSelectedZone}
           selectedZoneId={selectedZone?.zone_id || null}
-          selectedEngine={selectedEngine}
           routes={routes}
           coveragePreview={selectedCoveragePreview}
           coveragePreviewStockPct={stockPct}
@@ -349,7 +369,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
         {/* Left Rail — Sidebar panels */}
         <div
           className="console-left-rail absolute top-3 left-3 z-20 w-[268px] xl:w-[288px] flex flex-col gap-2 pointer-events-auto overflow-y-auto no-scrollbar"
-          style={{ bottom: 'calc(146px + 12px + 10px)' }}
+          style={{ bottom: 'calc(194px + 12px + 10px)' }}
         >
           <LeftRail
             events={events}
@@ -442,14 +462,15 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
         {/* Top Right Resource Inventory: per-round allocation and remaining stock */}
         <div className="absolute top-3 right-3 z-20 w-72 sm:w-80 xl:w-[22rem] pointer-events-auto">
           <InventoryPanel
-            foodRemaining={remainingInventory.food_rations ?? stockTotals.food_rations}
+            foodRemaining={resourcePoolRemaining.food_rations}
             foodTotal={stockTotals.food_rations}
-            waterRemaining={remainingInventory.water_liters ?? stockTotals.water_liters}
+            waterRemaining={resourcePoolRemaining.water_liters}
             waterTotal={stockTotals.water_liters}
-            medicalRemaining={remainingInventory.medical_kits ?? stockTotals.medical_kits}
+            medicalRemaining={resourcePoolRemaining.medical_kits}
             medicalTotal={stockTotals.medical_kits}
             stepAllocation={stepAllocation}
             stepNumber={currentStep + 1}
+            hasRoundData={hasRoundData}
           />
         </div>
         {/* Bottom Center: Scarcity Sweeper + Step Timeline stacked */}
@@ -464,6 +485,10 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
               onOpenChart={() => setIsChartOpen(true)}
               comparisonRows={sweepRowsAtStock}
               selectedEngine={selectedEngine}
+              disabled={offlineMode || stockMode === 'entered'}
+              disabledMessage={offlineMode
+                ? 'Live API needed to apply a stock percentage'
+                : 'Entered stock is fixed; percentage is preview only'}
             />
           </div>
 

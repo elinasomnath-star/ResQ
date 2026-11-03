@@ -10,9 +10,9 @@ OUTPUT_CSV = REPO_ROOT / "data" / "processed" / "gauge_readings.csv"
 PUBLIC_CSV = REPO_ROOT / "frontend" / "public" / "data" / "gauge_readings.csv"
 DIST_CSV = REPO_ROOT / "frontend" / "dist" / "data" / "gauge_readings.csv"
 
-# Danger level for Netravati river at Bantwal gauge is 9.0 meters. Warning level is 8.5 meters.
+# Danger level for Netravati river at Bantwal gauge is 9.0 meters. Warning level is 8.0 meters.
 DANGER_LEVEL_M = 9.0
-WARNING_LEVEL_M = 8.5
+WARNING_LEVEL_M = 8.0
 
 READINGS = [
     # 2019-08-10 event: Multiple timestamped readings documented in Deccan Herald & Daijiworld

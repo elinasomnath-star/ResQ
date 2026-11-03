@@ -1,26 +1,43 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowDownRight, ArrowUpRight, Boxes, MapPinned, Navigation, Waves } from 'lucide-react';
 import Aurora from '../components/reactbits/Aurora';
 import GradientText from '../components/reactbits/GradientText';
 import SpotlightCard from '../components/reactbits/SpotlightCard';
 import StarBorder from '../components/reactbits/StarBorder';
+import { api } from '../services/api';
+import { EventRecord } from '../types';
 import '../styles/LandingView.css';
 
 interface LandingViewProps {
   onLaunchConsole: () => void;
 }
 
-const events = [
-  { date: '2019-08-10', year: '2019', stage: 11.6, descriptor: 'Severe event' },
-  { date: '2024-07-31', year: '2024', stage: 9.3, descriptor: 'Severe flood event' },
-  { date: '2026-08-03', year: '2026', stage: 8.5, descriptor: 'Danger-level event' },
+const fallbackEvents: EventRecord[] = [
+  { event_date: '2019-08-10', river_gauge: 'Bantwal', water_level_m: 11.6, danger_mark_m: 9.0, warning_level_m: 8.0, affected_localities: [], roads_blocked: [], houses_affected: '', source_urls: [] },
+  { event_date: '2024-07-31', river_gauge: 'Bantwal', water_level_m: 9.3, danger_mark_m: 9.0, warning_level_m: 8.0, affected_localities: [], roads_blocked: [], houses_affected: '', source_urls: [] },
+  { event_date: '2026-08-03', river_gauge: 'Bantwal', water_level_m: 8.5, danger_mark_m: 9.0, warning_level_m: 8.0, affected_localities: [], roads_blocked: [], houses_affected: '', source_urls: [] },
 ];
 
+const eventDescriptor = (level: number, warning: number, danger: number) =>
+  level >= danger ? 'Severe flood event' : level >= warning ? 'Warning-level event' : 'Below warning';
+
 export const LandingView: React.FC<LandingViewProps> = ({ onLaunchConsole }) => {
-  const [activeEvent, setActiveEvent] = useState(events[1]);
-  const atDanger = activeEvent.stage >= 8.0;
-  const atWarning = activeEvent.stage >= 7.0;
+  const [events, setEvents] = useState(fallbackEvents);
+  const [activeEventDate, setActiveEventDate] = useState('2024-07-31');
+  useEffect(() => {
+    let mounted = true;
+    api.getEvents().then((records) => {
+      if (mounted && records.length) setEvents(records);
+    }).catch(() => undefined);
+    return () => { mounted = false; };
+  }, []);
+  const activeEvent = events.find((event) => event.event_date === activeEventDate) ?? events[0];
+  const warningLevel = activeEvent.warning_level_m ?? 8.0;
+  const dangerLevel = activeEvent.danger_mark_m ?? 9.0;
+  const atDanger = activeEvent.water_level_m >= dangerLevel;
+  const atWarning = activeEvent.water_level_m >= warningLevel;
   const stageStatus = atDanger ? 'Danger level reached' : atWarning ? 'Warning level reached' : 'Below warning';
+  const stage = activeEvent.water_level_m;
 
   return (
     <main className="landing-shell">
@@ -90,11 +107,11 @@ export const LandingView: React.FC<LandingViewProps> = ({ onLaunchConsole }) => 
           <SpotlightCard className="landing-gauge-card" spotlightColor="rgba(42, 216, 205, .26)">
             <div className="floating-card-heading"><span className="floating-card-icon gauge-icon"><Waves size={15} /></span><span><small>EVENT GAUGE PEAK</small><strong>Netravati at Bantwal</strong></span></div>
             <div className="event-selector" role="group" aria-label="Choose documented event">
-              {events.map((event) => <button key={event.date} className={activeEvent.date === event.date ? 'active' : ''} onClick={() => setActiveEvent(event)}>{event.year}</button>)}
+              {events.map((event) => <button key={event.event_date} className={activeEvent.event_date === event.event_date ? 'active' : ''} onClick={() => setActiveEventDate(event.event_date)}>{event.event_date.slice(0, 4)}</button>)}
             </div>
-            <div className="gauge-summary"><div><strong>{activeEvent.stage.toFixed(1)}<small>m</small></strong><span>{activeEvent.descriptor}</span></div><div className={`gauge-status-pill ${atDanger ? 'danger' : atWarning ? 'warning' : ''}`}><i />{stageStatus}</div></div>
-            <div className="gauge-scale"><span>Warning 7.0 m</span><span>Danger 8.0 m</span></div>
-            <div className="gauge-bar"><i style={{ width: `${Math.min(100, activeEvent.stage / 12 * 100)}%` }} /><b className="warning-mark" style={{ left: '58.3%' }} /><b className="danger-mark" style={{ left: '66.6%' }} /></div>
+            <div className="gauge-summary"><div><strong>{stage.toFixed(1)}<small>m</small></strong><span>{eventDescriptor(stage, warningLevel, dangerLevel)}</span></div><div className={`gauge-status-pill ${atDanger ? 'danger' : atWarning ? 'warning' : ''}`}><i />{stageStatus}</div></div>
+            <div className="gauge-scale"><span>Warning {warningLevel.toFixed(1)} m</span><span>Danger {dangerLevel.toFixed(1)} m</span></div>
+            <div className="gauge-bar"><i style={{ width: `${Math.min(100, stage / 12 * 100)}%` }} /><b className="warning-mark" style={{ left: `${warningLevel / 12 * 100}%` }} /><b className="danger-mark" style={{ left: `${dangerLevel / 12 * 100}%` }} /></div>
           </SpotlightCard>
         </div>
       </section>

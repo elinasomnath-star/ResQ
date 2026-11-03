@@ -4,22 +4,15 @@ import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import {
   Layers,
-  Eye,
-  Sliders,
-  Box,
   Radio,
-  Flame,
   Shield,
   Truck,
   Rotate3d,
-  Maximize2,
-  Minimize2,
   AlertTriangle,
   Plus,
   Minus,
 } from 'lucide-react';
-import { ZoneData, RouteFeature, EngineType, AllocationRow } from '../types';
-import Dock, { DockItem } from './reactbits/Dock';
+import { ZoneData, RouteFeature, AllocationRow } from '../types';
 
 function closureMarkerCollection(collection: any, closureId: string | null) {
   const feature = collection?.features?.find((item: any) => item.properties?.closure_id === closureId);
@@ -28,6 +21,17 @@ function closureMarkerCollection(collection: any, closureId: string | null) {
     ? [feature.geometry.coordinates]
     : feature.geometry.type === 'MultiLineString' ? feature.geometry.coordinates : [];
   const configuredPoint = feature.properties?.closure_point;
+  const configuredPoints = feature.properties?.closure_points;
+  if (Array.isArray(configuredPoints) && configuredPoints.length > 0) {
+    return {
+      type: 'FeatureCollection',
+      features: configuredPoints.map((point: number[]) => ({
+        type: 'Feature',
+        properties: { closure_id: closureId },
+        geometry: { type: 'Point', coordinates: point },
+      })),
+    } as const;
+  }
   if (Array.isArray(configuredPoint) && configuredPoint.length >= 2) {
     return {
       type: 'FeatureCollection',
@@ -55,9 +59,17 @@ function closureMarkerCollection(collection: any, closureId: string | null) {
 // same-origin asset instead of relying on a runtime blob import.
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
-const MINI_TOWN_HALL_SCENARIO_ID = 'bantwal_netravati_bridge';
+const MINI_TOWN_HALL_SCENARIO_IDS = new Set([
+  'bantwal_netravati_bridge',
+  'bantwal_netravati_kalladka_multi',
+  'bantwal_three_main_roads_multi',
+]);
 const MINI_TOWN_HALL_NAME = 'Mini Town Hall';
 const MINI_TOWN_HALL_COORDINATES: [number, number] = [74.83935, 12.86431];
+
+function includesMiniTownHall(scenarioId: string | null) {
+  return scenarioId !== null && MINI_TOWN_HALL_SCENARIO_IDS.has(scenarioId);
+}
 
 function fitReliefSiteBounds(
   map: maplibregl.Map,
@@ -84,7 +96,6 @@ interface MapConsoleProps {
   zones: ZoneData[];
   onSelectZone: (zone: ZoneData | null) => void;
   selectedZoneId: string | null;
-  selectedEngine: EngineType;
   isClosureActive: boolean;
   appliedClosureId?: string | null;
   closureRouteChangeCount?: number | null;
@@ -100,7 +111,6 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
   zones,
   onSelectZone,
   selectedZoneId,
-  selectedEngine,
   isClosureActive,
   appliedClosureId = null,
   closureRouteChangeCount = null,
@@ -410,7 +420,7 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
           height: '0',
           pointerEvents: 'none',
           zIndex: '5',
-          display: appliedClosureIdRef.current === MINI_TOWN_HALL_SCENARIO_ID ? '' : 'none',
+          display: includesMiniTownHall(appliedClosureIdRef.current) ? '' : 'none',
         });
         const miniTownHallLabel = document.createElement('div');
         miniTownHallLabel.dataset.testid = 'mini-town-hall-map-label';
@@ -467,7 +477,7 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
         miniTownHallMarkerRef.current = new maplibregl.Marker({ element: miniTownHallRoot, anchor: 'center' })
           .setLngLat(MINI_TOWN_HALL_COORDINATES)
           .addTo(map);
-        if (appliedClosureIdRef.current === MINI_TOWN_HALL_SCENARIO_ID && mapBoundsRef.current) {
+        if (includesMiniTownHall(appliedClosureIdRef.current) && mapBoundsRef.current) {
           fitReliefSiteBounds(map, mapBoundsRef.current, true, 0);
         }
       } catch (err) {
@@ -671,14 +681,14 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
     else map.once('load', applyFilters);
   }, [selectedEvent, appliedClosureId, isClosureActive, showClosures]);
 
-  // Show the Mangaluru relief centre only for scenario 1 and include its real
-  // location in the map view without changing the Bantwal facility labels.
+  // Show the Mangaluru relief centre when a selected road scenario uses it as
+  // a route origin, including multi-road failures that close the Netravati Bridge.
   useEffect(() => {
     const map = mapRef.current;
     const marker = miniTownHallMarkerRef.current;
     if (!map || !marker) return;
     const showMiniTownHall = showFacilities && isClosureActive
-      && appliedClosureId === MINI_TOWN_HALL_SCENARIO_ID;
+      && includesMiniTownHall(appliedClosureId);
     marker.getElement().style.display = showMiniTownHall ? '' : 'none';
     if (mapBoundsRef.current) {
       fitReliefSiteBounds(map, mapBoundsRef.current, showMiniTownHall, 600);
@@ -768,7 +778,7 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
       });
     }
     const showMiniTownHall = showFacilities && isClosureActive
-      && appliedClosureId === MINI_TOWN_HALL_SCENARIO_ID;
+      && includesMiniTownHall(appliedClosureId);
     if (miniTownHallMarkerRef.current) {
       miniTownHallMarkerRef.current.getElement().style.display = showMiniTownHall ? '' : 'none';
     }
@@ -803,8 +813,6 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
     appliedClosureId,
     isClosureActive,
     showClosures,
-    isClosureActive,
-    appliedClosureId,
     showRoutes,
     is3DMode,
   ]);
@@ -924,7 +932,11 @@ export const MapConsole: React.FC<MapConsoleProps> = ({
         </div>
       `;
 
-      el.addEventListener('click', () => {
+      el.addEventListener('click', (event) => {
+        // MapLibre also handles clicks on rendered zone polygons. Keep a
+        // marker selection from bubbling into that separate map listener,
+        // which can otherwise clear the selected-zone drawer.
+        event.stopPropagation();
         onSelectZone(zone);
       });
 

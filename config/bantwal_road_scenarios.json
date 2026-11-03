@@ -4,6 +4,8 @@
       "id": "bantwal_netravati_bridge",
       "name": "Netravati Bridge",
       "highway": "trunk",
+      "title": "Block Netravati Bridge",
+      "description": "Block the mapped Netravati Bridge trunk road inside Bantwal and recalculate routes.",
       "coordinate_parts": [
         [
           [
@@ -25,6 +27,8 @@
       "id": "bantwal_kalladka_highway",
       "name": "Kalladka-Kanhangad Highway",
       "highway": "primary",
+      "title": "Block Kalladka-Kanhangad Highway",
+      "description": "Block the mapped Kalladka-Kanhangad primary road inside Bantwal and recalculate routes.",
       "coordinate_parts": [
         [
           [
@@ -570,6 +574,8 @@
       "id": "bantwal_bakrabail_road",
       "name": "Bakrabail-Salethur-Vitla Road",
       "highway": "primary",
+      "title": "Block Bakrabail-Salethur-Vitla Road",
+      "description": "Block the mapped Bakrabail-Salethur-Vitla primary road inside Bantwal and recalculate routes.",
       "coordinate_parts": [
         [
           [
@@ -1130,6 +1136,27 @@
         75.03969643493343,
         12.780232812173725
       ]
+    },
+    {
+      "id": "bantwal_netravati_kalladka_multi",
+      "name": "Netravati Bridge + Kalladka-Kanhangad Highway",
+      "road_ids": [
+        "bantwal_netravati_bridge",
+        "bantwal_kalladka_highway"
+      ],
+      "title": "Block Netravati Bridge + Kalladka Highway",
+      "description": "Simulate simultaneous closures on the mapped Netravati Bridge trunk road and Kalladka-Kanhangad primary road inside Bantwal, then recalculate routes."
+    },
+    {
+      "id": "bantwal_three_main_roads_multi",
+      "name": "Netravati Bridge + Kalladka Highway + Bakrabail-Salethur-Vitla Road",
+      "road_ids": [
+        "bantwal_netravati_bridge",
+        "bantwal_kalladka_highway",
+        "bantwal_bakrabail_road"
+      ],
+      "title": "Block Three Bantwal Main Roads",
+      "description": "Simulate simultaneous closures on all three mapped Bantwal trunk and primary roads, then recalculate routes across the remaining network."
     }
   ]
 }

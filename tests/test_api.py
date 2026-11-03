@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import csv
+import math
 from pathlib import Path
 
 import pytest
@@ -73,7 +75,9 @@ def test_api_starts_without_cached_graph_and_reports_routing_unavailable(tmp_pat
 
 
 def test_simulate_closure_get_allocation_and_escalations(tmp_path, client):
-    simulated = client.post("/simulate", json={"event": "2019-08-10", "engine": "MILP", "stock_mode": "configured"})
+    simulated = client.post("/simulate", json={
+        "event": "2019-08-10", "engine": "MILP", "stock_mode": "configured", "stock_pct": 60,
+    })
     assert simulated.status_code == 201, simulated.text
     run_id = simulated.json()["run_id"]
     assert simulated.json()["summary"]["engine"] == "MILP"
@@ -101,7 +105,7 @@ def test_simulate_closure_get_allocation_and_escalations(tmp_path, client):
     routes = client.get(f"/routes/{run_id}")
     assert routes.status_code == 200
     assert len(routes.json()["routes"]) == 16
-    assert routes.json()["inventory_basis"].startswith("assumed_inventory:")
+    assert routes.json()["inventory_basis"] == "assumed_inventory: 60% of 2019-08-10 modeled need"
     assert {r["road_status"] for r in routes.json()["routes"]} <= {"ROUTED", "UNREACHABLE_BY_ROAD"}
 
     assumed = client.post("/simulate", json={"event": "2024-07-31", "engine": "proportional", "stock_mode": "simulated"})
@@ -118,6 +122,40 @@ def test_simulate_validation_errors(client):
     assert client.post("/simulate", json={"event": "1900-01-01", "engine": "MILP"}).status_code == 404
     assert client.post("/simulate", json={"event": "2019-08-10", "engine": "bogus"}).status_code == 422
     assert client.post("/simulate", json={"event": "2019-08-10", "engine": "MILP", "stock_mode": "real"}).status_code == 422
+    assert client.post("/simulate", json={"event": "2019-08-10", "engine": "MILP", "stock_mode": "entered", "stock_pct": 60}).status_code == 422
+    assert client.post("/simulate", json={"event": "2019-08-10", "engine": "MILP", "stock_pct": 5}).status_code == 422
+
+
+def test_all_engines_use_the_selected_percentage_of_modeled_need(client):
+    event_date = "2024-07-31"
+    processed = configured_path(load_config()["data"]["processed_dir"])
+    with (processed / f"severity_demand_{event_date}.csv").open(newline="", encoding="utf-8-sig") as stream:
+        demand_rows = list(csv.DictReader(stream))
+    demand_columns = {
+        "food_rations": "estimated_food_rations",
+        "water_liters": "estimated_water_liters",
+        "medical_kits": "estimated_medical_kits",
+    }
+    expected_inventory = {
+        resource: round(sum(math.ceil(max(0, float(row[column] or 0))) for row in demand_rows) * 0.6)
+        for resource, column in demand_columns.items()
+    }
+
+    for engine in ("MILP", "LinUCB", "proportional"):
+        response = client.post("/simulate", json={
+            "event": event_date,
+            "engine": engine,
+            "stock_mode": "configured",
+            "stock_pct": 60,
+        })
+        assert response.status_code == 201, response.text
+        run = response.json()
+        assert run["stock_pct_of_modeled_need"] == 60
+        assert run["available_inventory"] == expected_inventory
+        allocation = client.get(f"/allocation/{run['run_id']}")
+        assert allocation.status_code == 200
+        assert allocation.json()["available_inventory"] == expected_inventory
+        assert len(allocation.json()["allocations"]) == 48
 
 
 def test_closure_and_result_not_found_errors(tmp_path, client):
