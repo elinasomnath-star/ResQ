@@ -77,6 +77,10 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
   const [appliedClosureId, setAppliedClosureId] = useState<string | null>(null);
   const [closureRouteChangeCount, setClosureRouteChangeCount] = useState<number | null>(null);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
+  const [allocationProgress, setAllocationProgress] = useState<number | null>(null);
+  const [allocationRunKey, setAllocationRunKey] = useState(0);
+  const [allocationPaused, setAllocationPaused] = useState(false);
+  const [allocationSpeed, setAllocationSpeed] = useState(1);
   const [currentRunId, setCurrentRunId] = useState<string>('');
   const [stockTotals, setStockTotals] = useState({ food_rations: 0, water_liters: 0, medical_kits: 0 });
   const [runInventory, setRunInventory] = useState<{ food_rations: number; water_liters: number; medical_kits: number } | null>(null);
@@ -84,6 +88,14 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
     beforeDistanceKm: number;
     afterDistanceKm: number;
   } | null>(null);
+
+  // Reveal the completed API allocation as a paced, zone-by-zone process.
+  useEffect(() => {
+    if (isSimulating || allocationPaused || allocationProgress == null || allocationProgress >= zones.length) return;
+    const timer = window.setTimeout(() => setAllocationProgress((value) =>
+      value == null ? null : Math.min(zones.length, value + 1)), 420 / allocationSpeed);
+    return () => window.clearTimeout(timer);
+  }, [allocationProgress, zones.length, isSimulating, allocationPaused, allocationSpeed]);
 
   // Modals & Panels State
   const [isCompareOpen, setIsCompareOpen] = useState(false);
@@ -221,6 +233,12 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
   // Handle Simulation Run
   const handleRunSimulation = async () => {
     setIsSimulating(true);
+    setAllocationRunKey((key) => key + 1);
+    setAllocationPaused(false);
+    setAllocationProgress(0);
+    setCurrentRunId('');
+    setAllocations([]);
+    setEscalations([]);
     setRunInventory(null);
     try {
       const res = await api.simulate({
@@ -245,6 +263,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
       }
     } catch (err) {
       console.error('Simulation error:', err);
+      setAllocationProgress(null);
     } finally {
       setIsSimulating(false);
     }
@@ -278,11 +297,26 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
   const selectedEngineKey: Record<EngineType, string> = {
     MILP: 'MILP', LinUCB: 'LinUCB_contextual_bandit', proportional: 'naive_proportional_baseline',
   };
-  const sweepRowsAtStock = sweepRows.filter((row) => Math.abs(row.stock_pct - stockPct) < 0.001);
-  const selectedSweepRow = sweepRowsAtStock.find((row) => row.engine === selectedEngine);
-  const selectedCoveragePreview = stockMode !== 'entered' && selectedSweepRow?.zone_coverage_vector?.length
-    ? selectedSweepRow.zone_coverage_vector
-    : null;
+  const allocationZoneIds = zones.map((zone) => zone.zone_id).filter((zoneId) => allocations.some((row) => row.zone_id === zoneId));
+  const visibleZoneIds = new Set(allocationZoneIds.slice(0, allocationProgress ?? 0));
+  const visibleAllocations = allocationProgress == null ? [] : allocations.filter((row) => visibleZoneIds.has(row.zone_id));
+  const visibleShortageZones = new Set(visibleAllocations.filter((row) => Number(row.unmet) > 0).map((row) => row.zone_id));
+  const visibleShortfallRows = visibleAllocations.filter((row) => Number(row.unmet) > 0);
+  const visibleCoverageByZone = new Map<string, number>();
+  let processNeed = 0;
+  let processUnmet = 0;
+  for (const row of visibleAllocations) {
+    const need = Math.max(0, Number(row.estimated_need) || 0);
+    const allocated = Math.max(0, Number(row.allocated) || 0);
+    processNeed += need;
+    processUnmet += Math.max(0, Number(row.unmet) || 0);
+    const coverage = need > 0 ? Math.min(1, allocated / need) : 1;
+    visibleCoverageByZone.set(row.zone_id, Math.min(visibleCoverageByZone.get(row.zone_id) ?? 1, coverage));
+  }
+  const processMinCoveragePct = visibleCoverageByZone.size
+    ? Math.min(...visibleCoverageByZone.values()) * 100
+    : 0;
+  const processUnmetDemandPct = processNeed > 0 ? (processUnmet / processNeed) * 100 : 0;
   const inventoryStep = stepsData.find((step) => step.engine === selectedEngineKey[selectedEngine] && Number(step.step) === currentStep + 1);
   let remainingInventory: Record<string, number> = {};
   try {
@@ -306,8 +340,10 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
     water_liters: Math.max(0, Number(previousInventory.water_liters ?? stockTotals.water_liters) - Number(remainingInventory.water_liters ?? stockTotals.water_liters)),
     medical_kits: Math.max(0, Number(previousInventory.medical_kits ?? stockTotals.medical_kits) - Number(remainingInventory.medical_kits ?? stockTotals.medical_kits)),
   };
-  const hasRoundData = Boolean(inventoryStep?.remaining_inventory);
-  const totalAllocated = allocations.reduce((totals, row) => {
+  // Live runs animate the selected engine's returned zone allocations, not
+  // the old precomputed eight-round inventory snapshots.
+  const hasRoundData = false;
+  const totalAllocated = visibleAllocations.reduce((totals, row) => {
     if (row.resource in totals) totals[row.resource as keyof typeof totals] += Math.max(0, Number(row.allocated) || 0);
     return totals;
   }, { food_rations: 0, water_liters: 0, medical_kits: 0 });
@@ -345,7 +381,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
         onOpenScenarios={() => setIsScenariosOpen(true)}
         onOpenInventory={() => setIsInventoryOpen(true)}
         onOpenOverride={() => setIsOverrideOpen(true)}
-        alertCount={escalations.length}
+        alertCount={allocationProgress != null ? visibleShortageZones.size : escalations.length}
       />
 
       {/* Main Console Workspace */}
@@ -357,13 +393,13 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
           onSelectZone={setSelectedZone}
           selectedZoneId={selectedZone?.zone_id || null}
           routes={routes}
-          coveragePreview={selectedCoveragePreview}
+          coveragePreview={null}
           coveragePreviewStockPct={stockPct}
           isClosureActive={isClosureApplied}
           appliedClosureId={appliedClosureId}
           closureRouteChangeCount={closureRouteChangeCount}
           closureDetourInfo={closureDetourInfo}
-          allocations={allocations}
+          allocations={visibleAllocations}
         />
 
         {/* Left Rail — Sidebar panels */}
@@ -384,6 +420,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
               setClosureDetourInfo(null);
               setCurrentRunId('');
               setCurrentStep(0);
+              setAllocationProgress(null);
             }}
             selectedEngine={selectedEngine}
             onSelectEngine={(engine) => {
@@ -393,6 +430,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
               setAppliedClosureId(null);
               setClosureRouteChangeCount(null);
               setCurrentRunId('');
+              setAllocationProgress(null);
               setCurrentStep(0);
             }}
             stockMode={stockMode}
@@ -404,6 +442,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
               setAppliedClosureId(null);
               setClosureRouteChangeCount(null);
               setCurrentStep(0);
+              setAllocationProgress(null);
             }}
             onRunSimulation={handleRunSimulation}
             isSimulating={isSimulating}
@@ -462,6 +501,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
         {/* Top Right Resource Inventory: per-round allocation and remaining stock */}
         <div className="absolute top-3 right-3 z-20 w-72 sm:w-80 xl:w-[22rem] pointer-events-auto">
           <InventoryPanel
+            key={allocationRunKey}
             foodRemaining={resourcePoolRemaining.food_rations}
             foodTotal={stockTotals.food_rations}
             waterRemaining={resourcePoolRemaining.water_liters}
@@ -471,6 +511,9 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
             stepAllocation={stepAllocation}
             stepNumber={currentStep + 1}
             hasRoundData={hasRoundData}
+            processProgress={allocationProgress}
+            processZoneCount={allocationZoneIds.length}
+            shortageZoneCount={visibleShortageZones.size}
           />
         </div>
         {/* Bottom Center: Scarcity Sweeper + Step Timeline stacked */}
@@ -483,7 +526,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
               donorFloorThreshold={sweepThresholds[selectedEvent]?.smallest_stock_pct_for_40pct_floor ?? 40.6}
               linucbCollapseThreshold={sweepThresholds[selectedEvent]?.linucb_collapse_below_1pct_stock_pct ?? 10.0}
               onOpenChart={() => setIsChartOpen(true)}
-              comparisonRows={sweepRowsAtStock}
+              comparisonRows={sweepRows.filter((row) => Math.abs(row.stock_pct - stockPct) < 0.001)}
               selectedEngine={selectedEngine}
               disabled={offlineMode || stockMode === 'entered'}
               disabledMessage={offlineMode
@@ -498,8 +541,17 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
               currentStep={currentStep}
               totalSteps={8}
               onStepChange={setCurrentStep}
-              stepsData={stepsData}
+              stepsData={allocationProgress != null ? stepsData : []}
               isClosureApplied={isClosureApplied}
+              processProgress={allocationProgress}
+              processZoneCount={allocationZoneIds.length}
+              processMinCoveragePct={processMinCoveragePct}
+              processUnmetDemandPct={processUnmetDemandPct}
+              processPaused={allocationPaused}
+              processSpeed={allocationSpeed}
+              onProcessPause={() => setAllocationPaused((paused) => !paused)}
+              onProcessSpeedChange={setAllocationSpeed}
+              onProcessStepChange={setAllocationProgress}
             />
           </div>
         </div>
@@ -510,7 +562,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
             <RightDrawer
               zone={selectedZone}
               onClose={() => setSelectedZone(null)}
-              allocations={allocations.filter((a) => a.zone_id === selectedZone.zone_id)}
+              allocations={visibleAllocations.filter((a) => a.zone_id === selectedZone.zone_id)}
               route={selectedZoneRoute}
               userRole={user?.role}
               onOverrideSuccess={() => loadEventData(selectedEvent)}
@@ -594,6 +646,9 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
             onClose={() => setIsEscalationsOpen(false)}
             escalations={escalations}
             selectedEvent={selectedEvent}
+            isAllocationProcess={allocationProgress != null}
+            allocationShortfalls={visibleShortfallRows}
+            selectedEngine={selectedEngine}
           />
         )}
 

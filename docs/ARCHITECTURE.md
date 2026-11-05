@@ -279,7 +279,7 @@ CREATE TABLE stock_audit (
 );
 ```
 
-- **Staleness Tracking**: Stocks with `updated_at` older than 24 hours are marked stale in API responses and display an amber `>24h stale` badge.
+- **Stock Age Display**: Stock age is not used to mark facilities stale or show stale badges. Operator-entered inventory remains labeled `ENTERED, UNVERIFIED` because it is manual input rather than live telemetry.
 - **Unroutable Shelter Flagging**: Of the 51 mapped relief facilities, 16 candidate shelters lack routable OSM coordinates and are flagged with `is_routable = 0` to prevent dispatch lockups.
 
 ## Scarcity Sweeper & Scenario Engine

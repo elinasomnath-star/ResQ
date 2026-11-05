@@ -1,7 +1,7 @@
 """Facility Inventory and Real Stock Entry Management for ResQ.
 
 Manages facilities, warehouse stock, audit logging, CSV import/export,
-staleness tracking (>24h), and pooled 'entered' inventory mode.
+and pooled 'entered' inventory mode.
 """
 
 from __future__ import annotations
@@ -21,9 +21,6 @@ RESOURCE_LIMITS = {
     "water_liters": {"max": 2_000_000, "units": ["liters", "l"]},
     "medical_kits": {"max": 50_000, "units": ["kits", "boxes"]},
 }
-
-STALE_HOURS_THRESHOLD = 24.0
-
 
 def init_facility_tables(db: sqlite3.Connection, processed_dir: Path) -> None:
     """Create facilities, stock, and stock_audit tables and seed initial facilities."""
@@ -123,7 +120,7 @@ def init_facility_tables(db: sqlite3.Connection, processed_dir: Path) -> None:
 
 
 def get_all_facilities(db: sqlite3.Connection) -> list[dict[str, Any]]:
-    """Retrieve all facilities with their current stock and staleness flags."""
+    """Retrieve facilities and current stock; stock is not marked stale."""
     cursor = db.cursor()
     cursor.execute("SELECT id, name, type, lat, lon, source, confidence, geometry_verified FROM facilities ORDER BY name")
     facilities_rows = cursor.fetchall()
@@ -131,16 +128,9 @@ def get_all_facilities(db: sqlite3.Connection) -> list[dict[str, Any]]:
     cursor.execute("SELECT facility_id, resource, quantity, unit, mode, updated_by, updated_at, note FROM stock")
     stock_rows = cursor.fetchall()
 
-    now = datetime.now(timezone.utc)
     stock_by_facility: dict[str, list[dict[str, Any]]] = {}
     for r in stock_rows:
         f_id, res, qty, unit, mode, updated_by, updated_at, note = r
-        try:
-            dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
-            is_stale = (now - dt).total_seconds() > (STALE_HOURS_THRESHOLD * 3600.0)
-        except Exception:
-            is_stale = True
-
         item = {
             "resource": res,
             "quantity": qty,
@@ -148,7 +138,7 @@ def get_all_facilities(db: sqlite3.Connection) -> list[dict[str, Any]]:
             "mode": mode,
             "updated_by": updated_by,
             "updated_at": updated_at,
-            "is_stale": is_stale,
+            "is_stale": False,
             "note": note,
         }
         stock_by_facility.setdefault(f_id, []).append(item)
@@ -157,7 +147,6 @@ def get_all_facilities(db: sqlite3.Connection) -> list[dict[str, Any]]:
     for f in facilities_rows:
         f_id, name, f_type, lat, lon, source, confidence, geom_verified = f
         f_stock = stock_by_facility.get(f_id, [])
-        any_stale = any(s["is_stale"] for s in f_stock)
         is_routable = bool(geom_verified and lat is not None and lon is not None)
         result.append({
             "id": f_id,
@@ -171,7 +160,7 @@ def get_all_facilities(db: sqlite3.Connection) -> list[dict[str, Any]]:
             "is_routable": is_routable,
             "routing_flag": "routable" if is_routable else "unroutable",
             "stock": f_stock,
-            "has_stale_stock": any_stale,
+            "has_stale_stock": False,
         })
     return result
 

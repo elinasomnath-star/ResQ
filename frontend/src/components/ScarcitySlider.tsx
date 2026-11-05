@@ -129,41 +129,24 @@ export const ScarcitySlider: React.FC<ScarcitySliderProps> = ({
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                <span className="text-[12.5px] font-bold truncate font-heading" style={{ color }}>
-                  {label}
-                </span>
-                {selected && (
-                  <span className="px-1.5 py-0.5 rounded bg-accent-indigo/30 text-[8.5px] font-mono font-bold text-accent-indigo uppercase tracking-wider hidden xl:block">
-                    ACTIVE
-                  </span>
-                )}
+                <span className="text-[12.5px] font-bold truncate font-heading" style={{ color }}>{label}</span>
+                {selected && <span className="px-1.5 py-0.5 rounded bg-accent-indigo/30 text-[8.5px] font-mono font-bold text-accent-indigo uppercase tracking-wider hidden xl:block">ACTIVE</span>}
               </div>
               <div className="flex items-center gap-2 font-mono flex-shrink-0">
-                <span className="flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded-md border border-white/10">
-                  <span className="text-[9.5px] uppercase tracking-wider text-slate-300 font-bold">cov</span>
-                  <b className="text-[12px] font-extrabold text-white">{metric(row?.min_zone_coverage_pct)}</b>
-                </span>
-                <span className="flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded-md border border-white/10">
-                  <span className="text-[9.5px] uppercase tracking-wider text-slate-300 font-bold">unmet</span>
-                  <b className="text-[12px] font-extrabold text-amber-300">{metric(row?.unmet_demand_pct)}</b>
-                </span>
+                <span className="flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded-md border border-white/10"><span className="text-[9.5px] uppercase tracking-wider text-slate-300 font-bold">cov</span><b className="text-[12px] font-extrabold text-white">{metric(row?.min_zone_coverage_pct)}</b></span>
+                <span className="flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded-md border border-white/10"><span className="text-[9.5px] uppercase tracking-wider text-slate-300 font-bold">unmet</span><b className="text-[12px] font-extrabold text-amber-300">{metric(row?.unmet_demand_pct)}</b></span>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* ── Zone coverage summary (inline, readable) ── */}
       {comparisonRows.some((row) => row.engine === selectedEngine && (row.zone_coverage_vector?.length ?? 0) > 0) && (() => {
         const selected = comparisonRows.find((row) => row.engine === selectedEngine);
         const vector = selected?.zone_coverage_vector ?? [];
         const fullyCovered = vector.filter((c) => c >= 99.5).length;
         const leastIdx = vector.reduce((l, c, i, v) => (c < v[l] ? i : l), 0);
-        return (
-          <p className="mt-1.5 truncate text-[11px] font-mono text-slate-200 leading-tight">
-            <span className="text-cyan-300 font-semibold">{stockPct}% stock</span> &middot; {fullyCovered}/{vector.length} zones fully covered &middot; lowest: Zone {String(leastIdx + 1).padStart(2, '0')} (<span className="text-amber-300 font-bold">{metric(vector[leastIdx])}</span>)
-          </p>
-        );
+        return <p className="mt-1.5 truncate text-[11px] font-mono text-slate-200 leading-tight"><span className="text-cyan-300 font-semibold">{stockPct}% stock</span> &middot; {fullyCovered}/{vector.length} zones fully covered &middot; lowest: Zone {String(leastIdx + 1).padStart(2, '0')} (<span className="text-amber-300 font-bold">{metric(vector[leastIdx])}</span>)</p>;
       })()}
 
       {stockPct < floorThreshold && (

@@ -81,6 +81,9 @@ interface InventoryPanelProps {
   stepAllocation: { food_rations: number; water_liters: number; medical_kits: number };
   stepNumber: number;
   hasRoundData: boolean;
+  processProgress?: number | null;
+  processZoneCount?: number;
+  shortageZoneCount?: number;
   className?: string;
 }
 
@@ -94,6 +97,9 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
   stepAllocation,
   stepNumber,
   hasRoundData,
+  processProgress = null,
+  processZoneCount = 0,
+  shortageZoneCount = 0,
   className = '',
 }) => {
   return (
@@ -115,7 +121,9 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
             ASSUMED
           </span>
           <span className="text-[10.5px] font-mono font-bold text-slate-200 bg-black/50 px-2 py-0.5 rounded-md border border-white/10">
-            {hasRoundData ? `Round ${stepNumber}/8` : 'Run result'}
+            {processProgress != null
+              ? `Zones ${Math.min(processProgress, processZoneCount)}/${processZoneCount || 16}`
+              : hasRoundData ? `Round ${stepNumber}/8` : 'Awaiting run'}
           </span>
         </div>
       </div>
@@ -167,9 +175,12 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
           <span>Mark = 20% remaining</span>
         </span>
         <span className="text-slate-300 font-medium truncate max-w-[190px]">
-          {foodRemaining <= 0 && waterRemaining <= 0
+          {processProgress != null && shortageZoneCount > 0
+            ? `${shortageZoneCount} zone${shortageZoneCount === 1 ? '' : 's'} with unmet need`
+            : processProgress != null ? 'No shortages revealed yet'
+            : foodRemaining <= 0 && waterRemaining <= 0
             ? 'Food/water depleted; meds remain'
-            : '80% of pool used'}
+            : hasRoundData ? '80% of pool used' : 'Run an engine to allocate'}
         </span>
       </div>
     </section>

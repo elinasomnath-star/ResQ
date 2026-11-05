@@ -9,6 +9,16 @@
 }
 
 .console-bottom-overlays { padding: 0 16px; }
+.allocation-engine-panel {
+  background: rgba(11, 18, 32, .97);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.stock-assumption-panel {
+  background: rgba(11, 18, 32, .46);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
 .stock-sensitivity .grid > div { background: rgba(18, 27, 46, .94) !important; border-color: rgba(155, 174, 220, .18) !important; }
 .stock-sensitivity .text-slate-700,
 .stock-sensitivity .text-slate-600 { color: #b4c1d7 !important; }

@@ -148,7 +148,7 @@ export const LeftRail: React.FC<LeftRailProps> = ({
       </div>
 
       {/* ── Allocation Engine ────────────────────────────────── */}
-      <div className="glass-panel rounded-2xl p-4 space-y-3">
+      <div className="allocation-engine-panel glass-panel rounded-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-[12px] font-bold text-white font-heading">
             <Cpu className="w-3.5 h-3.5 text-engine-milp" />
@@ -161,13 +161,13 @@ export const LeftRail: React.FC<LeftRailProps> = ({
           {/* MILP */}
           <button
             onClick={() => onSelectEngine('MILP')}
-            className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all duration-200 ${
+            className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-colors duration-150 ${
               selectedEngine === 'MILP'
-                ? 'border-engine-milp/60 bg-engine-milp/15 text-white shadow-[0_0_14px_rgba(96,165,250,0.18)]'
+                ? 'border-engine-milp/60 bg-engine-milp/15 text-white'
                 : 'border-white/[0.08] bg-white/[0.025] text-slate-200 hover:border-white/18 hover:bg-white/[0.05]'
-            }`}
+            } focus:outline-none focus-visible:ring-2 focus-visible:ring-engine-milp/60`}
           >
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-engine-milp shadow-[0_0_6px_#60a5fa]" />
                 <span className="font-heading font-bold text-[12.5px] text-white">MILP Optimizer</span>
@@ -176,21 +176,19 @@ export const LeftRail: React.FC<LeftRailProps> = ({
                 Exact solver &middot; 40% target with feasible floor
               </p>
             </div>
-            {selectedEngine === 'MILP' && (
-              <span className="text-[10px] font-mono font-extrabold text-engine-milp flex-shrink-0 ml-2 tracking-wider">ACTIVE</span>
-            )}
+            <span className={`w-[50px] flex-shrink-0 ml-2 text-right text-[10px] font-mono font-extrabold tracking-wider text-engine-milp ${selectedEngine === 'MILP' ? '' : 'invisible'}`}>ACTIVE</span>
           </button>
 
           {/* LinUCB */}
           <button
             onClick={() => onSelectEngine('LinUCB')}
-            className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all duration-200 ${
+            className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-colors duration-150 ${
               selectedEngine === 'LinUCB'
-                ? 'border-engine-linucb/60 bg-engine-linucb/15 text-white shadow-[0_0_14px_rgba(251,146,60,0.18)]'
+                ? 'border-engine-linucb/60 bg-engine-linucb/15 text-white'
                 : 'border-white/[0.08] bg-white/[0.025] text-slate-200 hover:border-white/18 hover:bg-white/[0.05]'
-            }`}
+            } focus:outline-none focus-visible:ring-2 focus-visible:ring-engine-linucb/60`}
           >
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-engine-linucb shadow-[0_0_6px_#fb923c]" />
                 <span className="font-heading font-bold text-[12.5px] text-white">LinUCB Bandit</span>
@@ -199,21 +197,19 @@ export const LeftRail: React.FC<LeftRailProps> = ({
                 Contextual exploration &middot; Reward maximization
               </p>
             </div>
-            {selectedEngine === 'LinUCB' && (
-              <span className="text-[10px] font-mono font-extrabold text-engine-linucb flex-shrink-0 ml-2 tracking-wider">ACTIVE</span>
-            )}
+            <span className={`w-[50px] flex-shrink-0 ml-2 text-right text-[10px] font-mono font-extrabold tracking-wider text-engine-linucb ${selectedEngine === 'LinUCB' ? '' : 'invisible'}`}>ACTIVE</span>
           </button>
 
           {/* Proportional */}
           <button
             onClick={() => onSelectEngine('proportional')}
-            className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all duration-200 ${
+            className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-colors duration-150 ${
               selectedEngine === 'proportional'
-                ? 'border-engine-proportional/60 bg-engine-proportional/15 text-white shadow-[0_0_14px_rgba(74,222,128,0.18)]'
+                ? 'border-engine-proportional/60 bg-engine-proportional/15 text-white'
                 : 'border-white/[0.08] bg-white/[0.025] text-slate-200 hover:border-white/18 hover:bg-white/[0.05]'
-            }`}
+            } focus:outline-none focus-visible:ring-2 focus-visible:ring-engine-proportional/60`}
           >
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-engine-proportional shadow-[0_0_6px_#4ade80]" />
                 <span className="font-heading font-bold text-[12.5px] text-white">Proportional</span>
@@ -222,15 +218,13 @@ export const LeftRail: React.FC<LeftRailProps> = ({
                 Heuristic ratio &middot; Severity-weighted
               </p>
             </div>
-            {selectedEngine === 'proportional' && (
-              <span className="text-[10px] font-mono font-extrabold text-engine-proportional flex-shrink-0 ml-2 tracking-wider">ACTIVE</span>
-            )}
+            <span className={`w-[50px] flex-shrink-0 ml-2 text-right text-[10px] font-mono font-extrabold tracking-wider text-engine-proportional ${selectedEngine === 'proportional' ? '' : 'invisible'}`}>ACTIVE</span>
           </button>
         </div>
       </div>
 
       {/* ── Stock Assumption ─────────────────────────────────── */}
-      <div className="glass-panel rounded-2xl p-4 space-y-3.5 border border-white/10">
+      <div className="stock-assumption-panel glass-panel rounded-2xl p-4 space-y-3.5 border border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-[12.5px] font-bold text-white font-heading">
             <Layers className="w-4 h-4 text-violet-400" />

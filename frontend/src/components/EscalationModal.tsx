@@ -1,19 +1,32 @@
 import React from 'react';
 import { X, AlertTriangle, RefreshCw, ShieldAlert } from 'lucide-react';
-import { EscalationRecord } from '../types';
+import { AllocationRow, EscalationRecord, EngineType } from '../types';
 import AnimatedList from './reactbits/AnimatedList';
 
 interface EscalationModalProps {
   onClose: () => void;
   escalations: EscalationRecord[];
   selectedEvent: string;
+  isAllocationProcess?: boolean;
+  allocationShortfalls?: AllocationRow[];
+  selectedEngine?: EngineType;
 }
 
 export const EscalationModal: React.FC<EscalationModalProps> = ({
   onClose,
   escalations,
   selectedEvent,
+  isAllocationProcess = false,
+  allocationShortfalls = [],
+  selectedEngine = 'MILP',
 }) => {
+  const shortageGroups = Array.from(allocationShortfalls.reduce((groups, row) => {
+    const group = groups.get(row.zone_id) ?? { zone_id: row.zone_id, zone_name: row.zone_name, resources: [] as AllocationRow[] };
+    group.resources.push(row);
+    groups.set(row.zone_id, group);
+    return groups;
+  }, new Map<string, { zone_id: string; zone_name: string; resources: AllocationRow[] }>()).values());
+  const engineLabel = selectedEngine === 'MILP' ? 'MILP Optimizer' : selectedEngine === 'LinUCB' ? 'LinUCB Bandit' : 'Proportional';
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-950/80 backdrop-blur-xl">
       <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-white/15 bg-ink-900/95 p-6 shadow-2xl space-y-4">
@@ -23,11 +36,13 @@ export const EscalationModal: React.FC<EscalationModalProps> = ({
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-accent-alert animate-pulse" />
               <h2 className="font-heading text-lg font-bold text-text-primary tracking-wide">
-                MODULE 9: SHORTAGE ALERTS &amp; REALLOCATION
+                {isAllocationProcess ? 'ALLOCATION SHORTFALL ALERTS' : 'MODULE 9: SHORTAGE ALERTS & REALLOCATION'}
               </h2>
             </div>
             <p className="text-xs text-text-secondary mt-0.5">
-              Event {selectedEvent} &middot; Automatic threshold-triggered inter-zone resource transfers
+              {isAllocationProcess
+                ? `Event ${selectedEvent} · ${engineLabel} · unmet quantities revealed during this allocation`
+                : `Event ${selectedEvent} · Automatic threshold-triggered inter-zone resource transfers`}
             </p>
           </div>
 
@@ -45,16 +60,47 @@ export const EscalationModal: React.FC<EscalationModalProps> = ({
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-accent-alert" />
             <span className="text-text-primary font-medium">
-              Shortage Trigger Threshold: <span className="font-mono font-bold text-accent-alert">20% unmet ratio</span>
+              {isAllocationProcess
+                ? <>Current allocation shortfalls <span className="font-mono font-bold text-accent-alert">(not transfer triggers)</span></>
+                : <>Shortage Trigger Threshold: <span className="font-mono font-bold text-accent-alert">20% unmet ratio</span></>}
             </span>
           </div>
           <span className="font-mono text-[11px] text-text-secondary">
-            {escalations.length} shortage alerts recorded
+            {isAllocationProcess
+              ? `${shortageGroups.length} zone${shortageGroups.length === 1 ? '' : 's'} with unmet need`
+              : `${escalations.length} shortage alerts recorded`}
           </span>
         </div>
 
         {/* AnimatedList of Escalation & Reallocation Triggers */}
         <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+          {isAllocationProcess ? shortageGroups.length > 0 ? (
+            <AnimatedList delay={0.04}>
+              {shortageGroups.map((group) => (
+                <div key={group.zone_id} className="rounded-xl border border-rose-500/25 bg-gradient-to-r from-rose-950/35 to-white/[0.015] p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-accent-alert animate-pulse" />
+                      <strong className="text-sm text-white">{group.zone_name}</strong>
+                    </div>
+                    <span className="text-[10px] font-mono px-2 py-1 rounded-full bg-rose-950/70 border border-rose-500/30 text-rose-200">UNMET NEED</span>
+                  </div>
+                  <div className="grid gap-1.5 text-[11px] font-mono">
+                    {group.resources.map((row) => (
+                      <div key={`${row.zone_id}-${row.resource}`} className="flex flex-wrap items-center justify-between gap-x-3 rounded-lg bg-black/20 px-2.5 py-1.5 text-slate-200">
+                        <span className="capitalize">{row.resource.replaceAll('_', ' ')}</span>
+                        <span>Need {Number(row.estimated_need).toLocaleString()} · allocated {Number(row.allocated).toLocaleString()} · <b className="text-accent-alert">short {Number(row.unmet).toLocaleString()}</b></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </AnimatedList>
+          ) : (
+            <div className="h-full min-h-32 grid place-items-center text-sm text-text-secondary">
+              No unmet need has been revealed so far.
+            </div>
+          ) : (
           <AnimatedList delay={0.04}>
             {escalations.map((esc, index) => {
               const shortfallMap = esc.shortfall_by_resource || {};
@@ -119,11 +165,12 @@ export const EscalationModal: React.FC<EscalationModalProps> = ({
               );
             })}
           </AnimatedList>
+          )}
         </div>
 
         {/* Footer */}
         <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-text-muted">
-          <span>Module 9 bounded heuristic transfers</span>
+          <span>{isAllocationProcess ? 'Shortfalls from the selected engine allocation' : 'Module 9 bounded heuristic transfers'}</span>
           <button
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-text-primary font-medium text-xs transition-colors"

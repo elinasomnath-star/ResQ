@@ -21,7 +21,7 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
   const isOperator = user?.role === 'operator';
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filterType, setFilterType] = useState<'all' | 'routable' | 'unroutable' | 'stale'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'routable' | 'unroutable'>('all');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const hasEnteredStock = facilities.some((facility) => facility.stock?.some((item) => item.mode === 'entered'));
 
@@ -70,7 +70,6 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
 
       if (filterType === 'routable') return f.is_routable;
       if (filterType === 'unroutable') return !f.is_routable;
-      if (filterType === 'stale') return f.stock?.some((s) => s.is_stale);
       return true;
     });
   }, [facilities, searchQuery, filterType]);
@@ -133,7 +132,6 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
         water_mode: water?.mode ?? 'assumed',
         medical_kits: medical?.quantity ?? 0,
         medical_mode: medical?.mode ?? 'assumed',
-        is_stale: f.stock?.some((s) => s.is_stale) ? 'YES' : 'NO',
       };
     });
     exportToCSV('resq_shelter_inventory', flatRows);
@@ -230,7 +228,7 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
               className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 w-64 focus:outline-none focus:border-indigo-500"
             />
             <div className="flex items-center gap-1 bg-slate-850 p-0.5 rounded-lg border border-slate-750">
-              {(['all', 'routable', 'unroutable', 'stale'] as const).map((t) => (
+              {(['all', 'routable', 'unroutable'] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setFilterType(t)}
@@ -280,7 +278,6 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
                 <th className="py-2 px-3 text-right">Food Rations</th>
                 <th className="py-2 px-3 text-right">Water (L)</th>
                 <th className="py-2 px-3 text-right">Medical Kits</th>
-                <th className="py-2 px-3 text-center">Staleness</th>
                 <th className="py-2 px-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -290,7 +287,6 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
                 const water = f.stock?.find((s) => s.resource === 'water_liters');
                 const medical = f.stock?.find((s) => s.resource === 'medical_kits');
                 const isEditing = editingFacilityId === f.id;
-                const isStale = f.stock?.some((s) => s.is_stale);
 
                 return (
                   <tr key={f.id} className="hover:bg-slate-800/40 transition">
@@ -354,15 +350,6 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
                         <span className={medical?.mode === 'entered' ? 'text-amber-300 font-bold' : 'text-slate-300'}>
                           {medical?.quantity.toLocaleString() ?? '—'}
                         </span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      {isStale ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                          ⏱️ &gt;24h Stale
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-slate-500">Fresh</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-right font-sans">
