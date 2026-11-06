@@ -166,7 +166,7 @@ def get_all_facilities(db: sqlite3.Connection) -> list[dict[str, Any]]:
 
 
 def update_facility_stock(db: sqlite3.Connection, facility_id: str, updates: list[dict[str, Any]],
-                          operator_user: str) -> list[dict[str, Any]]:
+                          operator_user: str, *, commit: bool = True) -> list[dict[str, Any]]:
     """Validate and update stock items for a facility and record audit log."""
     now_iso = datetime.now(timezone.utc).isoformat()
     cursor = db.cursor()
@@ -184,7 +184,9 @@ def update_facility_stock(db: sqlite3.Connection, facility_id: str, updates: lis
             raise ValueError(f"Invalid resource '{res}'. Valid options: {list(RESOURCE_LIMITS.keys())}")
 
         qty_raw = up.get("quantity")
-        if qty_raw is None or not isinstance(qty_raw, (int, float)) or int(qty_raw) < 0:
+        if (qty_raw is None or isinstance(qty_raw, bool)
+                or not isinstance(qty_raw, (int, float))
+                or not float(qty_raw).is_integer() or int(qty_raw) < 0):
             raise ValueError(f"Quantity must be a non-negative whole number for '{res}'")
         qty = int(qty_raw)
 
@@ -193,6 +195,8 @@ def update_facility_stock(db: sqlite3.Connection, facility_id: str, updates: lis
             raise ValueError(f"Quantity {qty} exceeds upper bound limit of {max_limit} for '{res}'")
 
         unit = str(up.get("unit") or RESOURCE_LIMITS[res]["units"][0]).strip().lower()
+        if unit not in RESOURCE_LIMITS[res]["units"]:
+            raise ValueError(f"Invalid unit '{unit}' for '{res}'. Valid units: {RESOURCE_LIMITS[res]['units']}")
         note = str(up.get("note") or "").strip()
 
         # Fetch old quantity
@@ -224,12 +228,13 @@ def update_facility_stock(db: sqlite3.Connection, facility_id: str, updates: lis
             "updated_by": operator_user, "updated_at": now_iso, "note": note,
         })
 
-    db.commit()
+    if commit:
+        db.commit()
     return updated_items
 
 
 def get_stock_summary(db: sqlite3.Connection) -> dict[str, Any]:
-    """Aggregate pooled inventory across all facilities, highlighting entered vs assumed."""
+    """Return the active inventory pool and its assumed/entered breakdown."""
     cursor = db.cursor()
     cursor.execute("""
     SELECT s.resource, s.mode, SUM(s.quantity), COUNT(DISTINCT s.facility_id)
@@ -240,47 +245,72 @@ def get_stock_summary(db: sqlite3.Connection) -> dict[str, Any]:
     rows = cursor.fetchall()
 
     cursor.execute("""
-    SELECT s.resource, SUM(s.quantity)
-    FROM stock s
-    JOIN facilities f ON s.facility_id = f.id
-    WHERE f.geometry_verified = 0 OR f.lat IS NULL OR f.lon IS NULL
-    GROUP BY s.resource
-    """)
-    unroutable_sums = {r[0]: int(r[1]) for r in cursor.fetchall()}
-
-    cursor.execute("""
     SELECT id, name, geometry_verified
     FROM facilities
     WHERE geometry_verified = 0 OR lat IS NULL OR lon IS NULL
     """)
     unroutable_facilities = [{"id": r[0], "name": r[1]} for r in cursor.fetchall()]
 
-    pooled_by_resource: dict[str, int] = {}
     breakdown_by_resource: dict[str, dict[str, int]] = {}
+    facility_counts: dict[str, dict[str, int]] = {}
     modes_seen = set()
 
     for r in rows:
         res, mode, total_qty, fac_count = r
         total_qty = int(total_qty or 0)
-        pooled_by_resource[res] = pooled_by_resource.get(res, 0) + total_qty
         breakdown_by_resource.setdefault(res, {})[mode] = total_qty
+        facility_counts.setdefault(res, {})[mode] = int(fac_count or 0)
         modes_seen.add(mode)
 
     overall_mode = "entered" if "entered" in modes_seen else "assumed"
+    pooled_by_resource = {
+        resource: int(breakdown_by_resource.get(resource, {}).get(overall_mode, 0))
+        for resource in RESOURCE_LIMITS
+    }
+    totals = {
+        resource: {
+            "quantity": pooled_by_resource[resource],
+            "unit": RESOURCE_LIMITS[resource]["units"][0],
+            "entered_count": facility_counts.get(resource, {}).get("entered", 0),
+            "assumed_count": facility_counts.get(resource, {}).get("assumed", 0),
+            "entered_quantity": int(breakdown_by_resource.get(resource, {}).get("entered", 0)),
+            "assumed_quantity": int(breakdown_by_resource.get(resource, {}).get("assumed", 0)),
+        }
+        for resource in RESOURCE_LIMITS
+    }
+
+    cursor.execute("""
+    SELECT s.resource, SUM(s.quantity)
+    FROM stock s
+    JOIN facilities f ON s.facility_id = f.id
+    WHERE s.mode = ? AND (f.geometry_verified = 0 OR f.lat IS NULL OR f.lon IS NULL)
+    GROUP BY s.resource
+    """, (overall_mode,))
+    unroutable_sums = {r[0]: int(r[1] or 0) for r in cursor.fetchall()}
+    cursor.execute("SELECT COUNT(*) FROM facilities")
+    total_facilities = int(cursor.fetchone()[0])
 
     return {
+        "totals": totals,
         "overall_mode": overall_mode,
         "pooled_inventory": pooled_by_resource,
         "mode_breakdown": breakdown_by_resource,
         "unroutable_pooled_stock": unroutable_sums,
+        "stale_count": 0,
+        "total_facilities": total_facilities,
         "unroutable_facilities_count": len(unroutable_facilities),
         "unroutable_facilities": unroutable_facilities,
+        "mode_status": (
+            "Using operator-entered field-log stock only. Unlisted sites do not contribute to this allocation pool."
+            if overall_mode == "entered"
+            else "Using baseline assumed district inventory."
+        ),
         "honesty_label": "Operator-entered stock, unverified, no live sync" if overall_mode == "entered" else "Baseline assumed district inventory",
         "status_chip": "ENTERED, UNVERIFIED" if overall_mode == "entered" else "ASSUMED",
     }
 
 
-def reset_stock_to_assumed(db: sqlite3.Connection, operator_user: str) -> int:
+def reset_stock_to_assumed(db: sqlite3.Connection, operator_user: str, *, commit: bool = True) -> int:
     """Reset all facilities to baseline assumed stock and log audit trail."""
     now_iso = datetime.now(timezone.utc).isoformat()
     cursor = db.cursor()
@@ -305,7 +335,8 @@ def reset_stock_to_assumed(db: sqlite3.Connection, operator_user: str) -> int:
         """, (f_id, res, old_qty, default_qty, default_unit, operator_user, now_iso, f"Reset to assumed by {operator_user}"))
         count += 1
 
-    db.commit()
+    if commit:
+        db.commit()
     return count
 
 
@@ -328,28 +359,62 @@ def export_stock_csv(db: sqlite3.Connection) -> str:
 
 
 def import_stock_csv(db: sqlite3.Connection, csv_text: str, operator_user: str) -> dict[str, Any]:
-    """Parse and validate imported CSV, updating stock and recording audit."""
-    reader = csv.DictReader(io.StringIO(csv_text))
+    """Validate a complete field-stock CSV, then import it as one transaction."""
+    reader = csv.DictReader(io.StringIO(csv_text.lstrip("\ufeff")))
     required = {"facility_id", "resource", "quantity"}
-    if not reader.fieldnames or not required.issubset(set(reader.fieldnames)):
+    if not reader.fieldnames:
+        raise ValueError(f"CSV must contain headers: {', '.join(sorted(required))}")
+    reader.fieldnames = [str(name or "").strip().lower() for name in reader.fieldnames]
+    if not required.issubset(set(reader.fieldnames)):
         raise ValueError(f"CSV must contain headers: {', '.join(sorted(required))}")
 
     by_facility: dict[str, list[dict[str, Any]]] = {}
-    for row in reader:
-        f_id = row.get("facility_id", "").strip()
-        res = row.get("resource", "").strip()
-        qty = row.get("quantity", "").strip()
-        unit = row.get("unit", "").strip()
-        note = row.get("note", "").strip()
-        if not f_id or not res or not qty:
+    seen: set[tuple[str, str]] = set()
+    known_facilities = {row[0] for row in db.execute("SELECT id FROM facilities")}
+    for line_number, row in enumerate(reader, start=2):
+        values = {str(key or "").strip().lower(): str(value or "").strip() for key, value in row.items() if key}
+        if not any(values.values()):
             continue
+        f_id = values.get("facility_id", "")
+        res = values.get("resource", "").lower()
+        raw_quantity = values.get("quantity", "")
+        if not f_id or not res or not raw_quantity:
+            raise ValueError(f"Row {line_number} must include facility_id, resource, and quantity")
+        if f_id not in known_facilities:
+            raise ValueError(f"Row {line_number} references unknown facility '{f_id}'")
+        if res not in RESOURCE_LIMITS:
+            raise ValueError(f"Row {line_number} has invalid resource '{res}'")
+        try:
+            quantity = int(raw_quantity.replace(",", ""))
+        except ValueError as exc:
+            raise ValueError(f"Row {line_number} quantity must be a non-negative whole number") from exc
+        if quantity < 0 or quantity > RESOURCE_LIMITS[res]["max"]:
+            raise ValueError(f"Row {line_number} quantity for '{res}' must be between 0 and {RESOURCE_LIMITS[res]['max']}")
+        unit = (values.get("unit") or RESOURCE_LIMITS[res]["units"][0]).lower()
+        if unit not in RESOURCE_LIMITS[res]["units"]:
+            raise ValueError(f"Row {line_number} has invalid unit '{unit}' for '{res}'")
+        key = (f_id, res)
+        if key in seen:
+            raise ValueError(f"Row {line_number} repeats {res} for facility '{f_id}'")
+        seen.add(key)
         by_facility.setdefault(f_id, []).append({
-            "resource": res, "quantity": int(qty), "unit": unit, "note": note,
+            "resource": res, "quantity": quantity, "unit": unit, "note": values.get("note", ""),
         })
 
+    if not by_facility:
+        raise ValueError("CSV contains no stock rows to import")
+
     updated_count = 0
-    for f_id, items in by_facility.items():
-        res_items = update_facility_stock(db, f_id, items, operator_user)
-        updated_count += len(res_items)
+    try:
+        # Treat each field-log upload as a complete snapshot. This prevents
+        # rows from an older import leaking into the next entered-stock pool.
+        reset_stock_to_assumed(db, operator_user, commit=False)
+        for f_id, items in by_facility.items():
+            res_items = update_facility_stock(db, f_id, items, operator_user, commit=False)
+            updated_count += len(res_items)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
     return {"status": "success", "facilities_updated": len(by_facility), "stock_items_updated": updated_count}

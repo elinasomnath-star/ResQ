@@ -47,8 +47,75 @@ def test_stock_summary(client):
     assert resp.status_code == 200
     data = resp.json()
     assert "pooled_inventory" in data
+    assert "totals" in data
     assert "unroutable_pooled_stock" in data
     assert "status_chip" in data
+
+
+def test_field_log_csv_import_becomes_the_entered_allocation_pool(tmp_path):
+    app = create_app(database_path=tmp_path / "field-logs.sqlite3")
+    csv_text = """facility_id,resource,quantity,unit,note
+svs_kannada_medium_school_bantwal,food_rations,20000,rations,demo
+svs_kannada_medium_school_bantwal,water_liters,100000,liters,demo
+svs_kannada_medium_school_bantwal,medical_kits,260,kits,demo
+mini_town_hall_mangaluru,food_rations,16000,rations,demo
+mini_town_hall_mangaluru,water_liters,80000,liters,demo
+mini_town_hall_mangaluru,medical_kits,210,kits,demo
+panemangaluru_sharada_relief_centre,food_rations,14000,rations,demo
+panemangaluru_sharada_relief_centre,water_liters,70000,liters,demo
+panemangaluru_sharada_relief_centre,medical_kits,190,kits,demo
+"""
+
+    with TestClient(app) as test_client:
+        login = test_client.post("/auth/login", json={"username": "operator", "password": "operator2026"})
+        token = login.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        imported = test_client.post("/stock/import", json={"csv_text": csv_text}, headers=headers)
+        assert imported.status_code == 200, imported.text
+        assert imported.json()["facilities_updated"] == 3
+        assert imported.json()["stock_items_updated"] == 9
+
+        summary = test_client.get("/stock/summary").json()
+        assert summary["overall_mode"] == "entered"
+        assert summary["pooled_inventory"] == {
+            "food_rations": 50000,
+            "water_liters": 250000,
+            "medical_kits": 660,
+        }
+        assert summary["totals"]["food_rations"]["quantity"] == 25000
+
+        run = test_client.post("/simulate", json={
+            "event": "2024-07-31", "engine": "MILP", "stock_mode": "entered",
+        }, headers=headers)
+        assert run.status_code == 201, run.text
+        assert run.json()["available_inventory"] == summary["pooled_inventory"]
+        allocation = test_client.get(f"/allocation/{run.json()['run_id']}", headers=headers)
+        assert allocation.status_code == 200, allocation.text
+        zone_coverage: dict[str, list[float]] = {}
+        for row in allocation.json()["allocations"]:
+            need = row["estimated_need"]
+            coverage = 100 * row["allocated"] / need if need else 100.0
+            zone_coverage.setdefault(row["zone_id"], []).append(coverage)
+        minimum_by_zone = [min(values) for values in zone_coverage.values()]
+        assert any(60 <= coverage <= 90 for coverage in minimum_by_zone)
+        assert any(coverage == 100 for coverage in minimum_by_zone)
+
+
+def test_field_log_csv_import_rejects_bad_file_without_partial_updates(tmp_path):
+    app = create_app(database_path=tmp_path / "invalid-field-logs.sqlite3")
+    csv_text = """facility_id,resource,quantity,unit,note
+svs_kannada_medium_school_bantwal,food_rations,100,rations,demo
+unknown_site,water_liters,200,liters,demo
+"""
+
+    with TestClient(app) as test_client:
+        login = test_client.post("/auth/login", json={"username": "operator", "password": "operator2026"})
+        headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+        imported = test_client.post("/stock/import", json={"csv_text": csv_text}, headers=headers)
+        assert imported.status_code == 422
+        summary = test_client.get("/stock/summary").json()
+        assert summary["overall_mode"] == "assumed"
 
 
 def test_facility_stock_update_role_guard(client, viewer_token):

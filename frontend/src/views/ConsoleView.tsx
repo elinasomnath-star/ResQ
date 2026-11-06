@@ -14,6 +14,7 @@ import { ScarcityChart } from '../components/ScarcityChart';
 import { GaugeRewind } from '../components/GaugeRewind';
 import { ScenarioDeck } from '../components/ScenarioDeck';
 import { ShelterInventory } from '../components/ShelterInventory';
+import { FieldLogsModal } from '../components/FieldLogsModal';
 import '../styles/ConsoleOverlays.css';
 
 import type {
@@ -104,6 +105,8 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
   const [isOverrideOpen, setIsOverrideOpen] = useState(false);
   const [isScenariosOpen, setIsScenariosOpen] = useState(false);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isFieldLogsOpen, setIsFieldLogsOpen] = useState(false);
+  const [simulationError, setSimulationError] = useState<string | null>(null);
 
   // Load Initial Metadata (Events & Zones)
   useEffect(() => {
@@ -233,6 +236,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
   // Handle Simulation Run
   const handleRunSimulation = async () => {
     setIsSimulating(true);
+    setSimulationError(null);
     setAllocationRunKey((key) => key + 1);
     setAllocationPaused(false);
     setAllocationProgress(0);
@@ -241,6 +245,13 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
     setEscalations([]);
     setRunInventory(null);
     try {
+      if (stockMode === 'entered') {
+        const summary = await api.getStockSummary();
+        const enteredStock = Object.values(summary.totals || {}).some((item) => Number(item.quantity) > 0);
+        if (!enteredStock) {
+          throw new Error('No entered stock is available. Open Field Logs and import a CSV before running this allocation.');
+        }
+      }
       const res = await api.simulate({
         event_date: selectedEvent,
         engine: selectedEngine,
@@ -263,6 +274,7 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
       }
     } catch (err) {
       console.error('Simulation error:', err);
+      setSimulationError(err instanceof Error ? err.message : 'Allocation could not be completed.');
       setAllocationProgress(null);
     } finally {
       setIsSimulating(false);
@@ -436,16 +448,24 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
             stockMode={stockMode}
             onToggleStockMode={(mode) => {
               setStockMode(mode);
+              setAllocations([]);
+              setRoutes([]);
+              setStepsData([]);
+              setEscalations([]);
               setRunInventory(null);
               setCurrentRunId('');
               setIsClosureApplied(false);
               setAppliedClosureId(null);
               setClosureRouteChangeCount(null);
+              setClosureDetourInfo(null);
               setCurrentStep(0);
               setAllocationProgress(null);
+              setSimulationError(null);
             }}
+            onOpenFieldLogs={() => setIsFieldLogsOpen(true)}
             onRunSimulation={handleRunSimulation}
             isSimulating={isSimulating}
+            simulationError={simulationError}
           />
           <GaugeRewind eventDate={selectedEvent} />
         </div>
@@ -560,12 +580,28 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
         {selectedZone && (
           <div className="absolute top-0 right-0 h-full z-30 pointer-events-auto">
             <RightDrawer
+              key={`${selectedZone.zone_id}:${currentRunId}`}
               zone={selectedZone}
               onClose={() => setSelectedZone(null)}
-              allocations={visibleAllocations.filter((a) => a.zone_id === selectedZone.zone_id)}
+              allocations={allocations.filter((a) => a.zone_id === selectedZone.zone_id)}
               route={selectedZoneRoute}
               userRole={user?.role}
-              onOverrideSuccess={() => loadEventData(selectedEvent)}
+              runId={currentRunId}
+              offlineMode={offlineMode}
+              onOverrideSuccess={(changes) => {
+                const changedByKey = new Map(changes.map((change) => [`${change.zone_id}|${change.resource}`, change]));
+                setAllocations((previous) => previous.map((allocation) => {
+                  const change = changedByKey.get(`${allocation.zone_id}|${allocation.resource}`);
+                  if (!change) return allocation;
+                  const unmet = Math.max(0, change.estimated_need - change.new_allocated);
+                  return {
+                    ...allocation,
+                    allocated: change.new_allocated,
+                    unmet,
+                    unmet_pct: change.new_unmet_pct,
+                  };
+                }));
+              }}
               onSwitchToOperator={onToggleRole}
             />
           </div>
@@ -638,6 +674,28 @@ export const ConsoleView: React.FC<ConsoleViewProps> = ({
             setClosureRouteChangeCount(null);
             void loadEventData(selectedEvent, undefined, undefined, mode);
           }}
+        />
+
+        <FieldLogsModal
+          key={isFieldLogsOpen ? 'open' : 'closed'}
+          isOpen={isFieldLogsOpen}
+          onClose={() => setIsFieldLogsOpen(false)}
+          offlineMode={offlineMode}
+          user={user}
+          onImported={async () => {
+            setStockMode('entered');
+            setRunInventory(null);
+            setCurrentRunId('');
+            setAllocations([]);
+            setEscalations([]);
+            setIsClosureApplied(false);
+            setAppliedClosureId(null);
+            setClosureRouteChangeCount(null);
+            setAllocationProgress(null);
+            setSimulationError(null);
+            await loadEventData(selectedEvent, undefined, undefined, 'entered');
+          }}
+          onRunAllocation={handleRunSimulation}
         />
 
         {/* Escalation Alerts Feed & Transfer Arcs Modal */}

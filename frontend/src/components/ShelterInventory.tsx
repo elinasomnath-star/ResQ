@@ -137,37 +137,6 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
     exportToCSV('resq_shelter_inventory', flatRows);
   };
 
-  const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isOperator || offlineMode || !e.target.files?.[0]) return;
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const text = event.target?.result as string;
-        const lines = text.trim().split('\n');
-        let imported = 0;
-        for (let i = 1; i < lines.length; i++) {
-          const [fId, , , , , , food, , water, , med] = lines[i].split(',').map((s) => s.replace(/"/g, '').trim());
-          if (fId && food !== undefined && water !== undefined && med !== undefined) {
-            await api.updateFacilityStock(fId, [
-              { resource: 'food_rations', quantity: parseInt(food) || 0, unit: 'rations' },
-              { resource: 'water_liters', quantity: parseInt(water) || 0, unit: 'liters' },
-              { resource: 'medical_kits', quantity: parseInt(med) || 0, unit: 'kits' },
-            ]);
-            imported++;
-          }
-        }
-        setStatusMessage(`Successfully imported inventory for ${imported} facilities.`);
-        await loadFacilities();
-        if (onStockModeChanged) onStockModeChanged('entered');
-        setTimeout(() => setStatusMessage(null), 3500);
-      } catch (err: any) {
-        setStatusMessage(`CSV Import failed: ${err.message}`);
-      }
-    };
-    reader.readAsText(file);
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -248,17 +217,6 @@ export const ShelterInventory: React.FC<ShelterInventoryProps> = ({
             >
               📥 Export CSV
             </button>
-            {isOperator && !offlineMode && (
-              <label className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium cursor-pointer shadow-md transition flex items-center gap-1.5">
-                📤 Import CSV
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={handleCSVImport}
-                  className="hidden"
-                />
-              </label>
-            )}
           </div>
         </div>
 

@@ -210,7 +210,7 @@ export interface Facility {
 }
 
 export interface FacilityStockSummary {
-  totals: Record<string, { quantity: number; unit: string; entered_count: number; assumed_count: number }>;
+  totals: Record<string, { quantity: number; unit: string; entered_count: number; assumed_count: number; entered_quantity?: number; assumed_quantity?: number }>;
   stale_count: number;
   total_facilities: number;
   unroutable_facilities_count: number;
@@ -243,7 +243,12 @@ export interface AdminOverrideResponse {
   reason: string;
   coverage_changes: {
     zone_id: string;
+    zone_name: string;
     resource: string;
+    estimated_need: number;
+    original_allocated: number;
+    new_allocated: number;
+    new_unmet_pct: number;
     before_coverage_pct: number;
     after_coverage_pct: number;
     coverage_delta_pct: number;

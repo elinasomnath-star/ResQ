@@ -88,7 +88,7 @@ class AdminOverrideRequest(BaseModel):
     reason: str = Field(default="Manual operational priority override")
     zone_id: str | None = None
     resource: str | None = None
-    boost_amount: int | None = None
+    boost_amount: int | None = Field(default=None, ge=1)
 
 
 class FacilityCreateRequest(BaseModel):
@@ -275,7 +275,7 @@ def _stock_config(config: dict[str, Any], processed: Path, event_date: str,
             db_path = processed / "resq_service.sqlite3"
         with _db_connection(db_path) as db:
             cursor = db.cursor()
-            cursor.execute("SELECT resource, SUM(quantity) FROM stock GROUP BY resource")
+            cursor.execute("SELECT resource, SUM(quantity) FROM stock WHERE mode = 'entered' GROUP BY resource")
             stock = {r[0]: int(r[1] or 0) for r in cursor.fetchall()}
             for r in RESOURCE_COLUMNS:
                 stock.setdefault(r, 0)
@@ -478,7 +478,8 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
             }
 
         overrides_list = list(body.overrides)
-        if not overrides_list and body.zone_id and body.resource and body.boost_amount is not None:
+        is_boost_request = not overrides_list and body.zone_id and body.resource and body.boost_amount is not None
+        if is_boost_request:
             cur = alloc_map.get(body.zone_id, {}).get(body.resource, {}).get("allocated", 0)
             overrides_list.append(ZoneOverrideItem(
                 zone_id=body.zone_id, resource=body.resource, new_allocated=cur + body.boost_amount
@@ -486,9 +487,76 @@ def create_app(*, database_path: Path | None = None) -> FastAPI:
 
         if not overrides_list:
             raise HTTPException(status_code=400, detail={"code": "empty_override", "message": "No zone allocation overrides specified"})
+        if is_boost_request and (
+            body.zone_id not in alloc_map
+            or body.resource not in RESOURCE_COLUMNS
+            or body.resource not in alloc_map[body.zone_id]
+        ):
+            raise HTTPException(status_code=400, detail={
+                "code": "invalid_zone_or_resource",
+                "message": f"Zone '{body.zone_id}' or resource '{body.resource}' not in allocations",
+            })
 
         donor_floor = float(body.donor_floor_pct) / 100.0
         new_totals = {res: sum(alloc_map[zid][res]["allocated"] for zid in alloc_map if res in alloc_map[zid]) for res in RESOURCE_COLUMNS}
+
+        # A quick zone boost must fit the fixed resource pool. When its resource
+        # is fully allocated, make room by drawing from the most-covered donor
+        # zones while preserving the same 40% minimum floor used by manual edits.
+        if is_boost_request:
+            target = overrides_list[0]
+            target_current = alloc_map[target.zone_id][target.resource]["allocated"]
+            resource_total = new_totals[target.resource] + target.new_allocated - target_current
+            available_cap = int(inv_used.get(target.resource, 0))
+            required_rebalance = max(0, resource_total - available_cap)
+            if required_rebalance:
+                original_total = sum(
+                    alloc_map[zid][target.resource]["allocated"]
+                    for zid in alloc_map if target.resource in alloc_map[zid]
+                )
+                donor_capacity = sum(
+                    max(0, alloc_map[zid][target.resource]["allocated"] - int(math.ceil(
+                        donor_floor * alloc_map[zid][target.resource]["estimated_need"]
+                    )))
+                    for zid in alloc_map
+                    if zid != target.zone_id and target.resource in alloc_map[zid]
+                )
+                max_boost = max(0, donor_capacity - max(0, original_total - available_cap))
+                if required_rebalance > donor_capacity:
+                    raise HTTPException(status_code=422, detail={
+                        "code": "donor_floor_violation",
+                        "message": (
+                            f"Cannot boost {target.resource.replace('_', ' ')} by {body.boost_amount:,} "
+                            f"within the available pool and {body.donor_floor_pct:.1f}% donor floor. "
+                            f"The maximum boost for this zone is {max_boost:,}."
+                        ),
+                    })
+
+                remaining_to_rebalance = required_rebalance
+                donor_candidates = []
+                for donor_id, donor_resources in alloc_map.items():
+                    if donor_id == target.zone_id or target.resource not in donor_resources:
+                        continue
+                    donor = donor_resources[target.resource]
+                    floor_qty = int(math.ceil(donor_floor * donor["estimated_need"]))
+                    available_from_donor = max(0, donor["allocated"] - floor_qty)
+                    if available_from_donor:
+                        coverage = donor["allocated"] / donor["estimated_need"] if donor["estimated_need"] else 1.0
+                        donor_candidates.append((coverage, available_from_donor, donor_id, donor, floor_qty))
+                donor_candidates.sort(key=lambda item: (-item[0], -item[1], item[2]))
+
+                for _, available_from_donor, donor_id, donor, _ in donor_candidates:
+                    reduction = min(remaining_to_rebalance, available_from_donor)
+                    if reduction <= 0:
+                        continue
+                    overrides_list.append(ZoneOverrideItem(
+                        zone_id=donor_id,
+                        resource=target.resource,
+                        new_allocated=donor["allocated"] - reduction,
+                    ))
+                    remaining_to_rebalance -= reduction
+                    if remaining_to_rebalance == 0:
+                        break
 
         # 1. Validate donor floor
         for item in overrides_list:

@@ -543,12 +543,18 @@ class ResQApiClient {
     resource: string,
     boostAmount: number,
     reason: string
-  ): Promise<any> {
+  ): Promise<AdminOverrideResponse> {
     if (this.currentUser?.role !== 'operator') {
       throw new Error('Operator role required to apply an admin override.');
     }
     if (this.isOfflineMode) {
       throw new Error('Allocation overrides require the API backend; offline mode is read-only.');
+    }
+    if (!runId || runId.startsWith('offline_run_')) {
+      throw new Error('Run an allocation with the API before applying an override.');
+    }
+    if (!Number.isSafeInteger(boostAmount) || boostAmount <= 0) {
+      throw new Error('Boost amount must be a positive whole number.');
     }
     const res = await fetch(`${API_BASE}/admin/override`, {
       method: 'POST',
@@ -564,7 +570,11 @@ class ResQApiClient {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail?.message || 'Override failed');
+      const detail = err.detail;
+      const message = typeof detail === 'string'
+        ? detail
+        : detail?.message || (Array.isArray(detail) ? detail.map((item: any) => item.msg).join('; ') : null);
+      throw new Error(message || 'Override failed');
     }
     return res.json();
   }
@@ -762,6 +772,26 @@ class ResQApiClient {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail?.message || 'Failed to update stock');
+    }
+    return res.json();
+  }
+
+  public async importStockCSV(csvText: string): Promise<{ status: string; facilities_updated: number; stock_items_updated: number }> {
+    if (this.currentUser?.role !== 'operator') {
+      throw new Error('Operator role required to import field logs.');
+    }
+    if (this.isOfflineMode) {
+      throw new Error('Field log imports require the API backend; offline mode is read-only.');
+    }
+    const res = await fetch(`${API_BASE}/stock/import`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({ csv_text: csvText }),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.detail?.message || 'Field log CSV import failed.');
     }
     return res.json();
   }

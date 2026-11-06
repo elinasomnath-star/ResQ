@@ -17,8 +17,10 @@ interface LeftRailProps {
   onSelectEngine: (engine: EngineType) => void;
   stockMode: StockMode;
   onToggleStockMode: (mode: StockMode) => void;
+  onOpenFieldLogs: () => void;
   onRunSimulation: () => void;
   isSimulating: boolean;
+  simulationError?: string | null;
 }
 
 export const LeftRail: React.FC<LeftRailProps> = ({
@@ -29,8 +31,10 @@ export const LeftRail: React.FC<LeftRailProps> = ({
   onSelectEngine,
   stockMode,
   onToggleStockMode,
+  onOpenFieldLogs,
   onRunSimulation,
   isSimulating,
+  simulationError,
 }) => {
   const currentEventData = events.find((e) => e.event_date === selectedEvent) || events[0];
   const waterLevel = currentEventData?.water_level_m;
@@ -269,7 +273,7 @@ export const LeftRail: React.FC<LeftRailProps> = ({
           </button>
 
           <button
-            onClick={() => onToggleStockMode('entered')}
+            onClick={() => { onToggleStockMode('entered'); onOpenFieldLogs(); }}
             className={`p-2.5 rounded-xl border text-left transition-all duration-200 ${
               stockMode === 'entered'
                 ? 'border-amber-400/80 bg-amber-950/50 text-amber-200 font-semibold shadow-[0_0_12px_rgba(251,191,36,0.25)]'
@@ -294,6 +298,12 @@ export const LeftRail: React.FC<LeftRailProps> = ({
               : 'Operator-entered quantities. Not synced with a live warehouse system.'}
           </p>
         </div>
+
+        {simulationError && (
+          <div className="rounded-lg border border-rose-800/70 bg-rose-950/40 px-3 py-2 text-[11px] leading-relaxed text-rose-200" role="alert">
+            {simulationError}
+          </div>
+        )}
 
         {/* Run button */}
         <button

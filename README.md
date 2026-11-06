@@ -64,7 +64,7 @@ python validation/validate_module11.py
 
 The configured raster is WorldPop Global2 R2025A v1 for India, 2025, constrained, 1 km (`1km_ua`). Population pixels are summed by cell without census normalization. The Bantwal polygon sum is 677,985.36 over 674.38 km² (1,005.35 people/km²), or 1.715× the Census 2011 reference of 395,380. This comparison is reported as-is; the result is a modeled estimate, not an updated census count. See [`RESULTS.md`](RESULTS.md) and [`LIMITATIONS.md`](LIMITATIONS.md).
 
-The grid builder fails if any of its 16 cells has no valid SAR pixels in one of the event rasters. Phase II may download Sentinel-1 and CHIRPS inputs when they are not cached. Shelter stock and resource demand are modeled; the project has no live shelter inventory or dispatch service. The future interface could let authorized shelter officials enter actual stock for allocation.
+The grid builder fails if any of its 16 cells has no valid SAR pixels in one of the event rasters. Phase II may download Sentinel-1 and CHIRPS inputs when they are not cached. The project has no live shelter telemetry or dispatch service. Operators can import a field-log CSV; those manual, unverified quantities form a separate pooled inventory for the next allocation.
 
 ## Run the API
 
@@ -116,6 +116,13 @@ Demo login presets:
 - **Viewer** (`viewer` / `viewer2026`): Inspects replays, routes, scarcity curves, and shortage escalations.
 - **Operator** (`operator` / `operator2026`): Authorized for road closures, facility stock updates, and admin overrides.
 
+### Import Field Logs
+
+1. Sign in as the Operator and click **Entered · Field logs** in the stock selector. The Field Logs panel opens only from that control.
+2. Download [the sample field-log CSV](frontend/public/data/sample_field_logs.csv) or prepare a CSV with `facility_id,resource,quantity,unit,note` columns. Resource values are `food_rations`, `water_liters`, and `medical_kits`; facility IDs must already exist in the inventory.
+3. Choose the CSV. The import validates the whole file before saving it as one snapshot. Rows in the CSV become operator-entered stock; omitted facilities/resources return to baseline assumed stock and do not count toward entered-stock allocations.
+4. Click **Run allocation with field logs** (or close the panel and use **Run Allocation Replay**) to allocate from the imported pool. The sample totals are illustrative only (50,000 food rations, 250,000 liters of water, and 660 medical kits). For the 2024 MILP demo they produce a mix of full zone coverage and a partial zone in the 60–90% range. These are not observed stock reports.
+
 ### Phase III Interactive Dashboard Screenshots
 
 | Feature | Screenshot | Description |
@@ -126,8 +133,8 @@ Demo login presets:
 | **Shelter Inventory** | ![Shelter Inventory](demo/screenshot_shelter_inventory.png) | Lists three event-confirmed sites; their stock is assumed or manually entered and is not live inventory. |
 | **Shortage Escalations** | ![Shortage escalations](demo/screenshot_escalation.png) | Shows the recorded shortage alerts and resource reallocation triggers for the selected replay. |
 | **Admin Override** | ![Admin Override](demo/screenshot_admin_override.png) | Editable allocation table blocks edits exceeding inventory or dropping below the donor floor, labeled "manual override, not an optimization result". |
-| **Road Blockage & Rerouting** | ![Road blockage and rerouting](demo/screenshot_timeline_closure.png) | Shows a selected Bantwal main road in red and the route-only recalculation status. |
-| **Zone Details** | ![Zone details](demo/screenshot_zone_drawer.png) | Inspects a selected Bantwal analysis zone and its allocation and route data. |
+| **Road Blockage & Rerouting** | ![Road blockage and rerouting](demo/screenshot_timeline_closure.png) | Configured-stock MILP allocations are shown first, followed by the Kalladka-Kanhangad Highway closure in red and 16 routes recalculated. |
+| **Zone Details** | ![Zone details](demo/screenshot_zone_drawer.png) | Zone 16 allocation details and rerouted path for the same Kalladka-Kanhangad Highway closure, with MILP and configured prototype stock. |
 | **Data Sources & Limits** | ![Data sources and limits](demo/screenshot_about_limits.png) | Summarizes analytical boundaries, data sources, and limitations. |
 
 ### System design diagrams

@@ -178,6 +178,14 @@ export const AdminOverrideModal: React.FC<AdminOverrideModalProps> = ({
           </button>
         </div>
 
+        {(offlineMode || !runId || runId.startsWith('offline_run_')) && (
+          <div className="bg-amber-950/35 border-b border-amber-800/50 px-6 py-2.5 text-xs text-amber-200" role="status">
+            {offlineMode
+              ? 'Manual overrides require the online API and a live allocation run.'
+              : 'Run an allocation with the API before applying edits. Offline snapshots are read-only.'}
+          </div>
+        )}
+
         {/* Status Bar */}
         <div className="bg-slate-950/40 px-6 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs">
           <div className="flex items-center gap-4">

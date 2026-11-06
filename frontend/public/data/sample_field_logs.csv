@@ -1,0 +1,10 @@
+facility_id,resource,quantity,unit,note
+svs_kannada_medium_school_bantwal,food_rations,20000,rations,Illustrative demo only; not observed stock
+svs_kannada_medium_school_bantwal,water_liters,100000,liters,Illustrative demo only; not observed stock
+svs_kannada_medium_school_bantwal,medical_kits,260,kits,Illustrative demo only; not observed stock
+mini_town_hall_mangaluru,food_rations,16000,rations,Illustrative demo only; not observed stock
+mini_town_hall_mangaluru,water_liters,80000,liters,Illustrative demo only; not observed stock
+mini_town_hall_mangaluru,medical_kits,210,kits,Illustrative demo only; not observed stock
+panemangaluru_sharada_relief_centre,food_rations,14000,rations,Illustrative demo only; not observed stock
+panemangaluru_sharada_relief_centre,water_liters,70000,liters,Illustrative demo only; not observed stock
+panemangaluru_sharada_relief_centre,medical_kits,190,kits,Illustrative demo only; not observed stock

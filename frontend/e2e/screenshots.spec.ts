@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import * as path from 'path';
 
 const demoDir = path.resolve(process.cwd(), '../demo');
@@ -73,14 +73,11 @@ test('Refresh current ResQ interface screenshots', async ({ page }) => {
   expect(overlayAlignment.sameLeft).toBe(true);
   expect(overlayAlignment.sameRight).toBe(true);
   expect(overlayAlignment.controlsGap).toBeGreaterThanOrEqual(12);
+  await page.getByRole('button', { name: 'Run Allocation Replay' }).click();
+  await expect(page.getByText('Zones 16/16')).toBeVisible({ timeout: 30000 });
   const resourcePool = page.getByLabel('Assumed Resource Pool');
-  await expect(resourcePool.getByText('25,000 allocated')).toBeVisible();
-  await expect(resourcePool.getByText('75,000 allocated')).toBeVisible();
-  await expect(resourcePool.getByText('697 allocated')).toBeVisible();
-  await page.getByRole('button', { name: 'Round 2', exact: true }).click();
-  await expect(resourcePool.getByText('0 allocated').first()).toBeVisible();
-  await expect(resourcePool.getByText('16 allocated')).toBeVisible();
-  await page.getByRole('button', { name: 'Round 1', exact: true }).click();
+  await expect(resourcePool.locator('[aria-label*="allocated of"]')).toHaveCount(3);
+  await expect(page.locator('.step-scrubber .step-point')).toHaveCount(8);
   const timelineOverlaps = await page.locator('.step-timeline-toolbar').evaluate((toolbar) => {
     const boxes = Array.from(toolbar.children).map((child) => child.getBoundingClientRect());
     return boxes.some((box, index) => boxes.slice(index + 1).some((other) =>
@@ -167,6 +164,15 @@ test('Shelter names remain readable and do not overlap on the map', async ({ pag
 test('Selecting each road scenario recalculates all Bantwal routes live', async ({ page }) => {
   test.setTimeout(180000);
   await enterAsOperator(page);
+  const milpEngine = page.getByRole('button', { name: /MILP Optimizer/ });
+  await milpEngine.click();
+  await expect(milpEngine).toContainText('ACTIVE');
+  const configuredStock = page.getByRole('button', { name: /Configured.*Prototype stock/ });
+  await configuredStock.click();
+  await expect(configuredStock).toHaveClass(/border-violet-400\/70/);
+  await page.getByRole('button', { name: 'Run Allocation Replay' }).click();
+  await expect(page.getByText('Zones 16/16')).toBeVisible({ timeout: 30000 });
+  await expect(page.getByLabel('Assumed Resource Pool').locator('[aria-label*="allocated of"]')).toHaveCount(3);
   await page.getByRole('button', { name: 'Scenarios', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Run scenario: Block Netravati Bridge', exact: true })).toBeVisible();
   const scenarios: [string, string, number][] = [
@@ -221,7 +227,7 @@ test('Selecting each road scenario recalculates all Bantwal routes live', async 
       );
       expect(hasMapGeometry).toBe(zoneRoute.delivery_mode !== 'none');
     }
-    await expect(page.getByRole('status')).toContainText('16 routes recalculated', { timeout: 15000 });
+    await expect(page.getByText('16 routes recalculated', { exact: true })).toBeVisible({ timeout: 15000 });
   }
   const nonNetravatiReroute = page.waitForResponse((response) =>
     response.url().endsWith('/scenario-reroutes') && response.request().method() === 'POST'
@@ -231,6 +237,7 @@ test('Selecting each road scenario recalculates all Bantwal routes live', async 
   expect(nonNetravatiResult.ok()).toBe(true);
   expect((await nonNetravatiResult.json()).blocked_roads).toEqual(['Kalladka-Kanhangad Highway']);
   await expect(page.getByTestId('mini-town-hall-map-label')).toBeHidden();
+  await expect(page.getByText('Zones 16/16')).toBeVisible();
   await page.getByRole('button', { name: 'Close Scenario Deck' }).click();
   await expect(page.locator('aside.w-80')).toBeVisible();
   await page.locator('.resq-zone-marker').nth(15).click();

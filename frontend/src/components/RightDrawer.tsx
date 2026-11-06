@@ -9,8 +9,9 @@ import {
   Sparkles,
   Lock,
   CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
-import { ZoneData, AllocationRow, RouteFeature, UserRole } from '../types';
+import { ZoneData, AllocationRow, RouteFeature, UserRole, AdminOverrideResponse } from '../types';
 import CountUp from './reactbits/CountUp';
 import { api } from '../services/api';
 
@@ -20,8 +21,9 @@ interface RightDrawerProps {
   allocations: AllocationRow[];
   route?: RouteFeature | null;
   userRole?: UserRole;
-  runId?: string;
-  onOverrideSuccess?: () => void;
+  runId: string;
+  offlineMode: boolean;
+  onOverrideSuccess?: (changes: AdminOverrideResponse['coverage_changes']) => void;
   onSwitchToOperator?: () => void;
 }
 
@@ -32,12 +34,14 @@ export const RightDrawer: React.FC<RightDrawerProps> = ({
   route,
   userRole = 'viewer',
   runId,
+  offlineMode,
   onOverrideSuccess,
   onSwitchToOperator,
 }) => {
   const [boostResource, setBoostResource] = useState<'food_rations' | 'water_liters' | 'medical_kits'>('food_rations');
   const [boostAmount, setBoostAmount] = useState(100);
   const [overrideMsg, setOverrideMsg] = useState<string | null>(null);
+  const [overrideFailed, setOverrideFailed] = useState(false);
   const [isOverriding, setIsOverriding] = useState(false);
 
   if (!zone) return null;
@@ -61,20 +65,43 @@ export const RightDrawer: React.FC<RightDrawerProps> = ({
 
   const handleAdminOverride = async () => {
     if (userRole !== 'operator') return;
+    if (!runId || offlineMode) {
+      setOverrideFailed(true);
+      setOverrideMsg(offlineMode
+        ? 'Overrides are unavailable in offline mode.'
+        : 'Run an allocation before boosting a resource.');
+      return;
+    }
+    if (!Number.isSafeInteger(boostAmount) || boostAmount <= 0) {
+      setOverrideFailed(true);
+      setOverrideMsg('Enter a positive whole-number boost amount.');
+      return;
+    }
     setIsOverriding(true);
     setOverrideMsg(null);
+    setOverrideFailed(false);
+    const targetZoneId = zone.zone_id;
     try {
-      await api.adminOverride(
-        runId || 'current_run',
-        zone.zone_id,
+      const result = await api.adminOverride(
+        runId,
+        targetZoneId,
         boostResource,
         boostAmount,
         `Emergency relief override for ${zone.zone_name}`
       );
-      setOverrideMsg(`Boosted ${boostResource.replace('_', ' ')} by +${boostAmount}`);
-      if (onOverrideSuccess) onOverrideSuccess();
+      const applied = result.coverage_changes.find((change) =>
+        change.zone_id === targetZoneId && change.resource === boostResource,
+      );
+      if (!applied) throw new Error('The API did not return the updated zone allocation.');
+      if (zone.zone_id === targetZoneId) {
+        setOverrideMsg(`Saved ${boostResource.replace('_', ' ')}: ${applied.original_allocated.toLocaleString()} → ${applied.new_allocated.toLocaleString()}`);
+      }
+      if (onOverrideSuccess) onOverrideSuccess(result.coverage_changes);
     } catch (err: any) {
-      setOverrideMsg(`Failed: ${err.message}`);
+      if (zone.zone_id === targetZoneId) {
+        setOverrideFailed(true);
+        setOverrideMsg(`Failed: ${err.message}`);
+      }
     } finally {
       setIsOverriding(false);
     }
@@ -281,7 +308,7 @@ export const RightDrawer: React.FC<RightDrawerProps> = ({
               {(['food_rations', 'water_liters', 'medical_kits'] as const).map((res) => (
                 <button
                   key={res}
-                  onClick={() => setBoostResource(res)}
+                  onClick={() => { setBoostResource(res); setOverrideMsg(null); }}
                   className={`py-1.5 px-1 rounded-lg text-[10px] font-mono border capitalize transition-all ${
                     boostResource === res
                       ? 'border-accent-indigo/60 bg-accent-indigo/15 text-accent-indigo font-bold'
@@ -296,24 +323,30 @@ export const RightDrawer: React.FC<RightDrawerProps> = ({
             <div className="flex items-center gap-2">
               <input
                 type="number"
-                min="10"
-                step="50"
+                min="1"
+                step="1"
                 value={boostAmount}
-                onChange={(e) => setBoostAmount(parseInt(e.target.value) || 0)}
+                onChange={(e) => { setBoostAmount(parseInt(e.target.value) || 0); setOverrideMsg(null); }}
                 className="w-20 rounded-lg border border-white/[0.1] bg-ink-950 px-2.5 py-1.5 text-[11px] font-mono text-text-primary focus:outline-none focus:border-accent-indigo/50"
               />
               <button
                 onClick={handleAdminOverride}
-                disabled={isOverriding}
+                disabled={isOverriding || !runId || offlineMode || !Number.isSafeInteger(boostAmount) || boostAmount <= 0}
                 className="flex-1 py-1.5 px-3 rounded-lg bg-accent-indigo/15 border border-accent-indigo/35 hover:bg-accent-indigo/25 hover:border-accent-indigo/55 text-accent-indigo text-[11px] font-semibold transition-all disabled:opacity-40"
               >
                 {isOverriding ? 'Applying…' : `+ Boost ${boostResource.split('_')[0]}`}
               </button>
             </div>
 
+            {(!runId || offlineMode) && (
+              <p className="text-[10px] leading-relaxed text-amber-200/80">
+                {offlineMode ? 'Run an online allocation to enable overrides.' : 'Run an allocation first; boosts apply to its saved results.'}
+              </p>
+            )}
+
             {overrideMsg && (
-              <div className="text-[10px] font-mono text-emerald-400 flex items-center gap-1.5">
-                <CheckCircle className="w-3 h-3" /> {overrideMsg}
+              <div className={`text-[10px] font-mono flex items-center gap-1.5 ${overrideFailed ? 'text-rose-300' : 'text-emerald-400'}`} role={overrideFailed ? 'alert' : 'status'}>
+                {overrideFailed ? <AlertCircle className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />} {overrideMsg}
               </div>
             )}
           </div>

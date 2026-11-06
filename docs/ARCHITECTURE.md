@@ -219,7 +219,7 @@ The inspected runtime inventory is:
 | Roads and closures | `resq.roads`, `resq.routing` | cached OSM road JSON; `road_graph.graphml`; `warehouses.geojson`; `closures_{date}.geojson`; `analysis_zones.geojson` | node mapping, `routes_analysis_{date}.csv/.geojson`, route metadata |
 | Static allocation | `resq.optimization.allocation.run_allocators` | `severity_demand_{date}.csv`; configured prototype inventory or the demo scenario stock | `allocation_matrix_{date}.csv`, `allocation_comparison_{date}.csv`, `allocation_zone_metrics_{date}.csv`, allocation metadata |
 | Dynamic allocation/escalation | `resq.module8.run_module8`, `resq.module9` | event demand, cached graph, verified event closure geometry, facility points, configured stock | `module8_dynamic_steps_{date}.csv`, `module8_dynamic_summary_{date}.json`, zone-unmet CSV, `escalation_log_{date}.csv`, transfer and redirect-trace CSVs |
-| Facility & stock management | `resq.facilities` | `data/processed/facilities.json`, user CSV imports | SQLite `facilities`, `stock`, `stock_audit` tables in `resq_service.sqlite3` |
+| Facility & stock management | `resq.facilities` | `/facilities`, `/stock/import`, `/stock/summary`; `frontend/public/data/sample_field_logs.csv` | SQLite `facilities`, `stock`, `stock_audit` tables in `resq_service.sqlite3` |
 | Benchmark scenarios | `resq.scenarios` | `config/scenarios.yaml`, event data, closure GeoJSON | Analytical benchmark outputs for offline evaluation; separate from the frontend road-blockage deck |
 | Stock sweep & bisection | `validation.stock_sweep` | demand features, allocators, `resq.facilities` | `stock_sweep_{event}.csv/.json`, `stock_sweep_thresholds.json` |
 | HTTP service & API | `resq.api`, `resq.auth` | generated event/zone/demand/closure/graph inputs; `demo/adequate_supply_summary.csv` for simulated stock; SQLite | SQLite tables in `resq_service.sqlite3`; REST endpoints for simulation, routing, closures, facilities, sweep, admin override |
@@ -280,6 +280,7 @@ CREATE TABLE stock_audit (
 ```
 
 - **Stock Age Display**: Stock age is not used to mark facilities stale or show stale badges. Operator-entered inventory remains labeled `ENTERED, UNVERIFIED` because it is manual input rather than live telemetry.
+- **Field Log Import**: The Field Logs panel is opened from the Entered stock selector. Operators upload a CSV (`facility_id,resource,quantity,unit,note`); the API validates the complete snapshot before changing stock and writing audit rows. In `entered` allocation mode, only `mode='entered'` stock is pooled, and the summary response exposes the same totals the console uses to start a run.
 - **Unroutable Shelter Flagging**: Of the 51 mapped relief facilities, 16 candidate shelters lack routable OSM coordinates and are flagged with `is_routable = 0` to prevent dispatch lockups.
 
 ## Scarcity Sweeper & Scenario Engine
